@@ -23,11 +23,11 @@ internal class QuerySingleValueEncodingContainer: SingleValueEncodingContainer {
     let codingPath: [CodingKey]
     let allowedCharacterSet: CharacterSet?
     let userInfo: [CodingUserInfoKey: Any]
-    let options: QueryEncoder._Options
+    let options: QueryEncoder.Options
 
     init(userInfo: [CodingUserInfoKey: Any],
          codingPath: [CodingKey],
-         options: QueryEncoder._Options,
+         options: QueryEncoder.Options,
          allowedCharacterSet: CharacterSet?,
          defaultValue: ContainerValueType?) {
         self.containerValue = defaultValue
@@ -212,7 +212,7 @@ extension QuerySingleValueEncodingContainer: Swift.Encoder {
         return values.count
     }
 
-    func container<Key>(keyedBy type: Key.Type) -> KeyedEncodingContainer<Key> where Key: CodingKey  {
+    func container<Key>(keyedBy type: Key.Type) -> KeyedEncodingContainer<Key> where Key: CodingKey {
 
         // if there container is already initialized
         if let currentContainerValue = containerValue {
@@ -248,4 +248,3 @@ extension QuerySingleValueEncodingContainer: Swift.Encoder {
         return self
     }
 }
-

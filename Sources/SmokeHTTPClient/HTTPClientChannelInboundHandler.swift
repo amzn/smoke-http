@@ -22,13 +22,13 @@ import NIOOpenSSL
 import NIOTLS
 import LoggerAPI
 
-private let HTTP_METHOD_WRITE_BUFFER_SIZE = 10
+internal struct HttpHeaderNames {
+    /// Content-Length Header
+    static let contentLength = "Content-Length"
 
-/// Content-Length Header
-internal let CONTENT_LENGTH_HEADER = "Content-Length"
-
-/// Content-Type Header
-internal let CONTENT_TYPE_HEADER = "Content-Type"
+    /// Content-Type Header
+    static let contentType = "Content-Type"
+}
 
 /**
  Implementation of the ChannelInboundHandler protocol that handles sending
@@ -219,12 +219,12 @@ public final class HTTPClientChannelInboundHandler: ChannelInboundHandler {
         headers.append(contentsOf: additionalHeaders)
 
         // TODO: Move headers out to HTTPClient for UrlRequest
-        if (bodyData.count > 0 || delegate.specifyContentHeadersForZeroLengthBody) {
-            headers.append((CONTENT_TYPE_HEADER,contentType))
-            headers.append((CONTENT_LENGTH_HEADER,"\(bodyData.count)"))
+        if bodyData.count > 0 || delegate.specifyContentHeadersForZeroLengthBody {
+            headers.append((HttpHeaderNames.contentType, contentType))
+            headers.append((HttpHeaderNames.contentLength, "\(bodyData.count)"))
         }
-        headers.append(("User-Agent","SmokeHTTPClient"))
-        headers.append(("Accept","*/*"))
+        headers.append(("User-Agent", "SmokeHTTPClient"))
+        headers.append(("Accept", "*/*"))
 
         // Create the request head
         var httpRequestHead = HTTPRequestHead(version: HTTPVersion(major: 1, minor: 1),
@@ -243,4 +243,3 @@ public final class HTTPClientChannelInboundHandler: ChannelInboundHandler {
         Log.verbose("Request prepared on channel active.")
     }
 }
-

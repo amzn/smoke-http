@@ -36,14 +36,14 @@ public class QueryEncoder {
         case separateQueryEntriesWith(keyTag: String, valueTag: String)
     }
 
-    internal struct _Options {
+    internal struct Options {
         let mapEncodingStrategy: MapEncodingStrategy
     }
 
-    internal let options: _Options
+    internal let options: Options
 
     public init(mapEncodingStrategy: MapEncodingStrategy = .singleQueryEntry) {
-        self.options = _Options(mapEncodingStrategy: mapEncodingStrategy)
+        self.options = Options(mapEncodingStrategy: mapEncodingStrategy)
     }
 
     /**
