@@ -22,9 +22,6 @@ import NIOOpenSSL
 import NIOTLS
 import LoggerAPI
 
-private let UNEXPECTED_CLOSURE_ERROR =
-    HTTPError.connectionError("Http request was unexpectedly closed without returning a response.")
-
 public class HTTPClient {
     /// The server hostname to contact for requests from this client.
     public let endpointHostName: String
@@ -36,6 +33,9 @@ public class HTTPClient {
     public let clientDelegate: HTTPClientDelegate
     /// The connection timeout in seconds
     public let connectionTimeoutSeconds: Int
+    
+    private static let unexpectedClosureType =
+        HTTPError.connectionError("Http request was unexpectedly closed without returning a response.")
 
     /// The event loop used by requests/responses from this client
     let eventLoopGroup: MultiThreadedEventLoopGroup
@@ -174,7 +174,7 @@ public class HTTPClient {
         channel.closeFuture.whenComplete {
             // if this channel is being closed and no response has been recorded
             if !hasComplete {
-                completion(.error(UNEXPECTED_CLOSURE_ERROR))
+                completion(.error(HTTPClient.unexpectedClosureType))
             }
         }
 
@@ -262,7 +262,7 @@ public class HTTPClient {
         channel.closeFuture.whenComplete {
             // if this channel is being closed and no response has been recorded
             if !hasComplete {
-                completion(UNEXPECTED_CLOSURE_ERROR)
+                completion(HTTPClient.unexpectedClosureType)
             }
         }
 
@@ -308,14 +308,13 @@ public class HTTPClient {
         channel.closeFuture.whenComplete {
             // if this channel is being closed and no response has been recorded
             if responseResult == nil {
-                responseResult = .error(UNEXPECTED_CLOSURE_ERROR)
+                responseResult = .error(HTTPClient.unexpectedClosureType)
                 completedSemaphore.signal()
             }
         }
 
         Log.verbose("Waiting for response from \(endpointOverride?.host ?? endpointHostName) ...")
         completedSemaphore.wait()
-
 
         guard let result = responseResult else {
             throw HTTPError.connectionError("Http request was closed without returning a response.")
@@ -372,7 +371,7 @@ public class HTTPClient {
         channel.closeFuture.whenComplete {
             // if this channel is being closed and no response has been recorded
             if responseError == nil {
-                responseError = AsyncErrorResult(error: UNEXPECTED_CLOSURE_ERROR)
+                responseError = AsyncErrorResult(error: HTTPClient.unexpectedClosureType)
                 completedSemaphore.signal()
             }
         }

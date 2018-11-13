@@ -20,7 +20,11 @@ import Foundation
 /**
  A HTTP Request that includes a query, path, body and additional headers
  */
-public struct HTTPRequestInput<QueryType: Encodable, PathType: Encodable, BodyType: Encodable, AdditionalHeadersType: Encodable>: HTTPRequestInputProtocol {
+public struct HTTPRequestInput<QueryType: Encodable,
+                               PathType: Encodable,
+                               BodyType: Encodable,
+                               AdditionalHeadersType: Encodable>
+: HTTPRequestInputProtocol {
     public let queryEncodable: QueryType?
     public let pathEncodable: PathType?
     public let bodyEncodable: BodyType?
