@@ -21,18 +21,29 @@ public enum QueryEncoderError: Error {
     case typeNotQueryCompatible(String)
 }
 
+///
+/// Encode Swift types into query strings.
+///
+/// Nested types, arrays and dictionaries are serialized into query keys using a '.' notation.
+/// Array entries are indicated by a 1-based index
+/// ie. QueryOutput(theArray: ["Value1", "Value2"]) --> ?theArray.1=Value1&theArray.2=Value2
+/// Nested type attributes are indicated by the attribute keys
+/// ie. QueryOutput(theType: TheType(foo: "Value1", bar: "Value2")) --> ?theType.foo=Value1&theType.bar=Value2
+/// Dictionary entries are indicated based on the provided `MapEncodingStrategy`
+///
+/// This matches the default query key decoding strategy QueryDecoder.queryKeyDecodingStrategy.useDotAsContainerSeparator`.
 public class QueryEncoder {
 
     /// The strategy to use for encoding maps.
     public enum MapEncodingStrategy {
         /// The query output will contain a single query entry for
-        /// each attribute of each entry for the list. This is the default.
-        /// ie. ?Key=Value
+        /// each entry of the map. This is the default.
+        /// ie. QueryOutput(theMap: ["Key": "Value"]) --> ?theMap.Key=Value
         case singleQueryEntry
 
-        /// The query output will contain separate entires for the key and value
-        /// of each attribute of each entry for the list.
-        /// ie. ?1.KeyTag=Key&1.ValueTag=Value
+        /// The query output will contain separate entries for the key and value
+        /// of each entry of the map, specified as a list.
+        /// ie. QueryOutput(theMap: ["Key": "Value"]) --> ?theMap.1.KeyTag=Key&theMap.1.ValueTag=Value
         case separateQueryEntriesWith(keyTag: String, valueTag: String)
     }
 

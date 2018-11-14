@@ -18,23 +18,67 @@
 import Foundation
 @testable import QueryCoder
 
-struct TestTypeA: Codable {
+struct TestTypeA: Codable, Equatable {
     let firstly: String
     let secondly: String
     let thirdly: String
 }
 
-struct TestTypeB: Codable {
+struct TestTypeB: Codable, Equatable {
     let action: String
     let ids: [String]
 }
 
-struct TestTypeC: Codable {
+struct TestTypeC: Codable, Equatable {
     let action: String
     let map: [String: String]
 }
 
-struct TestTypeD: Codable {
+struct TestTypeD: Codable, Equatable {
     let action: String
     let ids: [TestTypeA]
+}
+
+struct TestTypeE: Codable, Equatable {
+    let firstly: String
+    let secondly: String
+    let thirdly: String
+    
+    enum CodingKeys: String, CodingKey {
+        case firstly = "values.1"
+        case secondly = "values.2"
+        case thirdly = "values.3"
+    }
+}
+
+struct TestTypeF: Codable, Equatable {
+    let firstly: String
+    let secondly: String
+    let thirdly: String
+    
+    enum CodingKeys: String, CodingKey {
+        case firstly = "values.one"
+        case secondly = "values.two"
+        case thirdly = "values.three"
+    }
+}
+
+struct TestTypeG: Codable, Equatable {
+    let id: String
+    let optionalString: String?
+    let data: Data?
+    let date: Date?
+    let bool: Bool?
+    let int: Int?
+    let double: Double?
+
+    enum CodingKeys: String, CodingKey {
+        case id = "Id"
+        case optionalString = "OptionalString"
+        case data = "Data"
+        case date = "Date"
+        case bool = "Bool"
+        case int = "Int"
+        case double = "Double"
+    }
 }

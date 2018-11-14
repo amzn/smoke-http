@@ -108,8 +108,33 @@ internal class QuerySingleValueEncodingContainer: SingleValueEncodingContainer {
     func encode<T>(_ value: T) throws where T: Encodable {
         if let date = value as? Foundation.Date {
             let dateAsString = date.iso8601
+            
+            let encodedValue: String
+            if let allowedCharacterSet = allowedCharacterSet,
+                let percentEncoded = dateAsString.addingPercentEncoding(withAllowedCharacters: allowedCharacterSet) {
+                    encodedValue = percentEncoded
+            } else {
+                encodedValue = dateAsString
+            }
 
-            containerValue = .singleValue(dateAsString)
+            containerValue = .singleValue(encodedValue)
+            return
+        } else if let data = value as? Foundation.Data {
+            guard let dataAsString = String(data: data, encoding: .utf8) else {
+                let description = "Unable to serialize data instance."
+                throw EncodingError.invalidValue(data, EncodingError.Context(codingPath: self.codingPath,
+                                                                             debugDescription: description))
+            }
+            
+            let encodedValue: String
+            if let allowedCharacterSet = allowedCharacterSet,
+                let percentEncoded = dataAsString.addingPercentEncoding(withAllowedCharacters: allowedCharacterSet) {
+                    encodedValue = percentEncoded
+            } else {
+                encodedValue = dataAsString
+            }
+
+            containerValue = .singleValue(encodedValue)
             return
         }
 

@@ -30,6 +30,11 @@ struct QueryCodingKey: CodingKey {
         self.stringValue = "\(intValue)"
         self.intValue = intValue
     }
+    
+    init(stringValue: String, intValue: Int?) {
+        self.stringValue = stringValue
+        self.intValue = intValue
+    }
 
     init(index: Int) {
         self.stringValue = "Index \(index)"
