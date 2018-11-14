@@ -12,7 +12,7 @@
 // permissions and limitations under the License.
 //
 //  QueryUnkeyedDecodingContainer.swift
-//  QueryCoding
+//  QueryCoder
 //
 
 import Foundation
