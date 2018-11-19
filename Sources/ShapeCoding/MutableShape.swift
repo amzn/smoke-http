@@ -17,24 +17,52 @@
 
 import Foundation
 
-/// An enumeration of possible types of MutableShapes.
+/// An enumeration of possible types of a shape that can be muted.
 public enum MutableShape {
     case dictionary(MutableShapeDictionary)
+    case string(String)
+    case null
     
     /**
-     Finalizes this MutableShapeAttribute as a ShapeAttribute.
+     Finalizes this MutableShape as a Shape.
      */
-    public func asShapeAttribute() -> ShapeAttribute {
+    public func asShape() -> Shape {
         switch self {
         case .dictionary(let innerDictionary):
-            return innerDictionary.asShapeAttribute()
+            return innerDictionary.asShape()
+        case .string(let value):
+            return .string(value)
+        case .null:
+            return .null
         }
     }
 }
 
-/// A MutableShape type for a dictionary of MutableShapeAttributes
+/// An enumeration of possible types of a shape.
+public enum Shape: Equatable {
+    case dictionary([String: Shape])
+    case string(String)
+    case null
+}
+
+/// An enumeration of possible types of MutableShapes that can have nested shapes.
+public enum NestedableMutableShape {
+    case dictionary(MutableShapeDictionary)
+    
+    /**
+     Finalizes this MutableShape as a Shape.
+     */
+    public func asShape() -> Shape {
+        switch self {
+        case .dictionary(let innerDictionary):
+            return innerDictionary.asShape()
+        }
+    }
+}
+
+/// A MutableShape type for a dictionary of MutableShapes
 public class MutableShapeDictionary {
-    private var values: [String: MutableShapeAttribute] = [:]
+    private var values: [String: MutableShape] = [:]
     
     /**
      Initializer with an empty dictionary.
@@ -50,7 +78,7 @@ public class MutableShapeDictionary {
         - key: the key of the value to retrieve
         - Returns: the value of the provided key or nil if there is no such value
      */
-    public subscript(key: String) -> MutableShapeAttribute? {
+    public subscript(key: String) -> MutableShape? {
         get {
             return values[key]
         }
@@ -60,41 +88,13 @@ public class MutableShapeDictionary {
     }
     
     /**
-     Finalizes this MutableShapeDictionary as a ShapeAttribute.
+     Finalizes this MutableShapeDictionary as a Shape.
      */
-    public func asShapeAttribute() -> ShapeAttribute {
-        let transformedValues: [String: ShapeAttribute] = values.mapValues { value in
-            return value.asShapeAttribute()
+    public func asShape() -> Shape {
+        let transformedValues: [String: Shape] = values.mapValues { value in
+            return value.asShape()
         }
         
         return .dictionary(transformedValues)
     }
-}
-
-/// An enumeration of possible values of a shape that can be mutated.
-public enum MutableShapeAttribute {
-    case dictionary(MutableShapeDictionary)
-    case string(String)
-    case null
-    
-    /**
-     Finalizes this MutableShapeAttribute as a ShapeAttribute.
-     */
-    public func asShapeAttribute() -> ShapeAttribute {
-        switch self {
-        case .dictionary(let innerDictionary):
-            return innerDictionary.asShapeAttribute()
-        case .string(let value):
-            return .string(value)
-        case .null:
-            return .null
-        }
-    }
-}
-
-/// An enumeration of the possible types of attributes for a shape
-public enum ShapeAttribute: Equatable {
-    case dictionary([String: ShapeAttribute])
-    case string(String)
-    case null
 }

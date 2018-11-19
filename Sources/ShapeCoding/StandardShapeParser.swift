@@ -17,10 +17,10 @@
 
 import Foundation
 
-/// Parses a [String: String] into an ShapeAttribute structure.
+/// Parses a [String: String] into an Shape structure.
 public struct StandardShapeParser {
     let storage = ShapeDecodingStorage()
-    var rootShape: MutableShape?
+    var rootShape: NestedableMutableShape?
     var codingPath: [CodingKey] = []
     
     let decoderOptions: StandardDecodingOptions
@@ -29,13 +29,13 @@ public struct StandardShapeParser {
         self.decoderOptions = decoderOptions
     }
     
-    /// Parses a query into an ShapeAttribute structure.
-    public static func parse(with headers: [(String, String?)], decoderOptions: StandardDecodingOptions) throws -> ShapeAttribute {
+    /// Parses a query into an Shape structure.
+    public static func parse(with headers: [(String, String?)], decoderOptions: StandardDecodingOptions) throws -> Shape {
         
         var parser = StandardShapeParser(decoderOptions: decoderOptions)
         try parser.parse(shapeName: nil, with: headers)
         
-        return parser.rootShape?.asShapeAttribute() ?? .null
+        return parser.rootShape?.asShape() ?? .null
     }
     
     mutating func parse(shapeName: String?, with entries: [(String, String?)]) throws {
@@ -47,13 +47,13 @@ public struct StandardShapeParser {
         if rootShape == nil {
             rootShape = .dictionary(mutableShapeDictionary)
         } else {
-            try addChildMutableShapeAttribute(shapeName: shapeName, mutableShapeAttribute: .dictionary(mutableShapeDictionary))
+            try addChildMutableShape(shapeName: shapeName, mutableShape: .dictionary(mutableShapeDictionary))
         }
         
         // add as the new top shape
         storage.push(shape: .dictionary(mutableShapeDictionary))
         
-        switch decoderOptions.stackKeyDecodingStrategy {
+        switch decoderOptions.shapeKeyDecodingStrategy {
         case .flatStructure, .useShapePrefix:
             try parseWithoutShapeSeparator(with: entries)
         case .useAsShapeSeparator(let separatorCharacter):
@@ -109,14 +109,14 @@ public struct StandardShapeParser {
                     codingPath: codingPath,
                     debugDescription: "Unable to remove percent encoding from value '\(value)'"))
             }
-            try addChildMutableShapeAttribute(shapeName: entry.0, mutableShapeAttribute: .string(removedPercentEncoding))
+            try addChildMutableShape(shapeName: entry.0, mutableShape: .string(removedPercentEncoding))
         } else {
-            try addChildMutableShapeAttribute(shapeName: entry.0, mutableShapeAttribute: .null)
+            try addChildMutableShape(shapeName: entry.0, mutableShape: .null)
         }
     }
     
     /// Add a child value to the shape
-    mutating func addChildMutableShapeAttribute(shapeName: String?, mutableShapeAttribute: MutableShapeAttribute) throws {
+    mutating func addChildMutableShape(shapeName: String?, mutableShape: MutableShape) throws {
         if let topShape = storage.topShape {
             switch topShape {
             case .dictionary(let dictionary):
@@ -127,7 +127,7 @@ public struct StandardShapeParser {
                 }
 
                 // add to the existing dictionary
-                dictionary[fieldName] = mutableShapeAttribute
+                dictionary[fieldName] = mutableShape
             }
         } else {
             throw DecodingError.dataCorrupted(DecodingError.Context(

@@ -17,9 +17,9 @@
 
 import Foundation
 
-/// The strategy to use for decoding stack keys.
+/// The strategy to use for decoding shape keys.
 public enum ShapeKeyDecodingStrategy {
-    /// The decoder will spilt stack keys on the specified character to indicate a
+    /// The decoder will spilt shape keys on the specified character to indicate a
     /// nested structure that could include nested types, dictionaries and arrays. This is the default.
     ///
     /// Array entries are indicated by a 1-based index
@@ -31,14 +31,14 @@ public enum ShapeKeyDecodingStrategy {
     
     case useShapePrefix
     
-    /// The decoder will decode stack keys into the attributes
+    /// The decoder will decode shape keys into the attributes
     /// of the provided type. No nested types, lists or dictionaries are possible.
     case flatStructure
 }
 
 /// The strategy to use for decoding maps.
 public enum ShapeMapDecodingStrategy {
-    /// The decoder will expect a single stack entry for
+    /// The decoder will expect a single shape entry for
     /// each entry of the map. This is the default.
     /// ie. ["theMap.Key": "Value"] --> ShapeOutput(theMap: ["Key": "Value"])
     case singleShapeEntry
@@ -51,12 +51,12 @@ public enum ShapeMapDecodingStrategy {
 
 // Structure that hold the options to use during decoding
 public struct StandardDecodingOptions {
-    public let stackKeyDecodingStrategy: ShapeKeyDecodingStrategy
-    public let stackMapDecodingStrategy: ShapeMapDecodingStrategy
+    public let shapeKeyDecodingStrategy: ShapeKeyDecodingStrategy
+    public let shapeMapDecodingStrategy: ShapeMapDecodingStrategy
     
-    public init(stackKeyDecodingStrategy: ShapeKeyDecodingStrategy,
-                stackMapDecodingStrategy: ShapeMapDecodingStrategy) {
-        self.stackKeyDecodingStrategy = stackKeyDecodingStrategy
-        self.stackMapDecodingStrategy = stackMapDecodingStrategy
+    public init(shapeKeyDecodingStrategy: ShapeKeyDecodingStrategy,
+                shapeMapDecodingStrategy: ShapeMapDecodingStrategy) {
+        self.shapeKeyDecodingStrategy = shapeKeyDecodingStrategy
+        self.shapeMapDecodingStrategy = shapeMapDecodingStrategy
     }
 }
