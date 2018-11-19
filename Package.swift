@@ -13,6 +13,9 @@ let package = Package(
         .library(
             name: "QueryCoder",
             targets: ["QueryCoder"]),
+        .library(
+            name: "ShapeCoding",
+            targets: ["ShapeCoding"]),
     ],
     dependencies: [
         // Dependencies declare other packages that this package depends on.
@@ -29,11 +32,17 @@ let package = Package(
         .target(
             name: "QueryCoder",
             dependencies: ["LoggerAPI"]),
+        .target(
+            name: "ShapeCoding",
+            dependencies: ["LoggerAPI"]),
         .testTarget(
             name: "SmokeHTTPClientTests",
             dependencies: ["SmokeHTTPClient"]),
         .testTarget(
             name: "QueryCoderTests",
             dependencies: ["QueryCoder"]),
+        .testTarget(
+            name: "ShapeCodingTests",
+            dependencies: ["ShapeCoding"]),
     ]
 )
