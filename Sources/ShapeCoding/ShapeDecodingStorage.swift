@@ -19,7 +19,7 @@ import Foundation
 
 /// Helper class to store a stack of the current MutableShape to use when decoding a shape.
 class ShapeDecodingStorage {
-    private(set) internal var shapes: [NestedableMutableShape] = []
+    private(set) internal var shapes: [NestableMutableShape] = []
 
     /// Initializer with no shapes.
     public init() {}
@@ -30,12 +30,12 @@ class ShapeDecodingStorage {
     }
 
     /// Retreive the current top shape
-    public var topShape: NestedableMutableShape? {
+    public var topShape: NestableMutableShape? {
         return self.shapes.last
     }
 
     /// Push a new stack into the stack
-    public func push(shape: NestedableMutableShape) {
+    public func push(shape: NestableMutableShape) {
         self.shapes.append(shape)
     }
 

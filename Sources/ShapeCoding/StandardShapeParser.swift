@@ -20,7 +20,7 @@ import Foundation
 /// Parses a [String: String] into an Shape structure.
 public struct StandardShapeParser {
     let storage = ShapeDecodingStorage()
-    var rootShape: NestedableMutableShape?
+    var rootShape: NestableMutableShape?
     var codingPath: [CodingKey] = []
     
     let decoderOptions: StandardDecodingOptions

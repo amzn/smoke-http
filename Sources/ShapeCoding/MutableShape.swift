@@ -46,7 +46,7 @@ public enum Shape: Equatable {
 }
 
 /// An enumeration of possible types of MutableShapes that can have nested shapes.
-public enum NestedableMutableShape {
+public enum NestableMutableShape {
     case dictionary(MutableShapeDictionary)
     
     /**
