@@ -17,8 +17,10 @@
 import XCTest
 @testable import SmokeHTTPClientTests
 @testable import QueryCoderTests
+@testable import ShapeCodingTests
 
 XCTMain([
+    testCase(StandardShapeParserTests.allTests),
     testCase(SmokeHTTPClientTests.allTests),
     testCase(QueryEncoderTests.allTests),
 ])
