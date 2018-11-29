@@ -17,16 +17,31 @@
 
 import Foundation
 
+/**
+ Errors that can be thrown when encoding a shape.
+ */
 public enum ShapeEncoderError: Error {
     case typeNotShapeCompatible(String)
 }
 
+/**
+ Protocol that elements of a shape must conform to.
+ */
 public protocol ShapeElement {
-    func getShapeElements(_ key: String?, isRoot: Bool, elements: inout [(String, String?)]) throws
+    /**
+     Function that gathers the serialized elements that are either this element or contained within this element.
+ 
+     - Parameters:
+         - key: the key for this element if any.
+         - isRoot: if this element is the root of the type being encoded.
+         - elements: the array to append elements from this element to.
+     */
+    func getSerializedElements(_ key: String?, isRoot: Bool, elements: inout [(String, String?)]) throws
 }
 
+/// Conform String to the `ShapeElement` protocol such that it returns itself as
 extension String: ShapeElement {
-    public func getShapeElements(_ key: String?, isRoot: Bool, elements: inout [(String, String?)]) throws {
+    public func getSerializedElements(_ key: String?, isRoot: Bool, elements: inout [(String, String?)]) throws {
         if let key = key {
             elements.append((key, self))
         } else {
@@ -35,8 +50,14 @@ extension String: ShapeElement {
     }
 }
 
+/**
+ Enumeration of possible values of a container.
+ */
 public enum ContainerValueType {
+    /// A single value that conforms to the `ShapeElement` protocol
     case singleValue(ShapeElement)
+    /// an unkeyed container that has a list of values that conform to the `ShapeElement` protocol
     case unkeyedContainer([ShapeElement])
+    /// a keyed container that has a dictionary of values that conform to the `ShapeElement` protocol
     case keyedContainer([String: ShapeElement])
 }

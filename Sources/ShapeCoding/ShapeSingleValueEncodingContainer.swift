@@ -177,8 +177,8 @@ public class ShapeSingleValueEncodingContainer: SingleValueEncodingContainer {
 }
 
 extension ShapeSingleValueEncodingContainer: ShapeElement {
-    public func getShapeElements(_ key: String?, isRoot: Bool, elements: inout [(String, String?)]) throws {
-        try delegate.shapeElementsForEncodingContainer(
+    public func getSerializedElements(_ key: String?, isRoot: Bool, elements: inout [(String, String?)]) throws {
+        try delegate.serializedElementsForEncodingContainer(
             containerValue: containerValue,
             key: key,
             isRoot: isRoot,

@@ -23,7 +23,7 @@ import Foundation
  */
 public protocol ShapeSingleValueEncodingContainerDelegate {
     /**
-     Function that provides the shape elements for an encoding container.
+     Function that gathers the serialized elements for an encoding container.
  
      - Parameters:
          - containerValue: the value of the container if any
@@ -31,7 +31,7 @@ public protocol ShapeSingleValueEncodingContainerDelegate {
          - isRoot: if this container is the root of the type being encoded.
          - elements: the array to append elements from this container to.
      */
-    func shapeElementsForEncodingContainer(
+    func serializedElementsForEncodingContainer(
         containerValue: ContainerValueType?,
         key: String?,
         isRoot: Bool,
