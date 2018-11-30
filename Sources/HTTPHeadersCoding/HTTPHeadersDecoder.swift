@@ -53,6 +53,10 @@ public struct HTTPHeadersDecoder {
     
     /**
      Initializer.
+     
+     - Parameters:
+        - keyDecodingStrategy: the `KeyDecodingStrategy` to use for decoding.
+        - mapDecodingStrategy: the `MapDecodingStrategy` to use for decoding.
      */
     public init(userInfo: [CodingUserInfoKey: Any] = [:],
                 keyDecodingStrategy: KeyDecodingStrategy = .useAsShapeSeparator("-"),
@@ -69,7 +73,7 @@ public struct HTTPHeadersDecoder {
  
      - Parameters:
         - type: The type of the value to decode.
-        - data: The data to decode from.
+        - headers: The headers to decode.
      - returns: A value of the requested type.
      - throws: `DecodingError.dataCorrupted` if values requested from the payload are corrupted.
      - throws: An error if any value throws an error during decoding.

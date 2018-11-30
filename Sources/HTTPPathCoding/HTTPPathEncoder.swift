@@ -32,6 +32,13 @@ public class HTTPPathEncoder {
     
     public typealias KeyEncodingStrategy = ShapeKeyEncodingStrategy
 
+    /**
+     Initializer.
+     
+     - Parameters:
+        - keyEncodingStrategy: the `KeyEncodingStrategy` to use for encoding.
+                               By default uses `.useAsShapeSeparator(".")`.
+     */
     public init(keyEncodingStrategy: KeyEncodingStrategy = .useAsShapeSeparator(".")) {
         self.options = StandardEncodingOptions(shapeKeyEncodingStrategy: keyEncodingStrategy,
                                                shapeMapEncodingStrategy: .singleShapeEntry)

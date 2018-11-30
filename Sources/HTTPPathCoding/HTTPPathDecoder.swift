@@ -35,6 +35,9 @@ public struct HTTPPathDecoder {
     
     /**
      Initializer.
+     
+     - Parameters:
+        - keyDecodingStrategy: the `KeyDecodingStrategy` to use for decoding.
      */
     public init(userInfo: [CodingUserInfoKey: Any] = [:],
                 keyDecodingStrategy: KeyDecodingStrategy = .useAsShapeSeparator(".")) {
@@ -49,7 +52,8 @@ public struct HTTPPathDecoder {
  
      - Parameters:
         - type: The type of the value to decode.
-        - data: The data to decode from.
+        - path: The HTTP path to decode.
+        - withTemplate: The path template to use to decode the path from.
      - returns: A value of the requested type.
      - throws: `DecodingError.dataCorrupted` if values requested from the payload are corrupted, or
                 if the given string is not a valid HTTP path.

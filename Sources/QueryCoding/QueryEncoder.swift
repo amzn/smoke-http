@@ -55,12 +55,15 @@ public class QueryEncoder {
             }
         }
     }
-
+    
     /**
      Initializer.
- 
-     By default will use a `KeyEncodingStrategy` of `.useAsShapeSeparator(".")` and
-     a `MapEncodingStrategy` of `.singleQueryEntry`.
+     
+     - Parameters:
+        - keyEncodingStrategy: the `KeyEncodingStrategy` to use for encoding.
+                               By default uses `.useAsShapeSeparator(".")`.
+        - mapEncodingStrategy: the `MapEncodingStrategy` to use for encoding.
+                               By default uses `.singleQueryEntry`.
      */
     public init(keyEncodingStrategy: KeyEncodingStrategy = .useAsShapeSeparator("."),
                 mapEncodingStrategy: MapEncodingStrategy = .singleQueryEntry) {

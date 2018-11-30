@@ -58,6 +58,15 @@ public class HTTPHeadersEncoder {
         }
     }
 
+    /**
+     Initializer.
+     
+     - Parameters:
+        - keyEncodingStrategy: the `KeyEncodingStrategy` to use for encoding.
+                               By default uses `.useAsShapeSeparator("-")`.
+        - mapEncodingStrategy: the `MapEncodingStrategy` to use for encoding.
+                               By default uses `.singleHeader`.
+     */
     public init(keyEncodingStrategy: KeyEncodingStrategy = .useAsShapeSeparator("-"),
                 mapEncodingStrategy: MapEncodingStrategy = .singleHeader) {
         self.options = StandardEncodingOptions(shapeKeyEncodingStrategy: keyEncodingStrategy,
