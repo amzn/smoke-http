@@ -11,8 +11,14 @@ let package = Package(
             name: "SmokeHTTPClient",
             targets: ["SmokeHTTPClient"]),
         .library(
-            name: "QueryCoder",
-            targets: ["QueryCoder"]),
+            name: "QueryCoding",
+            targets: ["QueryCoding"]),
+        .library(
+            name: "HTTPHeadersCoding",
+            targets: ["HTTPHeadersCoding"]),
+        .library(
+            name: "HTTPPathCoding",
+            targets: ["HTTPPathCoding"]),
         .library(
             name: "ShapeCoding",
             targets: ["ShapeCoding"]),
@@ -30,8 +36,14 @@ let package = Package(
             name: "SmokeHTTPClient",
             dependencies: ["LoggerAPI", "NIO", "NIOHTTP1", "NIOOpenSSL"]),
         .target(
-            name: "QueryCoder",
-            dependencies: ["LoggerAPI"]),
+            name: "QueryCoding",
+            dependencies: ["ShapeCoding"]),
+        .target(
+            name: "HTTPHeadersCoding",
+            dependencies: ["ShapeCoding"]),
+        .target(
+            name: "HTTPPathCoding",
+            dependencies: ["ShapeCoding"]),
         .target(
             name: "ShapeCoding",
             dependencies: ["LoggerAPI"]),
@@ -39,10 +51,16 @@ let package = Package(
             name: "SmokeHTTPClientTests",
             dependencies: ["SmokeHTTPClient"]),
         .testTarget(
-            name: "QueryCoderTests",
-            dependencies: ["QueryCoder"]),
-        .testTarget(
             name: "ShapeCodingTests",
             dependencies: ["ShapeCoding"]),
+        .testTarget(
+            name: "QueryCodingTests",
+            dependencies: ["QueryCoding"]),
+        .testTarget(
+            name: "HTTPHeadersCodingTests",
+            dependencies: ["HTTPHeadersCoding"]),
+        .testTarget(
+            name: "HTTPPathCodingTests",
+            dependencies: ["HTTPPathCoding"]),
     ]
 )

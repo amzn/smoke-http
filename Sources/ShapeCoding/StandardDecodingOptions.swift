@@ -61,7 +61,8 @@ public enum ShapeMapDecodingStrategy {
     case separateShapeEntriesWith(keyTag: String, valueTag: String)
 }
 
-// Structure that hold the options to use during decoding
+/// The standard decoding options to use in conjunction with
+/// StandardShapeDecoderDelegate.
 public struct StandardDecodingOptions {
     public let shapeKeyDecodingStrategy: ShapeKeyDecodingStrategy
     public let shapeMapDecodingStrategy: ShapeMapDecodingStrategy
