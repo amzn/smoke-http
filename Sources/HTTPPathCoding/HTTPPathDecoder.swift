@@ -12,7 +12,7 @@
 // permissions and limitations under the License.
 //
 //  HTTPPathDecoder.swift
-//  QueryCoder
+//  HTTPPathCoding
 //
 
 import Foundation
@@ -23,7 +23,7 @@ public enum HTTPPathDecoderErrors: Error {
 }
 
 /**
- Decode query strings into Swift types.
+ Decode HTTP path strings into Swift types.
  */
 public struct HTTPPathDecoder {
     private let options: StandardDecodingOptions
@@ -31,9 +31,7 @@ public struct HTTPPathDecoder {
     
     public typealias KeyDecodingStrategy = ShapeKeyDecodingStrategy
     
-    let queryPrefix: Character = "?"
-    let valuesSeparator: Character = "&"
-    let equalsSeparator: Character = "="
+    let segmentsSeparator: Character = "/"
     
     /**
      Initializer.
@@ -46,7 +44,7 @@ public struct HTTPPathDecoder {
     }
     
     /**
-     Decodes a string that represents an query string into an
+     Decodes a string that represents a HTTP path into an
      instance of the specified type.
  
      - Parameters:
@@ -54,12 +52,12 @@ public struct HTTPPathDecoder {
         - data: The data to decode from.
      - returns: A value of the requested type.
      - throws: `DecodingError.dataCorrupted` if values requested from the payload are corrupted, or
-                if the given string is not a valid query.
+                if the given string is not a valid HTTP path.
      - throws: An error if any value throws an error during decoding.
      */
     public func decode<T: Decodable>(_ type: T.Type, from path: String,
                                      withTemplate template: String) throws -> T {
-        var remainingPathSegments = Array(path.split(separator: "/")
+        var remainingPathSegments = Array(path.split(separator: segmentsSeparator)
             .map(String.init).reversed())
         var remainingTemplateSegments =
             try Array(HTTPPathSegment.tokenize(template: template).reversed())

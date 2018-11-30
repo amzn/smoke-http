@@ -66,17 +66,17 @@ ShapeSingleValueEncodingContainerDelegate {
 
                 // if this isn't the root and using the separateShapeEntriesWith strategy
                 if !isRoot, case let .separateShapeEntriesWith(keyTag: keyTag, valueTag: valueTag) = options.shapeMapEncodingStrategy {
-                    let keyQueryElementKey: String
+                    let keyElementKey: String
                     if let baseKey = key {
-                        keyQueryElementKey = "\(baseKey)\(separatorString)\(index + 1)\(separatorString)\(keyTag)"
+                        keyElementKey = "\(baseKey)\(separatorString)\(index + 1)\(separatorString)\(keyTag)"
                         keyToUse = "\(baseKey)\(separatorString)\(index + 1)\(separatorString)\(valueTag)"
                     } else {
-                        keyQueryElementKey = "\(index + 1)\(separatorString)\(keyTag)"
+                        keyElementKey = "\(index + 1)\(separatorString)\(keyTag)"
                         keyToUse = "\(index + 1)\(separatorString)\(valueTag)"
                     }
 
                     // add an element for the key
-                    elements.append((keyQueryElementKey, innerKey))
+                    elements.append((keyElementKey, innerKey))
                 } else {
                     if let baseKey = key {
                         keyToUse = "\(baseKey)\(separatorString)\(innerKey)"

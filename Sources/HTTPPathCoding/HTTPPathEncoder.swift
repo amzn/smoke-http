@@ -19,16 +19,14 @@ import Foundation
 import ShapeCoding
 
 ///
-/// Encode Swift types into query strings.
+/// Encode Swift types into HTTP paths.
 ///
-/// Nested types, arrays and dictionaries are serialized into query keys using a '.' notation.
+/// Nested types, arrays and dictionaries are serialized into path tokens using a '.' notation.
 /// Array entries are indicated by a 1-based index
-/// ie. QueryOutput(theArray: ["Value1", "Value2"]) --> ?theArray.1=Value1&theArray.2=Value2
+/// ie. PathInput(theArray: ["Value1", "Value2"]) --> \base\{theArray.1}\{theArray.2}--> \base\Value1\Value2
 /// Nested type attributes are indicated by the attribute keys
-/// ie. QueryOutput(theType: TheType(foo: "Value1", bar: "Value2")) --> ?theType.foo=Value1&theType.bar=Value2
+/// ie. PathInput(theType: TheType(foo: "Value1", bar: "Value2")) --> \base\{theType.1}\{theType.2}--> \base\Value1\Value2
 /// Dictionary entries are indicated based on the provided `MapEncodingStrategy`
-///
-/// This matches the default query key decoding strategy QueryDecoder.queryKeyDecodingStrategy.useDotAsContainerSeparator`.
 public class HTTPPathEncoder {
     internal let options: StandardEncodingOptions
     
@@ -44,8 +42,7 @@ public class HTTPPathEncoder {
 
      - Parameters:
         - value: The value to be encoded
-        - allowedCharacterSet: The allowed character set for query values. If nil,
-          all characters are allowed.
+        - withTemplate: The path template to use to encode the value into.
         - userInfo: The user info to use for this encoding.
      */
     public func encode<T: Swift.Encodable>(_ value: T,

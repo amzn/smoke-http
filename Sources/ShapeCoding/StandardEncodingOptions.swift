@@ -27,9 +27,11 @@ public enum ShapeKeyEncodingStrategy {
     /// Nested type attributes are indicated by the attribute keys
     /// ie. ShapeOutput(theType: TheType(foo: "Value1", bar: "Value2")) ?theType.foo=Value1&theType.bar=Value2
     /// Dictionary entries are indicated based on the provided `ShapeMapEncodingStrategy`
+    /// Matches the decoding strategy `ShapeKeyDecodingStrategy.useAsShapeSeparator`.
     case useAsShapeSeparator(Character)
     
     /// The encoder will concatinate attribute keys with no separator.
+    /// Matches the decoding strategy `ShapeKeyDecodingStrategy.useShapePrefix`.
     case noSeparator
     
     /// Get the separator string to use for this strategy

@@ -23,12 +23,10 @@ import ShapeCoding
 ///
 /// Nested types, arrays and dictionaries are serialized into query keys the `QueryKeyEncodingStrategy`.
 /// Array entries are indicated by a 1-based index
-/// ie. QueryOutput(theArray: ["Value1", "Value2"]) --> ?theArray.1=Value1&theArray.2=Value2
+/// ie. QueryInput(theArray: ["Value1", "Value2"]) --> ?theArray.1=Value1&theArray.2=Value2
 /// Nested type attributes are indicated by the attribute keys
-/// ie. QueryOutput(theType: TheType(foo: "Value1", bar: "Value2")) --> ?theType.foo=Value1&theType.bar=Value2
+/// ie. QueryInput(theType: TheType(foo: "Value1", bar: "Value2")) --> ?theType.foo=Value1&theType.bar=Value2
 /// Dictionary entries are indicated based on the provided `MapEncodingStrategy`
-///
-/// This matches the default query key decoding strategy QueryDecoder.queryKeyDecodingStrategy.useDotAsContainerSeparator`.
 public class QueryEncoder {
     public typealias KeyEncodingStrategy = ShapeKeyEncodingStrategy
 
@@ -38,12 +36,14 @@ public class QueryEncoder {
     public enum MapEncodingStrategy {
         /// The output will contain a single header for
         /// each entry of the map. This is the default.
-        /// ie. StackOutput(theMap: ["Key": "Value"]) --> ?theMap.Key=Value
+        /// ie. QueryInput(theMap: ["Key": "Value"]) --> ?theMap.Key=Value
+        /// Matches the decoding strategy `QueryDecoder.MapEncodingStrategy.singleQueryEntry`.
         case singleQueryEntry
 
         /// The output will contain separate headers for the key and value
         /// of each entry of the map, specified as a list.
-        /// ie. StackOutput(theMap: ["Key": "Value"]) --> ?theMap.1.KeyTag=Key&theMap.1.ValueTag=Value
+        /// ie. QueryInput(theMap: ["Key": "Value"]) --> ?theMap.1.KeyTag=Key&theMap.1.ValueTag=Value
+        /// Matches the decoding strategy `QueryDecoder.MapEncodingStrategy.separateQueryEntriesWith`.
         case separateQueryEntriesWith(keyTag: String, valueTag: String)
         
         var shapeMapEncodingStrategy: ShapeMapEncodingStrategy {
@@ -56,6 +56,12 @@ public class QueryEncoder {
         }
     }
 
+    /**
+     Initializer.
+ 
+     By default will use a `KeyEncodingStrategy` of `.useAsShapeSeparator(".")` and
+     a `MapEncodingStrategy` of `.singleQueryEntry`.
+     */
     public init(keyEncodingStrategy: KeyEncodingStrategy = .useAsShapeSeparator("."),
                 mapEncodingStrategy: MapEncodingStrategy = .singleQueryEntry) {
         self.options = StandardEncodingOptions(shapeKeyEncodingStrategy: keyEncodingStrategy,

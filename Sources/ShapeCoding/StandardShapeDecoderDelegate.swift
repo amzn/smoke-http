@@ -239,7 +239,7 @@ public struct StandardShapeDecoderDelegate: ShapeDecoderDelegate {
             }
             
             // get the key value
-            guard let keyQueryValue = innerValues[keyTag] else {
+            guard let keyValueShape = innerValues[keyTag] else {
                 let debugDescription = "No value associated with key '\(keyTag)'."
                 let decodingContext = DecodingError.Context(codingPath: codingPath + [indexCodingKey],
                                                             debugDescription: debugDescription)
@@ -247,7 +247,7 @@ public struct StandardShapeDecoderDelegate: ShapeDecoderDelegate {
             }
             
             // the key should be a string
-            guard case let .string(keyValue) = keyQueryValue else {
+            guard case let .string(keyValue) = keyValueShape else {
                 let debugDescription = "Dictionary key value with key '\(valueKey)' is not a string."
                 let decodingContext = DecodingError.Context(codingPath: codingPath + [indexCodingKey],
                                                             debugDescription: debugDescription)

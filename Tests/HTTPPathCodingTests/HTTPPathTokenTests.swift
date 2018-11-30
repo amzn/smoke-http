@@ -12,7 +12,7 @@
 // permissions and limitations under the License.
 //
 //  HTTPPathTokenTests.swift
-//  QueryCodingTests
+//  HTTPPathCodingTests
 //
 
 import XCTest

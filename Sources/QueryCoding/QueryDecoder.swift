@@ -32,11 +32,13 @@ public struct QueryDecoder {
         /// The decoder will expect a query entry for
         /// each entry of the map. This is the default.
         /// ie. ?theMap.Key=Value --> StackOutput(theMap: ["Key": "Value"])
+        /// Matches the encoding strategy `QueryEncoder.MapDecodingStrategy.singleQueryEntry`.
         case singleQueryEntry
 
         /// The decoder will expect separate query entries for the key and value
         /// of each entry of the map, specified as a list.
         /// ie. ?theMap.1.KeyTag=Key&theMap.1.ValueTag=Value -> StackOutput(theMap: ["Key": "Value"])
+        /// Matches the encoding strategy `QueryEncoder.MapDecodingStrategy.separateQueryEntriesWith`.
         case separateQueryEntriesWith(keyTag: String, valueTag: String)
         
         var shapeMapDecodingStrategy: ShapeMapDecodingStrategy {

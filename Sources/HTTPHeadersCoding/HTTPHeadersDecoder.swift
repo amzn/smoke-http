@@ -32,11 +32,13 @@ public struct HTTPHeadersDecoder {
         /// The decoder will expect a header for
         /// each entry of the map. This is the default.
         /// ie. ["theMap.Key": "Value"] --> StackOutput(theMap: ["Key": "Value"])
+        /// Matches the encoding strategy `HTTPHeadersEncoder.MapDecodingStrategy.singleHeader`.
         case singleHeader
 
         /// The decoder will expect separate headers for the key and value
         /// of each entry of the map, specified as a list.
         /// ie. ["theMap.1.KeyTag": "Key", "theMap.1.ValueTag": "Value"] -> StackOutput(theMap: ["Key": "Value"])
+        /// Matches the encoding strategy `HTTPHeadersEncoder.MapDecodingStrategy.separateHeadersWith`.
         case separateHeadersWith(keyTag: String, valueTag: String)
         
         var shapeMapDecodingStrategy: ShapeMapDecodingStrategy {
@@ -62,15 +64,14 @@ public struct HTTPHeadersDecoder {
     }
     
     /**
-     Decodes a string that represents an query string into an
+     Decodes an array that represents a set of HTTP Headers into an
      instance of the specified type.
  
      - Parameters:
         - type: The type of the value to decode.
         - data: The data to decode from.
      - returns: A value of the requested type.
-     - throws: `DecodingError.dataCorrupted` if values requested from the payload are corrupted, or
-                if the given string is not a valid query.
+     - throws: `DecodingError.dataCorrupted` if values requested from the payload are corrupted.
      - throws: An error if any value throws an error during decoding.
      */
     public func decode<T: Decodable>(_ type: T.Type, from headers: [(String, String?)]) throws -> T {

@@ -24,11 +24,11 @@ import ShapeCoding
 /// Nested types, arrays and dictionaries are serialized into header keys using
 /// key concatination
 /// Array entries are indicated by a 1-based index
-/// ie. HeadersOutput(theArray: ["Value1", "Value2"]) --> ["theArray1": "Value1", "theArray2": "Value2"]
+/// ie. HeadersInput(theArray: ["Value1", "Value2"]) --> ["theArray1": "Value1", "theArray2": "Value2"]
 /// Dictionary entries are indicated by the attribute keys
-/// ie. HeadersOutput(theMap: [foo: "Value1", bar: "Value2"]) --> ["theMapfoo": "Value1", "theMapbar": "Value2"]
+/// ie. HeadersInput(theMap: [foo: "Value1", bar: "Value2"]) --> ["theMapfoo": "Value1", "theMapbar": "Value2"]
 /// Nested type attributes are indicated by the attribute keys
-/// ie. HeadersOutput(theType: TheType(foo: "Value1", bar: "Value2")) --> ["theArrayfoo": "Value1", "theArraybar": "Value2"]
+/// ie. HeadersInput(theType: TheType(foo: "Value1", bar: "Value2")) --> ["theArrayfoo": "Value1", "theArraybar": "Value2"]
 public class HTTPHeadersEncoder {
     public typealias KeyEncodingStrategy = ShapeKeyEncodingStrategy
 
@@ -38,12 +38,14 @@ public class HTTPHeadersEncoder {
     public enum MapEncodingStrategy {
         /// The output will contain a single header for
         /// each entry of the map. This is the default.
-        /// ie. StackOutput(theMap: ["Key": "Value"]) --> ["theMap.Key": "Value"]
+        /// ie. HeadersInput(theMap: ["Key": "Value"]) --> ["theMap.Key": "Value"]
+        /// Matches the decoding strategy `HTTPHeadersDecoder.MapEncodingStrategy.singleHeader`.
         case singleHeader
 
         /// The output will contain separate headers for the key and value
         /// of each entry of the map, specified as a list.
-        /// ie. StackOutput(theMap: ["Key": "Value"]) --> ["theMap.1.KeyTag": "Key", "theMap.1.ValueTag": "Value"]
+        /// ie. HeadersInput(theMap: ["Key": "Value"]) --> ["theMap.1.KeyTag": "Key", "theMap.1.ValueTag": "Value"]
+        /// Matches the decoding strategy `HTTPHeadersDecoder.MapEncodingStrategy.separateHeadersWith`.
         case separateHeadersWith(keyTag: String, valueTag: String)
         
         var shapeMapEncodingStrategy: ShapeMapEncodingStrategy {
@@ -86,7 +88,7 @@ public class HTTPHeadersEncoder {
         var elements: [(String, String?)] = []
         try container.getSerializedElements(nil, isRoot: true, elements: &elements)
         
-        // The query elements need to be sorted into canonical form
+        // The headers need to be sorted into canonical form
         let sortedElements = elements.sorted { (left, right) in left.0.lowercased() < right.0.lowercased() }
 
         return sortedElements
