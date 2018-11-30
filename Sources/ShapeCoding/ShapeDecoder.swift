@@ -30,8 +30,8 @@ public class ShapeDecoder: Decoder {
      Initializer.
      */
     public init(decoderValue: Shape?, isRoot: Bool, at codingPath: [CodingKey] = [],
-                  userInfo: [CodingUserInfoKey: Any],
-                  delegate: ShapeDecoderDelegate) {
+                userInfo: [CodingUserInfoKey: Any],
+                delegate: ShapeDecoderDelegate) {
         self.decoderValue = decoderValue
         self.codingPath = codingPath
         self.userInfo = userInfo

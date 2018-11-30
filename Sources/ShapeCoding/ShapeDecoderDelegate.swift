@@ -96,6 +96,6 @@ public protocol ShapeDecoderDelegate {
                         Shape is being retrieved for.
      - Returns: Shape for the specified key or nil if there is no such Shape.
      */
-    func getNestedShape(parentContainer: [String : Shape],
+    func getNestedShape(parentContainer: [String: Shape],
                         containerKey: CodingKey) throws -> Shape?
 }
