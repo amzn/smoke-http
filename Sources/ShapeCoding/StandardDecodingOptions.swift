@@ -27,6 +27,7 @@ public enum ShapeKeyDecodingStrategy {
     /// Nested type attributes are indicated by the attribute keys
     /// ie. ["theArray.foo": "Value1", "theArray.bar": "Value2] --> ShapeOutput(theType: TheType(foo: "Value1", bar: "Value2"))
     /// Dictionary entries are indicated based on the provided `ShapeMapDecodingStrategy`
+    /// Matches the encoding strategy `ShapeKeyDecodingStrategy.useAsShapeSeparator`.
     case useAsShapeSeparator(Character)
     
     /// The decoder will spilt the shape keys on the expected name of an attribute to indicate a
@@ -41,6 +42,7 @@ public enum ShapeKeyDecodingStrategy {
     /// ie. ["theMapfoo": "Value1", "theMapbar": "Value2] --> ShapeOutput(theMap: [foo: "Value1", bar: "Value2"])
     /// The above transformation is possible with this strategy. This strategy cannot be used if the map's attributes
     /// contains nested attributes. In these scenarios, a specific shape separator will need to be used.
+    /// Matches the encoding strategy `ShapeKeyDecodingStrategy.noSeparator`.
     case useShapePrefix
     
     /// The decoder will decode shape keys into the attributes
@@ -61,7 +63,8 @@ public enum ShapeMapDecodingStrategy {
     case separateShapeEntriesWith(keyTag: String, valueTag: String)
 }
 
-// Structure that hold the options to use during decoding
+/// The standard decoding options to use in conjunction with
+/// StandardShapeDecoderDelegate.
 public struct StandardDecodingOptions {
     public let shapeKeyDecodingStrategy: ShapeKeyDecodingStrategy
     public let shapeMapDecodingStrategy: ShapeMapDecodingStrategy

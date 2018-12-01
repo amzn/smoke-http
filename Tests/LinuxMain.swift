@@ -16,11 +16,17 @@
 
 import XCTest
 @testable import SmokeHTTPClientTests
-@testable import QueryCoderTests
+@testable import QueryCodingTests
+@testable import HTTPHeadersCodingTests
+@testable import HTTPPathCodingTests
 @testable import ShapeCodingTests
 
 XCTMain([
     testCase(StandardShapeParserTests.allTests),
     testCase(SmokeHTTPClientTests.allTests),
     testCase(QueryEncoderTests.allTests),
+    testCase(HTTPHeadersEncoderTests.allTests),
+    testCase(HTTPPathEncoderTests.allTests),
+    testCase(HTTPPathTokenTests.allTests),
+    testCase(HTTPPathSegmentTests.allTests),
 ])

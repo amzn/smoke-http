@@ -11,30 +11,55 @@
 // express or implied. See the License for the specific language governing
 // permissions and limitations under the License.
 //
-//  QueryCoderTestInput.swift
-//  QueryCoderTests
+//  HTTPHeadersCodingTestInput.swift
+//  HTTPHeadersCodingTests
 //
 
 import Foundation
-@testable import QueryCoder
+@testable import HTTPHeadersCoding
 
-struct TestTypeA: Codable {
+struct TestTypeA: Codable, Equatable {
     let firstly: String
     let secondly: String
     let thirdly: String
 }
 
-struct TestTypeB: Codable {
+struct TestTypeB: Codable, Equatable {
     let action: String
     let ids: [String]
 }
 
-struct TestTypeC: Codable {
+struct TestTypeC: Codable, Equatable {
     let action: String
     let map: [String: String]
 }
 
-struct TestTypeD: Codable {
+struct TestTypeD1: Codable, Equatable {
     let action: String
     let ids: [TestTypeA]
+}
+
+struct TestTypeD2: Codable, Equatable {
+    let action: String
+    let id: TestTypeA
+}
+
+struct TestTypeG: Codable, Equatable {
+    let id: String
+    let optionalString: String?
+    let data: Data?
+    let date: Date?
+    let bool: Bool?
+    let int: Int?
+    let double: Double?
+
+    enum CodingKeys: String, CodingKey {
+        case id = "Id"
+        case optionalString = "OptionalString"
+        case data = "Data"
+        case date = "Date"
+        case bool = "Bool"
+        case int = "Int"
+        case double = "Double"
+    }
 }

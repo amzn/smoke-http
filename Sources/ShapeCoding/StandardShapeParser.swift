@@ -29,11 +29,11 @@ public struct StandardShapeParser {
         self.decoderOptions = decoderOptions
     }
     
-    /// Parses a query into an Shape structure.
-    public static func parse(with headers: [(String, String?)], decoderOptions: StandardDecodingOptions) throws -> Shape {
+    /// Parses an array of entries into an Shape structure.
+    public static func parse(with entries: [(String, String?)], decoderOptions: StandardDecodingOptions) throws -> Shape {
         
         var parser = StandardShapeParser(decoderOptions: decoderOptions)
-        try parser.parse(shapeName: nil, with: headers)
+        try parser.parse(shapeName: nil, with: entries)
         
         return parser.rootShape?.asShape() ?? .null
     }
