@@ -5,7 +5,7 @@ matrix:
       dist: xenial
       sudo: required
       ervices: docker
-      env: $DOCKER_IMAGE_TAG=ubuntu:18.04 $SWIFT_PLATFORM=ubuntu18.04 $SWIFT_BRANCH=swift-4.2.1-release $SWIFT_VERSION=swift-4.2.1-RELEASE
+      env: $DOCKER_IMAGE_TAG=ubuntu:16.04 $SWIFT_PLATFORM=ubuntu16.04 $SWIFT_BRANCH=swift-4.2.1-release $SWIFT_VERSION=swift-4.2.1-RELEASE
     - os: linux
       dist: xenial
       sudo: required
