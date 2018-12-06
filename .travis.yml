@@ -5,20 +5,15 @@ matrix:
       dist: xenial
       sudo: required
       ervices: docker
-      env: $DOCKER_IMAGE_TAG=ubuntu:16.04 $SWIFT_PLATFORM=ubuntu16.04 $SWIFT_BRANCH=swift-4.2.1-release $SWIFT_VERSION=swift-4.2.1-RELEASE
+      env: DOCKER_IMAGE_TAG=swift:4.2.1 USE_SWIFT_LINT=yes
     - os: linux
       dist: xenial
       sudo: required
       ervices: docker
-      env: $DOCKER_IMAGE_TAG=ubuntu:16.04 $SWIFT_PLATFORM=ubuntu16.04 $SWIFT_BRANCH=swift-4.1.3-release $SWIFT_VERSION=swift-4.1.3-RELEASE
-    - os: linux
-      dist: xenial
-      sudo: required
-      ervices: docker
-      env: $DOCKER_IMAGE_TAG=ubuntu:16.04 $SWIFT_PLATFORM=ubuntu16.04 $SWIFT_BRANCH=swift-4.0.3-release $SWIFT_VERSION=swift-4.0.3-RELEASE
+      env: DOCKER_IMAGE_TAG=swift:4.1.3 USE_SWIFT_LINT=no
 
 before_install:
   - docker pull $DOCKER_IMAGE_TAG
 
 script:
-  - docker run -v ${TRAVIS_BUILD_DIR}:/build ${DOCKER_IMAGE_TAG} /bin/bash -c "/build/CITests/run"
+  - docker run -v ${TRAVIS_BUILD_DIR}:/package ${DOCKER_IMAGE_TAG} /bin/bash -c "/package/CITests/run $USE_SWIFT_LINT"
