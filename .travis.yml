@@ -21,4 +21,4 @@ before_install:
   - docker pull $DOCKER_IMAGE_TAG
 
 script:
-  - docker run -v ${$TRAVIS_BUILD_DIR}:${$TRAVIS_BUILD_DIR} ${DOCKER_IMAGE_TAG} /bin/bash -c "./CITests/run"
+  - docker run -v ${TRAVIS_BUILD_DIR}:${TRAVIS_BUILD_DIR} ${DOCKER_IMAGE_TAG} /bin/bash -c "./CITests/run"
