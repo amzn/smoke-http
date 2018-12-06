@@ -38,6 +38,7 @@ public enum HTTPPathToken {
         var inVariable = false
         var tokens: [HTTPPathToken] = []
         
+        var hasGreedyToken = false
         repeat {
             let nextSplit = inVariable ? endCharacter : startCharacter
             let components = remainingTemplate.split(separator: nextSplit, maxSplits: 1,
@@ -48,16 +49,17 @@ public enum HTTPPathToken {
             
             if !thisToken.isEmpty {
                 if inVariable {
+                    // can only have greedy tokens at the end
+                    if hasGreedyToken {
+                        throw HTTPPathErrors.hasInvalidMultiSegmentTokens
+                    }
+                    
                     let tokenName: String
                     let multiSegment: Bool
                     if let last = thisToken.last, last == "+" {
                         tokenName = String(thisToken.dropLast())
                         multiSegment = true
-                        
-                        // can only have multi-segment tokens at the end
-                        if !futureTokens.isEmpty {
-                            throw HTTPPathErrors.hasInvalidMultiSegmentTokens
-                        }
+                        hasGreedyToken = true
                     } else {
                         tokenName = String(thisToken)
                         multiSegment = false
