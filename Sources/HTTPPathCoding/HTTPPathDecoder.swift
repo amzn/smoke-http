@@ -19,7 +19,7 @@ import Foundation
 import ShapeCoding
 
 public enum HTTPPathDecoderErrors: Error {
-    case pathDoesNotMatchTemplate
+    case pathDoesNotMatchTemplate(String)
 }
 
 /**
@@ -70,13 +70,14 @@ public struct HTTPPathDecoder {
         // iterate through the path elements
         while let templateSegment = remainingTemplateSegments.popLast() {
             guard let pathSegment = remainingPathSegments.popLast() else {
-                throw HTTPPathDecoderErrors.pathDoesNotMatchTemplate
+                throw HTTPPathDecoderErrors.pathDoesNotMatchTemplate("Insufficent segments in path compared with template.")
             }
             
             try parsePathSegment(templateSegment: templateSegment,
-                             pathSegment: pathSegment,
-                             variables: &variables,
-                             remainingPathSegments: remainingPathSegments)
+                                 pathSegment: pathSegment,
+                                 variables: &variables,
+                                 remainingPathSegments: remainingPathSegments,
+                                 isLastSegment: remainingTemplateSegments.isEmpty)
         }
 
         let stackValue = try StandardShapeParser.parse(with: variables, decoderOptions: options)
@@ -95,43 +96,72 @@ public struct HTTPPathDecoder {
         return value
     }
     
+    fileprivate func getVariableValue(rawVariableValue: String, remainingPathSegments: [String],
+                                      isGreedyToken: Bool, isLastSegment: Bool) throws -> String {
+        let variableValue: String
+        if remainingPathSegments.isEmpty {
+            variableValue = rawVariableValue
+            // If this isn't a greedy token
+        } else if !isGreedyToken {
+            // There are remaining path segments but not a greedy token
+            // and this is the last segment
+            if isLastSegment {
+                throw HTTPPathDecoderErrors.pathDoesNotMatchTemplate("Too many segments in path compared with template.")
+            }
+            
+            variableValue = rawVariableValue
+        } else {
+            variableValue = rawVariableValue + "/" + remainingPathSegments.joined(separator: "/")
+        }
+        
+        return variableValue
+    }
+    
     func parsePathSegment(templateSegment: HTTPPathSegment,
                           pathSegment: String,
                           variables: inout [(String, String?)],
-                          remainingPathSegments: [String]) throws {
+                          remainingPathSegments: [String],
+                          isLastSegment: Bool) throws {
         var remaingPathSegment = pathSegment
         var currentVariableKey: String?
+        var isGreedyToken = false
         
         try templateSegment.tokens.forEach { token in
             switch token {
             case .string(let value):
                 // if there was a variable before this
                 if let variableKey = currentVariableKey {
+                    let currentRemainingPathSegment = try getVariableValue(rawVariableValue: remaingPathSegment,
+                                                                           remainingPathSegments: remainingPathSegments,
+                                                                           isGreedyToken: isGreedyToken, isLastSegment: isLastSegment)
                     // the remaining path segment must have the value somewhere
-                    guard let index = remaingPathSegment.range(of: value)?.lowerBound else {
-                        throw HTTPPathDecoderErrors.pathDoesNotMatchTemplate
+                    guard let index = currentRemainingPathSegment.range(of: value)?.lowerBound else {
+                        throw HTTPPathDecoderErrors.pathDoesNotMatchTemplate("Path does not have '\(value)' from template.")
                     }
                     
-                    let variableValue = String(remaingPathSegment[..<index])
+                    let variableValue = String(currentRemainingPathSegment[..<index])
                     variables.append((variableKey, variableValue))
-                    remaingPathSegment = String(remaingPathSegment.dropFirst(variableValue.count + value.count))
+                    remaingPathSegment = String(currentRemainingPathSegment.dropFirst(variableValue.count + value.count))
                 } else {
                     // the remaining path segment must be prefixed by the value
                     guard remaingPathSegment.hasPrefix(value) else {
-                        throw HTTPPathDecoderErrors.pathDoesNotMatchTemplate
+                        throw HTTPPathDecoderErrors.pathDoesNotMatchTemplate("Path does not have '\(value)' from template.")
                     }
                     
                     // drop the value from the remaining path to move on
                     remaingPathSegment = String(remaingPathSegment.dropFirst(value.count))
                 }
-            case .variable(let name, _):
+                currentVariableKey = nil
+            case .variable(let name, let isMultiSegment):
                 currentVariableKey = name
+                isGreedyToken = isMultiSegment
             }
         }
         
         // if there was a variable before this
         if let variableKey = currentVariableKey {
-            let variableValue = remaingPathSegment
+            let variableValue = try getVariableValue(rawVariableValue: remaingPathSegment, remainingPathSegments: remainingPathSegments,
+                                                     isGreedyToken: isGreedyToken, isLastSegment: isLastSegment)
             variables.append((variableKey, variableValue))
         }
     }

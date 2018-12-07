@@ -82,8 +82,33 @@ class HTTPPathSegmentTests: XCTestCase {
         XCTAssertEqual(expected, output)
     }
     
+    func testTokenizeAtEndWithPlusWithTrail() throws {
+        let input = "/person/{id}/address{index+}?trail"
+
+        let expected = [HTTPPathSegment(tokens: [.string("person")]),
+                        HTTPPathSegment(tokens: [.variable(name: "id", multiSegment: false)]),
+                        HTTPPathSegment(tokens: [.string("address"),
+                                         .variable(name: "index", multiSegment: true),
+                                         .string("?trail")])]
+        
+        let output = try! HTTPPathSegment.tokenize(template: input)
+        XCTAssertEqual(expected, output)
+    }
+    
     func testInvalidTokenize() throws {
         let input = "/person/{id+}/address{index}"
+        
+        do {
+            _ = try HTTPPathSegment.tokenize(template: input)
+            
+            XCTFail()
+        } catch {
+            // expected
+        }
+    }
+    
+    func testInvalidTokenizeWithTrail() throws {
+        let input = "/person/{id+}trail/address{index}"
         
         do {
             _ = try HTTPPathSegment.tokenize(template: input)
@@ -100,6 +125,8 @@ class HTTPPathSegmentTests: XCTestCase {
         ("testTokenizeAtStart", testTokenizeAtStart),
         ("testTokenizeAtEnd", testTokenizeAtEnd),
         ("testTokenizeAtEndWithPlus", testTokenizeAtEndWithPlus),
+        ("testTokenizeAtEndWithPlusWithTrail", testTokenizeAtEndWithPlusWithTrail),
         ("testInvalidTokenize", testInvalidTokenize),
+        ("testInvalidTokenizeWithTrail", testInvalidTokenizeWithTrail),
     ]
 }

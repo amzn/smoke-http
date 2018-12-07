@@ -265,6 +265,100 @@ class HTTPPathEncoderTests: XCTestCase {
         XCTAssertEqual(decoded.int, intValue)
         XCTAssertEqual(String(decoded.double!), String(doubleValue))
     }
+    
+    func testEncodeGreedyToken() throws {
+        let input = TestTypeA(firstly: "value1", secondly: "value2", thirdly: "value3")
+
+        let template = "items{firstly}/things/{secondly}/{thirdly+}"
+        let httpPath = try httpPathEncoder.encode(input, withTemplate: template)
+
+        XCTAssertEqual("itemsvalue1/things/value2/value3", httpPath)
+        
+        let decoded = try httpPathDecoder.decode(TestTypeA.self,
+                                                 from: httpPath, withTemplate: template)
+        
+        XCTAssertEqual(decoded, input)
+    }
+    
+    func testEncodeGreedyMultiSegmentToken() throws {
+        let input = TestTypeA(firstly: "value1", secondly: "value2", thirdly: "value3/value4")
+
+        let template = "items{firstly}/things/{secondly}/{thirdly+}"
+        let httpPath = try httpPathEncoder.encode(input, withTemplate: template)
+
+        XCTAssertEqual("itemsvalue1/things/value2/value3/value4", httpPath)
+        
+        let decoded = try httpPathDecoder.decode(TestTypeA.self,
+                                                 from: httpPath, withTemplate: template)
+        
+        XCTAssertEqual(decoded, input)
+    }
+    
+    func testEncodeGreedyMultiSegmentTokenWithTail() throws {
+        let input = TestTypeA(firstly: "value1", secondly: "value2", thirdly: "value3/value4")
+
+        let template = "items{firstly}/things/{secondly}/{thirdly+}?tail"
+        let httpPath = try httpPathEncoder.encode(input, withTemplate: template)
+
+        XCTAssertEqual("itemsvalue1/things/value2/value3/value4?tail", httpPath)
+        
+        let decoded = try! httpPathDecoder.decode(TestTypeA.self,
+                                                 from: httpPath, withTemplate: template)
+        
+        XCTAssertEqual(decoded, input)
+    }
+    
+    func testNonMatchingTemplate() throws {
+        let template = "items{firstly}/things/{secondly}/{thirdly}"
+        let httpPath = "itemsvalue1/think/value2/value3"
+        
+        do {
+            _ = try httpPathDecoder.decode(TestTypeA.self,
+                                           from: httpPath, withTemplate: template)
+            XCTFail("Expected error not thrown")
+        } catch {
+            // expected error thrown
+        }
+    }
+    
+    func testNonMatchingTemplate2() throws {
+        let template = "items{firstly}/things/{secondly}/{thirdly}"
+        let httpPath = "itemzvalue1/things/value2/value3"
+        
+        do {
+            _ = try httpPathDecoder.decode(TestTypeA.self,
+                                           from: httpPath, withTemplate: template)
+            XCTFail("Expected error not thrown")
+        } catch {
+            // expected error thrown
+        }
+    }
+    
+    func testNonMatchingTemplateTooFewSegments() throws {
+        let template = "items{firstly}/things/{secondly}/{thirdly}"
+        let httpPath = "itemzvalue1/things/value2"
+        
+        do {
+            _ = try httpPathDecoder.decode(TestTypeA.self,
+                                           from: httpPath, withTemplate: template)
+            XCTFail("Expected error not thrown")
+        } catch {
+            // expected error thrown
+        }
+    }
+    
+    func testNonMatchingTemplateTooManySegments() throws {
+        let template = "items{firstly}/things/{secondly}/{thirdly}"
+        let httpPath = "itemzvalue1/things/value2/value3/value4"
+        
+        do {
+            _ = try httpPathDecoder.decode(TestTypeA.self,
+                                           from: httpPath, withTemplate: template)
+            XCTFail("Expected error not thrown")
+        } catch {
+            // expected error thrown
+        }
+    }
 
     static var allTests = [
         ("testEncodeBasicType", testEncodeBasicType),
@@ -281,5 +375,11 @@ class HTTPPathEncoderTests: XCTestCase {
         ("testEncodeTypeWithInnerTypeWithNoSeparator", testEncodeTypeWithInnerTypeWithNoSeparator),
         ("testArrayLikeFlatStructure", testArrayLikeFlatStructure),
         ("testMapLikeFlatStructure", testMapLikeFlatStructure),
+        ("testEncodeGreedyToken", testEncodeGreedyToken),
+        ("testEncodeGreedyMultiSegmentToken", testEncodeGreedyMultiSegmentToken),
+        ("testNonMatchingTemplate", testNonMatchingTemplate),
+        ("testNonMatchingTemplate2", testNonMatchingTemplate2),
+        ("testNonMatchingTemplateTooFewSegments", testNonMatchingTemplateTooFewSegments),
+        ("testNonMatchingTemplateTooManySegments", testNonMatchingTemplateTooManySegments),
     ]
 }
