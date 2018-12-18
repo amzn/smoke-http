@@ -46,7 +46,9 @@ public protocol HTTPClientDelegate {
     where OutputType: HTTPResponseOutputProtocol
 
     /// Gets the TLS configuration required for HTTPClient's use-case.
-    func getTLSConfiguration() -> TLSConfiguration
+    /// If this function returns nil, the HTTPClient will send requests as
+    /// unencrypted http.
+    func getTLSConfiguration() -> TLSConfiguration?
 }
 
 public extension HTTPClientDelegate {

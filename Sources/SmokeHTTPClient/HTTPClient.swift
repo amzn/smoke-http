@@ -178,10 +178,17 @@ public class HTTPClient {
         let endpointHostName = endpointOverride?.host ?? self.endpointHostName
         let endpointPort = endpointOverride?.port ?? self.endpointPort
 
-        let tlsConfiguration = clientDelegate.getTLSConfiguration()
-        let sslContext = try SSLContext(configuration: tlsConfiguration)
-        let sslHandler = try OpenSSLClientHandler(context: sslContext,
+        let sslHandler: OpenSSLClientHandler?
+        let endpointScheme: String
+        if let tlsConfiguration = clientDelegate.getTLSConfiguration() {
+            let sslContext = try SSLContext(configuration: tlsConfiguration)
+            sslHandler = try OpenSSLClientHandler(context: sslContext,
                                                   serverHostname: endpointHostName)
+            endpointScheme = "https"
+        } else {
+            sslHandler = nil
+            endpointScheme = "http"
+        }
 
         let requestComponents = try clientDelegate.encodeInputAndQueryString(
             input: input,
@@ -189,7 +196,7 @@ public class HTTPClient {
 
         let pathWithQuery = requestComponents.pathWithQuery
 
-        let endpoint = "https://\(endpointHostName):\(endpointPort)\(pathWithQuery)"
+        let endpoint = "\(endpointScheme)://\(endpointHostName):\(endpointPort)\(pathWithQuery)"
         let sendPath = pathWithQuery
         let sendBody = requestComponents.body
         let additionalHeaders = requestComponents.additionalHeaders
@@ -210,14 +217,26 @@ public class HTTPClient {
                                                       completion: completion,
                                                       channelInboundHandlerDelegate: handlerDelegate)
 
-        let bootstrap = ClientBootstrap(group: eventLoopGroup)
-            .connectTimeout(TimeAmount.seconds(self.connectionTimeoutSeconds))
-            .channelInitializer { channel in
-                channel.pipeline.add(handler: sslHandler).then {
+        let bootstrap: ClientBootstrap
+        // include the sslHandler in the channel pipeline if there one
+        if let sslHandler = sslHandler {
+            bootstrap = ClientBootstrap(group: eventLoopGroup)
+                .connectTimeout(TimeAmount.seconds(self.connectionTimeoutSeconds))
+                .channelInitializer { channel in
+                    channel.pipeline.add(handler: sslHandler).then {
+                        channel.pipeline.addHTTPClientHandlers().then {
+                            channel.pipeline.add(handler: handler)
+                        }
+                    }
+            }
+        } else {
+            bootstrap = ClientBootstrap(group: eventLoopGroup)
+                .connectTimeout(TimeAmount.seconds(self.connectionTimeoutSeconds))
+                .channelInitializer { channel in
                     channel.pipeline.addHTTPClientHandlers().then {
                         channel.pipeline.add(handler: handler)
                     }
-                }
+            }
         }
 
         return try bootstrap.connect(host: endpointHostName, port: endpointPort).wait()
