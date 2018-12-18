@@ -25,7 +25,8 @@ import NIOOpenSSL
 public protocol HTTPClientDelegate {
 
     /// Gets the error corresponding to a client response body on the response head and body data.
-    func getResponseError(responseHead: HTTPResponseHead, bodyData: Data) throws -> Error
+    func getResponseError(responseHead: HTTPResponseHead,
+                          responseComponents: HTTPResponseComponents) throws -> Error
 
     /**
      Gets the encoded input body and path with a query string for a client request.
@@ -39,8 +40,10 @@ public protocol HTTPClientDelegate {
         httpPath: String) throws -> HTTPRequestComponents
     where InputType: HTTPRequestInputProtocol
 
-    /// Gets the decoded ouput base on the response body.
-    func decodeOutput<OutputType: Decodable>(output: Data) throws -> OutputType
+    /// Gets the decoded output base on the response body.
+    func decodeOutput<OutputType>(output: Data?,
+                                  headers: [(String, String)]) throws -> OutputType
+    where OutputType: HTTPResponseOutputProtocol
 
     /// Gets the TLS configuration required for HTTPClient's use-case.
     func getTLSConfiguration() -> TLSConfiguration

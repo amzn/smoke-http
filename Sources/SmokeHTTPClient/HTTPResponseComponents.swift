@@ -11,24 +11,21 @@
 // express or implied. See the License for the specific language governing
 // permissions and limitations under the License.
 //
-//  HTTPRequestComponents.swift
+//  HTTPResponseComponents.swift
 //  SmokeHTTPClient
 //
 
 import Foundation
 
 /// The parsed components that specify a request.
-public struct HTTPRequestComponents {
-    /// the path for the request including the query.
-    public let pathWithQuery: String
-    /// any request specific headers that needs to be added.
-    public let additionalHeaders: [(String, String)]
-    /// The body data of the request.
-    public let body: Data
+public struct HTTPResponseComponents {
+    /// any response headers.
+    public let headers: [(String, String)]
+    /// The body data of the response.
+    public let body: Data?
 
-    public init(pathWithQuery: String, additionalHeaders: [(String, String)], body: Data) {
-        self.pathWithQuery = pathWithQuery
-        self.additionalHeaders = additionalHeaders
+    public init(headers: [(String, String)], body: Data?) {
+        self.headers = headers
         self.body = body
     }
 }

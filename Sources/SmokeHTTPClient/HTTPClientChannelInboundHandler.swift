@@ -56,9 +56,9 @@ public final class HTTPClientChannelInboundHandler: ChannelInboundHandler {
     public var bodyParts: [ByteBuffer] = []
 
     /// A completion handler to pass any recieved response to.
-    private let completion: (HTTPResult<Data?>) -> ()
+    private let completion: (HTTPResult<HTTPResponseComponents>) -> ()
     /// A function that provides an Error based on the payload provided.
-    private let errorProvider: (HTTPResponseHead, Data) throws -> Error
+    private let errorProvider: (HTTPResponseHead, HTTPResponseComponents) throws -> Error
     /// Delegate that provides client-specific logic
     private let delegate: HTTPClientChannelInboundHandlerDelegate
 
@@ -81,8 +81,8 @@ public final class HTTPClientChannelInboundHandler: ChannelInboundHandler {
          httpMethod: HTTPMethod,
          bodyData: Data,
          additionalHeaders: [(String, String)],
-         errorProvider: @escaping (HTTPResponseHead, Data) throws -> Error,
-         completion: @escaping (HTTPResult<Data?>) -> (),
+         errorProvider: @escaping (HTTPResponseHead, HTTPResponseComponents) throws -> Error,
+         completion: @escaping (HTTPResult<HTTPResponseComponents>) -> (),
          channelInboundHandlerDelegate: HTTPClientChannelInboundHandlerDelegate) {
         self.contentType = contentType
         self.endpointUrl = endpointUrl
@@ -118,6 +118,14 @@ public final class HTTPClientChannelInboundHandler: ChannelInboundHandler {
             // handle this response
             handleCompleteResponse(context: ctx)
         }
+    }
+    
+    private func getHeadersFromResponse(header: HTTPResponseHead) -> [(String, String)] {
+        let headers: [(String, String)] = header.headers.map { header in
+            return (header.name, header.value)
+        }
+        
+        return headers
     }
 
     /*
@@ -158,6 +166,10 @@ public final class HTTPClientChannelInboundHandler: ChannelInboundHandler {
             completion(.error(error))
             return
         }
+        
+        let headers = getHeadersFromResponse(header: responseHead)
+        let responseComponents = HTTPResponseComponents(headers: headers,
+                                                        body: responseBodyData)
 
         if let bodyData = responseBodyData {
             Log.verbose("Got response from endpoint: \(endpointUrl) and path: \(endpointPath) with " +
@@ -166,11 +178,19 @@ public final class HTTPClientChannelInboundHandler: ChannelInboundHandler {
             Log.verbose("Got response from endpoint: \(endpointUrl) and path: \(endpointPath) with " +
                 "headers: \(responseHead) and empty body.")
         }
+        
+        let isSuccess: Bool
+        switch responseHead.status {
+        case .ok, .created, .accepted, .nonAuthoritativeInformation, .noContent, .resetContent, .partialContent:
+            isSuccess = true
+        default:
+            isSuccess = false
+        }
 
         // if the response status is ok
-        if case .ok = responseHead.status {
+        if isSuccess {
             // complete with the response data (potentially empty)
-            completion(.response(responseBodyData))
+            completion(.response(responseComponents))
             return
         }
 
@@ -180,17 +200,10 @@ public final class HTTPClientChannelInboundHandler: ChannelInboundHandler {
             return
         }
 
-        // otherwise this is the error case
-        // If there is no body, can't know anything about the error
-        guard let bodyData = responseBodyData else {
-            completion(.error(HTTPError.unknownError("Error with status '\(responseHead.status)' with empty body")))
-            return
-        }
-
         let responseError: Error
         do {
             // attempt to get the error from the provider
-            responseError = try errorProvider(responseHead, bodyData)
+            responseError = try errorProvider(responseHead, responseComponents)
         } catch {
             // if the provider throws an error, use this error
             responseError = error
@@ -216,7 +229,6 @@ public final class HTTPClientChannelInboundHandler: ChannelInboundHandler {
     public func channelActive(ctx: ChannelHandlerContext) {
         Log.verbose("Preparing request on channel active.")
         var headers = delegate.addClientSpecificHeaders(handler: self)
-        headers.append(contentsOf: additionalHeaders)
 
         // TODO: Move headers out to HTTPClient for UrlRequest
         if bodyData.count > 0 || delegate.specifyContentHeadersForZeroLengthBody {
