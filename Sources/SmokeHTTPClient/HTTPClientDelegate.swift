@@ -40,7 +40,7 @@ public protocol HTTPClientDelegate {
         httpPath: String) throws -> HTTPRequestComponents
     where InputType: HTTPRequestInputProtocol
 
-    /// Gets the decoded ouput base on the response body.
+    /// Gets the decoded output base on the response body.
     func decodeOutput<OutputType>(output: Data?,
                                   headers: [(String, String)]) throws -> OutputType
     where OutputType: HTTPResponseOutputProtocol
