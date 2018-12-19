@@ -54,7 +54,7 @@ public protocol HTTPClientDelegate {
 public extension HTTPClientDelegate {
     /// Default TLS configuration if no customization is needed. Simply turns certificate verification off if debugging, otherwise
     /// provides the default TLSConfiguration.
-    func getTLSConfiguration() -> TLSConfiguration {
+    func getTLSConfiguration() -> TLSConfiguration? {
 
         // To help debugging, turn off certificate verification when locally calling.
         #if DEBUG
