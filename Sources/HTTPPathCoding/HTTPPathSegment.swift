@@ -30,6 +30,13 @@ public struct HTTPPathSegment: Equatable {
         self.tokens = tokens
     }
     
+    /**
+     Tokenizes the provided template string into an array of path segments.
+ 
+     - Parameters:
+        - template: the template to tokenize.
+     - Returns: the array of path segments.
+     */
     public static func tokenize(template: String) throws -> [HTTPPathSegment] {
         let segmentStrings = template.split(separator: "/",
                                             omittingEmptySubsequences: false)
@@ -62,5 +69,88 @@ public struct HTTPPathSegment: Equatable {
         }
         
         return segments
+    }
+    
+    /**
+     Parses the provided value into an array of variables
+     that match the tokens of this Path Segment.
+     
+     - Parameters:
+         - value: the value to be parsed
+         - variables: the array to place the discovered variables.
+         - remainingSegmentValues: the values of any remaining unparsed path segments.
+                                   To be used for greedy tokens.
+        - isLastSegment: if this is the last segment in a path to be parsed.
+     */
+    public func parse(value: String,
+                      variables: inout [(String, String?)],
+                      remainingSegmentValues: [String],
+                      isLastSegment: Bool) throws {
+        var unparsedValue = value
+        var currentVariableKey: String?
+        var isGreedyToken = false
+        
+        try tokens.forEach { token in
+            switch token {
+            case .string(let value):
+                // if there was a variable before this
+                if let variableKey = currentVariableKey {
+                    let currentUnparsedValue = try getVariableValue(
+                        rawVariableValue: unparsedValue,
+                        remainingSegmentValues: remainingSegmentValues,
+                        isGreedyToken: isGreedyToken, isLastSegment: isLastSegment)
+                    // the remaining path segment must have the value somewhere
+                    guard let index = currentUnparsedValue.range(of: value)?.lowerBound else {
+                        throw HTTPPathDecoderErrors.pathDoesNotMatchTemplate("Path does not have '\(value)' from template.")
+                    }
+                    
+                    let variableValue = String(currentUnparsedValue[..<index])
+                    variables.append((variableKey, variableValue))
+                    unparsedValue = String(currentUnparsedValue.dropFirst(variableValue.count + value.count))
+                } else {
+                    // the remaining path segment must be prefixed by the value
+                    guard unparsedValue.hasPrefix(value) else {
+                        throw HTTPPathDecoderErrors.pathDoesNotMatchTemplate("Path does not have '\(value)' from template.")
+                    }
+                    
+                    // drop the value from the remaining path to move on
+                    unparsedValue = String(unparsedValue.dropFirst(value.count))
+                }
+                currentVariableKey = nil
+            case .variable(let name, let isMultiSegment):
+                currentVariableKey = name
+                isGreedyToken = isMultiSegment
+            }
+        }
+        
+        // if there was a variable before this
+        if let variableKey = currentVariableKey {
+            let variableValue = try getVariableValue(
+                rawVariableValue: unparsedValue,
+                remainingSegmentValues: remainingSegmentValues,
+                isGreedyToken: isGreedyToken, isLastSegment: isLastSegment)
+            variables.append((variableKey, variableValue))
+        }
+    }
+    
+    fileprivate func getVariableValue(rawVariableValue: String, remainingSegmentValues: [String],
+                                      isGreedyToken: Bool, isLastSegment: Bool) throws -> String {
+        let variableValue: String
+        if remainingSegmentValues.isEmpty {
+            variableValue = rawVariableValue
+            // If this isn't a greedy token
+        } else if !isGreedyToken {
+            // There are remaining path segments but not a greedy token
+            // and this is the last segment
+            if isLastSegment {
+                throw HTTPPathDecoderErrors.pathDoesNotMatchTemplate("Too many segments in path compared with template.")
+            }
+            
+            variableValue = rawVariableValue
+        } else {
+            variableValue = rawVariableValue + "/" + remainingSegmentValues.joined(separator: "/")
+        }
+        
+        return variableValue
     }
 }

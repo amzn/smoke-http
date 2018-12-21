@@ -73,11 +73,10 @@ public struct HTTPPathDecoder {
                 throw HTTPPathDecoderErrors.pathDoesNotMatchTemplate("Insufficent segments in path compared with template.")
             }
             
-            try parsePathSegment(templateSegment: templateSegment,
-                                 pathSegment: pathSegment,
-                                 variables: &variables,
-                                 remainingPathSegments: remainingPathSegments,
-                                 isLastSegment: remainingTemplateSegments.isEmpty)
+            try templateSegment.parse(value: pathSegment,
+                                      variables: &variables,
+                                      remainingSegmentValues: remainingPathSegments,
+                                      isLastSegment: remainingTemplateSegments.isEmpty)
         }
 
         let stackValue = try StandardShapeParser.parse(with: variables, decoderOptions: options)
@@ -96,73 +95,29 @@ public struct HTTPPathDecoder {
         return value
     }
     
-    fileprivate func getVariableValue(rawVariableValue: String, remainingPathSegments: [String],
-                                      isGreedyToken: Bool, isLastSegment: Bool) throws -> String {
-        let variableValue: String
-        if remainingPathSegments.isEmpty {
-            variableValue = rawVariableValue
-            // If this isn't a greedy token
-        } else if !isGreedyToken {
-            // There are remaining path segments but not a greedy token
-            // and this is the last segment
-            if isLastSegment {
-                throw HTTPPathDecoderErrors.pathDoesNotMatchTemplate("Too many segments in path compared with template.")
-            }
-            
-            variableValue = rawVariableValue
-        } else {
-            variableValue = rawVariableValue + "/" + remainingPathSegments.joined(separator: "/")
+    /**
+     Decodes a decoded Shape into an instance of the specified type.
+ 
+     - Parameters:
+        - type: The type of the value to decode.
+        - pathShape: Shape constructed from the path.
+     - returns: A value of the requested type.
+     - throws: `DecodingError.dataCorrupted` if values requested from the payload are corrupted, or
+                if the given string is not a valid HTTP path.
+     - throws: An error if any value throws an error during decoding.
+     */
+    public func decode<T: Decodable>(_ type: T.Type, fromShape pathShape: Shape) throws -> T {
+        let decoder = ShapeDecoder(
+            decoderValue: pathShape,
+            isRoot: true,
+            userInfo: userInfo,
+            delegate: StandardShapeDecoderDelegate(options: options))
+        
+        guard let value = try decoder.unbox(pathShape, as: type, isRoot: true) else {
+            throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: [],
+                                                                          debugDescription: "The given data did not contain a top-level value."))
         }
         
-        return variableValue
-    }
-    
-    func parsePathSegment(templateSegment: HTTPPathSegment,
-                          pathSegment: String,
-                          variables: inout [(String, String?)],
-                          remainingPathSegments: [String],
-                          isLastSegment: Bool) throws {
-        var remaingPathSegment = pathSegment
-        var currentVariableKey: String?
-        var isGreedyToken = false
-        
-        try templateSegment.tokens.forEach { token in
-            switch token {
-            case .string(let value):
-                // if there was a variable before this
-                if let variableKey = currentVariableKey {
-                    let currentRemainingPathSegment = try getVariableValue(rawVariableValue: remaingPathSegment,
-                                                                           remainingPathSegments: remainingPathSegments,
-                                                                           isGreedyToken: isGreedyToken, isLastSegment: isLastSegment)
-                    // the remaining path segment must have the value somewhere
-                    guard let index = currentRemainingPathSegment.range(of: value)?.lowerBound else {
-                        throw HTTPPathDecoderErrors.pathDoesNotMatchTemplate("Path does not have '\(value)' from template.")
-                    }
-                    
-                    let variableValue = String(currentRemainingPathSegment[..<index])
-                    variables.append((variableKey, variableValue))
-                    remaingPathSegment = String(currentRemainingPathSegment.dropFirst(variableValue.count + value.count))
-                } else {
-                    // the remaining path segment must be prefixed by the value
-                    guard remaingPathSegment.hasPrefix(value) else {
-                        throw HTTPPathDecoderErrors.pathDoesNotMatchTemplate("Path does not have '\(value)' from template.")
-                    }
-                    
-                    // drop the value from the remaining path to move on
-                    remaingPathSegment = String(remaingPathSegment.dropFirst(value.count))
-                }
-                currentVariableKey = nil
-            case .variable(let name, let isMultiSegment):
-                currentVariableKey = name
-                isGreedyToken = isMultiSegment
-            }
-        }
-        
-        // if there was a variable before this
-        if let variableKey = currentVariableKey {
-            let variableValue = try getVariableValue(rawVariableValue: remaingPathSegment, remainingPathSegments: remainingPathSegments,
-                                                     isGreedyToken: isGreedyToken, isLastSegment: isLastSegment)
-            variables.append((variableKey, variableValue))
-        }
+        return value
     }
 }
