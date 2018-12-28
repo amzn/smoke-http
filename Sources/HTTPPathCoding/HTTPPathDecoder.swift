@@ -61,7 +61,7 @@ public struct HTTPPathDecoder {
      */
     public func decode<T: Decodable>(_ type: T.Type, from path: String,
                                      withTemplate template: String) throws -> T {
-        var remainingPathSegments = Array(path.split(separator: segmentsSeparator)
+        var remainingSegmentValues = Array(path.split(separator: segmentsSeparator)
             .map(String.init).reversed())
         var remainingTemplateSegments =
             try Array(HTTPPathSegment.tokenize(template: template).reversed())
@@ -69,13 +69,13 @@ public struct HTTPPathDecoder {
         
         // iterate through the path elements
         while let templateSegment = remainingTemplateSegments.popLast() {
-            guard let pathSegment = remainingPathSegments.popLast() else {
+            guard let pathSegment = remainingSegmentValues.popLast() else {
                 throw HTTPPathDecoderErrors.pathDoesNotMatchTemplate("Insufficent segments in path compared with template.")
             }
             
             try templateSegment.parse(value: pathSegment,
                                       variables: &variables,
-                                      remainingSegmentValues: remainingPathSegments,
+                                      remainingSegmentValues: remainingSegmentValues,
                                       isLastSegment: remainingTemplateSegments.isEmpty)
         }
 
