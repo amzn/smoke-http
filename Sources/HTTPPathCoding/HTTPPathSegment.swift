@@ -26,8 +26,15 @@ public enum HTTPPathErrors: Error {
 public struct HTTPPathSegment: Equatable {
     public let tokens: [HTTPPathToken]
     
+    private static let segmentsSeparator: Character = "/"
+    
     public init(tokens: [HTTPPathToken]) {
         self.tokens = tokens
+    }
+    
+    public static func getPathSegmentsForPath(uri: String) -> [String] {
+        return Array(uri.split(separator: segmentsSeparator)
+            .map(String.init))
     }
     
     /**
@@ -84,7 +91,7 @@ public struct HTTPPathSegment: Equatable {
      */
     public func parse(value: String,
                       variables: inout [(String, String?)],
-                      remainingSegmentValues: [String],
+                      remainingSegmentValues: inout [String],
                       isLastSegment: Bool) throws {
         var unparsedValue = value
         var currentVariableKey: String?
@@ -97,10 +104,10 @@ public struct HTTPPathSegment: Equatable {
                 if let variableKey = currentVariableKey {
                     let currentUnparsedValue = try getVariableValue(
                         rawVariableValue: unparsedValue,
-                        remainingSegmentValues: remainingSegmentValues,
+                        remainingSegmentValues: &remainingSegmentValues,
                         isGreedyToken: isGreedyToken, isLastSegment: isLastSegment)
                     // the remaining path segment must have the value somewhere
-                    guard let index = currentUnparsedValue.range(of: value)?.lowerBound else {
+                    guard let index = currentUnparsedValue.lowercased().range(of: value)?.lowerBound else {
                         throw HTTPPathDecoderErrors.pathDoesNotMatchTemplate("Path does not have '\(value)' from template.")
                     }
                     
@@ -109,7 +116,7 @@ public struct HTTPPathSegment: Equatable {
                     unparsedValue = String(currentUnparsedValue.dropFirst(variableValue.count + value.count))
                 } else {
                     // the remaining path segment must be prefixed by the value
-                    guard unparsedValue.hasPrefix(value) else {
+                    guard unparsedValue.lowercased().hasPrefix(value) else {
                         throw HTTPPathDecoderErrors.pathDoesNotMatchTemplate("Path does not have '\(value)' from template.")
                     }
                     
@@ -127,13 +134,13 @@ public struct HTTPPathSegment: Equatable {
         if let variableKey = currentVariableKey {
             let variableValue = try getVariableValue(
                 rawVariableValue: unparsedValue,
-                remainingSegmentValues: remainingSegmentValues,
+                remainingSegmentValues: &remainingSegmentValues,
                 isGreedyToken: isGreedyToken, isLastSegment: isLastSegment)
             variables.append((variableKey, variableValue))
         }
     }
     
-    fileprivate func getVariableValue(rawVariableValue: String, remainingSegmentValues: [String],
+    fileprivate func getVariableValue(rawVariableValue: String, remainingSegmentValues: inout [String],
                                       isGreedyToken: Bool, isLastSegment: Bool) throws -> String {
         let variableValue: String
         if remainingSegmentValues.isEmpty {
@@ -149,6 +156,9 @@ public struct HTTPPathSegment: Equatable {
             variableValue = rawVariableValue
         } else {
             variableValue = rawVariableValue + "/" + remainingSegmentValues.joined(separator: "/")
+            
+            // the remaing segment values have been used, consume them
+            remainingSegmentValues = []
         }
         
         return variableValue

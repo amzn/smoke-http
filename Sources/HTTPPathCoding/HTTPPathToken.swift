@@ -66,7 +66,7 @@ public enum HTTPPathToken {
                     }
                     tokens.append(.variable(name: tokenName, multiSegment: multiSegment))
                 } else {
-                    tokens.append(.string(String(thisToken)))
+                    tokens.append(.string(String(thisToken.lowercased())))
                 }
             } else if !tokens.isEmpty {
                 throw HTTPPathErrors.hasAdjoiningVariables
