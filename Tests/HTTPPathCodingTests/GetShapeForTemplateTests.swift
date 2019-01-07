@@ -1,12 +1,3 @@
-//
-//  GetShapeForTemplateTests.swift
-//  HTTPPathCodingTests
-//
-//  Created by Simon Pilkington on 1/8/19.
-//
-
-import Foundation
-
 // Copyright 2018 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License").
