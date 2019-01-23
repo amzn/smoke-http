@@ -102,9 +102,9 @@ public struct HTTPPathSegment: Equatable {
             case .string(let value):
                 // if there was a variable before this
                 if let variableKey = currentVariableKey {
-                    let currentUnparsedValue = try getVariableValue(
-                        rawVariableValue: unparsedValue,
-                        remainingSegmentValues: &remainingSegmentValues,
+                    let currentUnparsedValue = try nextVariableValueFromRemainingSegments(
+                        nextSegmentValue: unparsedValue,
+                        futureSegmentValues: &remainingSegmentValues,
                         isGreedyToken: isGreedyToken, isLastSegment: isLastSegment)
                     // the remaining path segment must have the value somewhere
                     guard let index = currentUnparsedValue.lowercased().range(of: value)?.lowerBound else {
@@ -132,19 +132,30 @@ public struct HTTPPathSegment: Equatable {
         
         // if there was a variable before this
         if let variableKey = currentVariableKey {
-            let variableValue = try getVariableValue(
-                rawVariableValue: unparsedValue,
-                remainingSegmentValues: &remainingSegmentValues,
+            let variableValue = try nextVariableValueFromRemainingSegments(
+                nextSegmentValue: unparsedValue,
+                futureSegmentValues: &remainingSegmentValues,
                 isGreedyToken: isGreedyToken, isLastSegment: isLastSegment)
             variables.append((variableKey, variableValue))
         }
     }
     
-    fileprivate func getVariableValue(rawVariableValue: String, remainingSegmentValues: inout [String],
-                                      isGreedyToken: Bool, isLastSegment: Bool) throws -> String {
+    /**
+     Retrieves the value of the next variable from the remaining segments of a path.
+ 
+     - Parameters
+        - nextSegmentValue: the value of the next segment in a path that hasn't been parsed
+        - futureSegmentValues: the values of any other remaining segments. If any of these values are used to construct the
+          returned variable value, they will be removed from this array.
+        - isGreedyToken: if the token for the variable value to be returned is greedy (can span multiple segments).
+        - isLastSegment: if nextSegmentValue is from the final segment in a path being parsed.
+     - Returns: the value of the next variable to be parsed from a path.
+     */
+    fileprivate func nextVariableValueFromRemainingSegments(nextSegmentValue: String, futureSegmentValues: inout [String],
+                                                            isGreedyToken: Bool, isLastSegment: Bool) throws -> String {
         let variableValue: String
-        if remainingSegmentValues.isEmpty {
-            variableValue = rawVariableValue
+        if futureSegmentValues.isEmpty {
+            variableValue = nextSegmentValue
             // If this isn't a greedy token
         } else if !isGreedyToken {
             // There are remaining path segments but not a greedy token
@@ -153,12 +164,12 @@ public struct HTTPPathSegment: Equatable {
                 throw HTTPPathDecoderErrors.pathDoesNotMatchTemplate("Too many segments in path compared with template.")
             }
             
-            variableValue = rawVariableValue
+            variableValue = nextSegmentValue
         } else {
-            variableValue = rawVariableValue + "/" + remainingSegmentValues.joined(separator: "/")
+            variableValue = nextSegmentValue + "/" + futureSegmentValues.joined(separator: "/")
             
             // the remaing segment values have been used, consume them
-            remainingSegmentValues = []
+            futureSegmentValues = []
         }
         
         return variableValue
