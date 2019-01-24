@@ -29,4 +29,5 @@ XCTMain([
     testCase(HTTPPathEncoderTests.allTests),
     testCase(HTTPPathTokenTests.allTests),
     testCase(HTTPPathSegmentTests.allTests),
+    testCase(GetShapeForTemplateTests.allTests),
 ])

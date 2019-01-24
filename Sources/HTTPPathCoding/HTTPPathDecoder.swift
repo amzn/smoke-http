@@ -31,8 +31,6 @@ public struct HTTPPathDecoder {
     
     public typealias KeyDecodingStrategy = ShapeKeyDecodingStrategy
     
-    let segmentsSeparator: Character = "/"
-    
     /**
      Initializer.
      
@@ -61,33 +59,18 @@ public struct HTTPPathDecoder {
      */
     public func decode<T: Decodable>(_ type: T.Type, from path: String,
                                      withTemplate template: String) throws -> T {
-        var remainingSegmentValues = Array(path.split(separator: segmentsSeparator)
-            .map(String.init).reversed())
-        var remainingTemplateSegments =
-            try Array(HTTPPathSegment.tokenize(template: template).reversed())
-        var variables: [(String, String?)] = []
-        
-        // iterate through the path elements
-        while let templateSegment = remainingTemplateSegments.popLast() {
-            guard let pathSegment = remainingSegmentValues.popLast() else {
-                throw HTTPPathDecoderErrors.pathDoesNotMatchTemplate("Insufficent segments in path compared with template.")
-            }
-            
-            try templateSegment.parse(value: pathSegment,
-                                      variables: &variables,
-                                      remainingSegmentValues: remainingSegmentValues,
-                                      isLastSegment: remainingTemplateSegments.isEmpty)
-        }
-
-        let stackValue = try StandardShapeParser.parse(with: variables, decoderOptions: options)
+        let pathSegments = HTTPPathSegment.getPathSegmentsForPath(uri: path)
+        let templateSegments = try HTTPPathSegment.tokenize(template: template)
+        let shape = try pathSegments.getShapeForTemplate(templateSegments: templateSegments,
+                                                         decoderOptions: options)
         
         let decoder = ShapeDecoder(
-            decoderValue: stackValue,
+            decoderValue: shape,
             isRoot: true,
             userInfo: userInfo,
             delegate: StandardShapeDecoderDelegate(options: options))
         
-        guard let value = try decoder.unbox(stackValue, as: type, isRoot: true) else {
+        guard let value = try decoder.unbox(shape, as: type, isRoot: true) else {
             throw DecodingError.valueNotFound(type, DecodingError.Context(codingPath: [],
                                                                           debugDescription: "The given data did not contain a top-level value."))
         }
