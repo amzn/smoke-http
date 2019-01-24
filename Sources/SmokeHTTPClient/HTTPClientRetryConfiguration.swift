@@ -59,7 +59,15 @@ public struct HTTPClientRetryConfiguration {
         let boundedMsInterval = min(maxRetryInterval, msInterval)
         
         if jitter {
-            return arc4random_uniform(boundedMsInterval)
+            #if swift(>=4.2)
+                return Int.random(in: 0 ..< boundedMsInterval)
+            #else
+                #if os(Linux)
+                    return random() % boundedMsInterval
+                #else
+                    return arc4random_uniform(boundedMsInterval)
+                #endif
+            #endif
         }
         
         return boundedMsInterval
