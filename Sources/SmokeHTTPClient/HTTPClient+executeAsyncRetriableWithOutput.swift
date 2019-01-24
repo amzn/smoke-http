@@ -106,6 +106,39 @@ public extension HTTPClient {
     
     /**
      Submits a request that will return a response body to this client asynchronously.
+     The completion handler's execution will be scheduled on DispatchQueue.global()
+     rather than executing on a thread from SwiftNIO.
+
+     - Parameters:
+        - endpointPath: The endpoint path for this request.
+        - httpMethod: The http method to use for this request.
+        - input: the input body data to send with this request.
+        - completion: Completion handler called with the response body or any error.
+        - handlerDelegate: the delegate used to customize the request's channel handler.
+        - retryConfiguration: the retry configuration for this request.
+     */
+    public func executeAsyncRetriableWithOutput<InputType, OutputType>(
+            endpointOverride: URL? = nil,
+            endpointPath: String,
+            httpMethod: HTTPMethod,
+            input: InputType,
+            completion: @escaping (HTTPResult<OutputType>) -> (),
+            handlerDelegate: HTTPClientChannelInboundHandlerDelegate,
+            retryConfiguration: HTTPClientRetryConfiguration) throws
+        where InputType: HTTPRequestInputProtocol, OutputType: HTTPResponseOutputProtocol {
+            try executeAsyncRetriableWithOutput(
+                endpointOverride: endpointOverride,
+                endpointPath: endpointPath,
+                httpMethod: httpMethod,
+                input: input,
+                completion: completion,
+                asyncResponseInvocationStrategy: GlobalDispatchQueueAsyncResponseInvocationStrategy<HTTPResult<OutputType>>(),
+                handlerDelegate: handlerDelegate,
+                retryConfiguration: retryConfiguration)
+    }
+    
+    /**
+     Submits a request that will return a response body to this client asynchronously.
 
      - Parameters:
         - endpointPath: The endpoint path for this request.
