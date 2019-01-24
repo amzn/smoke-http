@@ -63,7 +63,7 @@ public struct HTTPClientRetryConfiguration {
                 return Int.random(in: 0 ..< boundedMsInterval)
             #else
                 #if os(Linux)
-                    return random() % Int(boundedMsInterval)
+                    return RetryInterval(random() % Int(boundedMsInterval))
                 #else
                     return arc4random_uniform(boundedMsInterval)
                 #endif
