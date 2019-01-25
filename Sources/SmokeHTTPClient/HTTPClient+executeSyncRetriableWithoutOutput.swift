@@ -22,6 +22,12 @@ import NIOOpenSSL
 import NIOTLS
 import LoggerAPI
 
+private extension Int {
+    var milliFromMicroSeconds: Int {
+        return self * 1000
+    }
+}
+
 public extension HTTPClient {
     /**
      Helper type that manages the state of a retriable sync request.
@@ -37,8 +43,6 @@ public extension HTTPClient {
         let retryConfiguration: HTTPClientRetryConfiguration
         
         var retriesRemaining: Int
-        
-        let milliToMicroSeconds = 1000
         
         init(endpointOverride: URL?, endpointPath: String, httpMethod: HTTPMethod,
              input: InputType,
@@ -74,7 +78,7 @@ public extension HTTPClient {
                 
                 retriesRemaining -= 1
                 
-                usleep(useconds_t(retryInterval * milliToMicroSeconds))
+                usleep(useconds_t(retryInterval.milliFromMicroSeconds))
                 return try executeSyncWithoutOutput()
             } else {
                 throw error
