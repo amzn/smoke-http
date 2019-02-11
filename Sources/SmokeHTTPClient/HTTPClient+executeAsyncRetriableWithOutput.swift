@@ -39,6 +39,7 @@ public extension HTTPClient {
         let handlerDelegate: HTTPClientChannelInboundHandlerDelegate
         let httpClient: HTTPClient
         let retryConfiguration: HTTPClientRetryConfiguration
+        let retryOnError: (Swift.Error) -> Bool
         let queue = DispatchQueue.global()
         
         var retriesRemaining: Int
@@ -48,7 +49,8 @@ public extension HTTPClient {
              asyncResponseInvocationStrategy: InvocationStrategyType,
              handlerDelegate: HTTPClientChannelInboundHandlerDelegate,
              httpClient: HTTPClient,
-             retryConfiguration: HTTPClientRetryConfiguration) {
+             retryConfiguration: HTTPClientRetryConfiguration,
+             retryOnError: @escaping (Swift.Error) -> Bool) {
             self.endpointOverride = endpointOverride
             self.endpointPath = endpointPath
             self.httpMethod = httpMethod
@@ -59,6 +61,7 @@ public extension HTTPClient {
             self.httpClient = httpClient
             self.retryConfiguration = retryConfiguration
             self.retriesRemaining = retryConfiguration.numRetries
+            self.retryOnError = retryOnError
         }
         
         func executeAsyncWithOutput() throws {
@@ -75,15 +78,21 @@ public extension HTTPClient {
 
             switch innerResult {
             case .error(let error):
-                // if there are retries remaining
-                if retriesRemaining > 0 {
+                let shouldRetryOnError = retryOnError(error)
+                
+                // if there are retries remaining and we should retry on this error
+                if retriesRemaining > 0 && shouldRetryOnError {
                     // determine the required interval
                     let retryInterval = Int(retryConfiguration.getRetryInterval(retriesRemaining: retriesRemaining))
                     
+                    let currentRetriesRemaining = retriesRemaining
                     retriesRemaining -= 1
                     
+                    Log.debug("Request failed with error: \(error). Remaining retries: \(currentRetriesRemaining). "
+                        + "Retrying in \(retryInterval) ms.")
                     let deadline = DispatchTime.now() + .milliseconds(retryInterval)
                     queue.asyncAfter(deadline: deadline) {
+                        Log.debug("Reattempting request due to remaining retries: \(currentRetriesRemaining)")
                         do {
                             // execute again
                             try self.executeAsyncWithOutput()
@@ -94,6 +103,13 @@ public extension HTTPClient {
                         }
                     }
                 }
+                
+                if !shouldRetryOnError {
+                    Log.debug("Request not retried due to error returned: \(error)")
+                } else {
+                    Log.debug("Request not retried due to maximum retries: \(retryConfiguration.numRetries)")
+                }
+                
                 // its an error; complete with the provided error
                 result = .error(error)
             case .response:
@@ -116,6 +132,7 @@ public extension HTTPClient {
         - completion: Completion handler called with the response body or any error.
         - handlerDelegate: the delegate used to customize the request's channel handler.
         - retryConfiguration: the retry configuration for this request.
+        - retryOnError: function that should return if the provided error is retryable.
      */
     public func executeAsyncRetriableWithOutput<InputType, OutputType>(
             endpointOverride: URL? = nil,
@@ -124,7 +141,8 @@ public extension HTTPClient {
             input: InputType,
             completion: @escaping (HTTPResult<OutputType>) -> (),
             handlerDelegate: HTTPClientChannelInboundHandlerDelegate,
-            retryConfiguration: HTTPClientRetryConfiguration) throws
+            retryConfiguration: HTTPClientRetryConfiguration,
+            retryOnError: @escaping (Swift.Error) -> Bool) throws
         where InputType: HTTPRequestInputProtocol, OutputType: HTTPResponseOutputProtocol {
             try executeAsyncRetriableWithOutput(
                 endpointOverride: endpointOverride,
@@ -134,7 +152,8 @@ public extension HTTPClient {
                 completion: completion,
                 asyncResponseInvocationStrategy: GlobalDispatchQueueAsyncResponseInvocationStrategy<HTTPResult<OutputType>>(),
                 handlerDelegate: handlerDelegate,
-                retryConfiguration: retryConfiguration)
+                retryConfiguration: retryConfiguration,
+                retryOnError: retryOnError)
     }
     
     /**
@@ -148,6 +167,7 @@ public extension HTTPClient {
         - asyncResponseInvocationStrategy: The invocation strategy for the response from this request.
         - handlerDelegate: the delegate used to customize the request's channel handler.
         - retryConfiguration: the retry configuration for this request.
+        - retryOnError: function that should return if the provided error is retryable.
      */
     public func executeAsyncRetriableWithOutput<InputType, OutputType, InvocationStrategyType>(
             endpointOverride: URL? = nil,
@@ -157,7 +177,8 @@ public extension HTTPClient {
             completion: @escaping (HTTPResult<OutputType>) -> (),
             asyncResponseInvocationStrategy: InvocationStrategyType,
             handlerDelegate: HTTPClientChannelInboundHandlerDelegate,
-            retryConfiguration: HTTPClientRetryConfiguration) throws
+            retryConfiguration: HTTPClientRetryConfiguration,
+            retryOnError: @escaping (Swift.Error) -> Bool) throws
             where InputType: HTTPRequestInputProtocol, InvocationStrategyType: AsyncResponseInvocationStrategy,
         InvocationStrategyType.OutputType == HTTPResult<OutputType>,
         OutputType: HTTPResponseOutputProtocol {
@@ -167,7 +188,8 @@ public extension HTTPClient {
                 httpMethod: httpMethod, input: input, outerCompletion: completion,
                 asyncResponseInvocationStrategy: asyncResponseInvocationStrategy,
                 handlerDelegate: handlerDelegate, httpClient: self,
-                retryConfiguration: retryConfiguration)
+                retryConfiguration: retryConfiguration,
+                retryOnError: retryOnError)
             
             try retriable.executeAsyncWithOutput()
     }
