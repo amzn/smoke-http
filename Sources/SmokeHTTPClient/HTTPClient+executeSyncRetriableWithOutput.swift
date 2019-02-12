@@ -36,6 +36,7 @@ public extension HTTPClient {
         let handlerDelegate: HTTPClientChannelInboundHandlerDelegate
         let httpClient: HTTPClient
         let retryConfiguration: HTTPClientRetryConfiguration
+        let retryOnError: (Swift.Error) -> Bool
         
         var retriesRemaining: Int
         
@@ -45,7 +46,8 @@ public extension HTTPClient {
              input: InputType,
              handlerDelegate: HTTPClientChannelInboundHandlerDelegate,
              httpClient: HTTPClient,
-             retryConfiguration: HTTPClientRetryConfiguration) {
+             retryConfiguration: HTTPClientRetryConfiguration,
+             retryOnError: @escaping (Swift.Error) -> Bool) {
             self.endpointOverride = endpointOverride
             self.endpointPath = endpointPath
             self.httpMethod = httpMethod
@@ -54,6 +56,7 @@ public extension HTTPClient {
             self.httpClient = httpClient
             self.retryConfiguration = retryConfiguration
             self.retriesRemaining = retryConfiguration.numRetries
+            self.retryOnError = retryOnError
         }
         
         func executeSyncWithOutput() throws -> OutputType {
@@ -68,16 +71,28 @@ public extension HTTPClient {
         }
         
         func completeOnError(error: Error) throws -> OutputType {
-            // if there are retries remaining
-            if retriesRemaining > 0 {
+            let shouldRetryOnError = retryOnError(error)
+            
+            // if there are retries remaining and we should retry on this error
+            if retriesRemaining > 0 && shouldRetryOnError {
                 // determine the required interval
                 let retryInterval = Int(retryConfiguration.getRetryInterval(retriesRemaining: retriesRemaining))
                 
+                let currentRetriesRemaining = retriesRemaining
                 retriesRemaining -= 1
                 
+                Log.debug("Request failed with error: \(error). Remaining retries: \(currentRetriesRemaining). "
+                        + "Retrying in \(retryInterval) ms.")
                 usleep(useconds_t(retryInterval * milliToMicroSeconds))
+                Log.debug("Reattempting request due to remaining retries: \(currentRetriesRemaining)")
                 return try executeSyncWithOutput()
             } else {
+                if !shouldRetryOnError {
+                    Log.debug("Request not retried due to error returned: \(error)")
+                } else {
+                    Log.debug("Request not retried due to maximum retries: \(retryConfiguration.numRetries)")
+                }
+                
                 throw error
             }
         }
@@ -92,6 +107,7 @@ public extension HTTPClient {
         - input: the input body data to send with this request.
         - handlerDelegate: the delegate used to customize the request's channel handler.
         - retryConfiguration: the retry configuration for this request.
+        - retryOnError: function that should return if the provided error is retryable.
      */
     public func executeSyncRetriableWithOutput<InputType, OutputType>(
         endpointOverride: URL? = nil,
@@ -99,7 +115,8 @@ public extension HTTPClient {
         httpMethod: HTTPMethod,
         input: InputType,
         handlerDelegate: HTTPClientChannelInboundHandlerDelegate,
-        retryConfiguration: HTTPClientRetryConfiguration) throws -> OutputType
+        retryConfiguration: HTTPClientRetryConfiguration,
+        retryOnError: @escaping (Swift.Error) -> Bool) throws -> OutputType
         where InputType: HTTPRequestInputProtocol,
         OutputType: HTTPResponseOutputProtocol {
 
@@ -107,7 +124,8 @@ public extension HTTPClient {
                 endpointOverride: endpointOverride, endpointPath: endpointPath,
                 httpMethod: httpMethod, input: input,
                 handlerDelegate: handlerDelegate, httpClient: self,
-                retryConfiguration: retryConfiguration)
+                retryConfiguration: retryConfiguration,
+                retryOnError: retryOnError)
             
             return try retriable.executeSyncWithOutput()
     }
