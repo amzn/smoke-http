@@ -86,7 +86,7 @@ public extension HTTPClient {
                     let currentRetriesRemaining = retriesRemaining
                     retriesRemaining -= 1
                     
-                    Log.debug("Request failed with error: \(innerError). Remaining retries: \(currentRetriesRemaining). "
+                    Log.warning("Request failed with error: \(innerError). Remaining retries: \(currentRetriesRemaining). "
                         + "Retrying in \(retryInterval) ms.")
                     let deadline = DispatchTime.now() + .milliseconds(retryInterval)
                     queue.asyncAfter(deadline: deadline) {
@@ -100,6 +100,9 @@ public extension HTTPClient {
                             self.outerCompletion(innerError)
                         }
                     }
+                    
+                    // request will be retried; don't complete yet
+                    return
                 }
                 
                 if !shouldRetryOnError {
