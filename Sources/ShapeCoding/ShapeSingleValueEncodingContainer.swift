@@ -184,6 +184,10 @@ extension ShapeSingleValueEncodingContainer: ShapeElement {
             isRoot: isRoot,
             elements: &elements)
     }
+    
+    public func asRawShape() throws -> RawShape {
+        return try delegate.rawShapeForEncodingContainer(containerValue: containerValue)
+    }
 }
 
 extension ShapeSingleValueEncodingContainer: Swift.Encoder {
