@@ -61,7 +61,11 @@ public struct HTTPClientRetryConfiguration {
         
         if jitter {
             #if swift(>=4.2)
-                return Int.random(in: 0 ..< boundedMsInterval)
+                if boundedMsInterval > 0 {
+                        return RetryInterval.random(in: 0 ..< boundedMsInterval)
+                } else {
+                    return 0
+                }
             #else
                 #if os(Linux)
                     return RetryInterval(random() % Int(boundedMsInterval))
