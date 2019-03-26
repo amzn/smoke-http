@@ -72,11 +72,11 @@ public class HTTPHeadersEncoder {
      */
     public init(keyEncodingStrategy: KeyEncodingStrategy = .useAsShapeSeparator("-"),
                 mapEncodingStrategy: MapEncodingStrategy = .singleHeader,
-                KeyEncodeTransformStrategy: KeyEncodeTransformStrategy = .none) {
+                keyEncodeTransformStrategy: KeyEncodeTransformStrategy = .none) {
         self.options = StandardEncodingOptions(
             shapeKeyEncodingStrategy: keyEncodingStrategy,
             shapeMapEncodingStrategy: mapEncodingStrategy.shapeMapEncodingStrategy,
-            shapeKeyEncodeTransformStrategy: KeyEncodeTransformStrategy)
+            shapeKeyEncodeTransformStrategy: keyEncodeTransformStrategy)
     }
 
     /**

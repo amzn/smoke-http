@@ -70,11 +70,11 @@ public class QueryEncoder {
      */
     public init(keyEncodingStrategy: KeyEncodingStrategy = .useAsShapeSeparator("."),
                 mapEncodingStrategy: MapEncodingStrategy = .singleQueryEntry,
-                KeyEncodeTransformStrategy: KeyEncodeTransformStrategy = .none) {
+                keyEncodeTransformStrategy: KeyEncodeTransformStrategy = .none) {
         self.options = StandardEncodingOptions(
             shapeKeyEncodingStrategy: keyEncodingStrategy,
             shapeMapEncodingStrategy: mapEncodingStrategy.shapeMapEncodingStrategy,
-            shapeKeyEncodeTransformStrategy: KeyEncodeTransformStrategy)
+            shapeKeyEncodeTransformStrategy: keyEncodeTransformStrategy)
     }
 
     /**

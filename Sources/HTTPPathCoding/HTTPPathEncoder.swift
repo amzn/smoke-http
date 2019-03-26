@@ -43,11 +43,11 @@ public class HTTPPathEncoder {
                                By default uses `.none`.
      */
     public init(keyEncodingStrategy: KeyEncodingStrategy = .useAsShapeSeparator("."),
-                KeyEncodeTransformStrategy: KeyEncodeTransformStrategy = .none) {
+                keyEncodeTransformStrategy: KeyEncodeTransformStrategy = .none) {
         self.options = StandardEncodingOptions(
             shapeKeyEncodingStrategy: keyEncodingStrategy,
             shapeMapEncodingStrategy: .singleShapeEntry,
-            shapeKeyEncodeTransformStrategy: KeyEncodeTransformStrategy)
+            shapeKeyEncodeTransformStrategy: keyEncodeTransformStrategy)
     }
 
     /**
