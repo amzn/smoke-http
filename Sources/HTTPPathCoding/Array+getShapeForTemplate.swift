@@ -19,10 +19,12 @@ import Foundation
 import ShapeCoding
 
 public extension Array where Element == String {
-    public func getShapeForTemplate(templateSegments: [HTTPPathSegment],
-                                    decoderOptions: StandardDecodingOptions = StandardDecodingOptions(
-                                                                                shapeKeyDecodingStrategy: .useAsShapeSeparator("."),
-                                                                                shapeMapDecodingStrategy: .singleShapeEntry)) throws -> Shape {
+    public func getShapeForTemplate(
+            templateSegments: [HTTPPathSegment],
+            decoderOptions: StandardDecodingOptions = StandardDecodingOptions(
+                shapeKeyDecodingStrategy: .useAsShapeSeparator("."),
+                shapeMapDecodingStrategy: .singleShapeEntry,
+                shapeKeyDecodeTransformStrategy: .none)) throws -> Shape {
         // reverse the arrays so we can use popLast to iterate in the forwards direction
         var remainingPathSegments = Array(self.reversed())
         var remainingTemplateSegments = [HTTPPathSegment](templateSegments.reversed())

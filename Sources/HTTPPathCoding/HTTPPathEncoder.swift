@@ -31,6 +31,7 @@ public class HTTPPathEncoder {
     internal let options: StandardEncodingOptions
     
     public typealias KeyEncodingStrategy = ShapeKeyEncodingStrategy
+    public typealias KeyEncodeTransformStrategy = ShapeKeyEncodeTransformStrategy
 
     /**
      Initializer.
@@ -38,10 +39,15 @@ public class HTTPPathEncoder {
      - Parameters:
         - keyEncodingStrategy: the `KeyEncodingStrategy` to use for encoding.
                                By default uses `.useAsShapeSeparator(".")`.
+        - KeyEncodeTransformStrategy: the `KeyEncodeTransformStrategy` to use for transforming keys.
+                               By default uses `.none`.
      */
-    public init(keyEncodingStrategy: KeyEncodingStrategy = .useAsShapeSeparator(".")) {
-        self.options = StandardEncodingOptions(shapeKeyEncodingStrategy: keyEncodingStrategy,
-                                               shapeMapEncodingStrategy: .singleShapeEntry)
+    public init(keyEncodingStrategy: KeyEncodingStrategy = .useAsShapeSeparator("."),
+                keyEncodeTransformStrategy: KeyEncodeTransformStrategy = .none) {
+        self.options = StandardEncodingOptions(
+            shapeKeyEncodingStrategy: keyEncodingStrategy,
+            shapeMapEncodingStrategy: .singleShapeEntry,
+            shapeKeyEncodeTransformStrategy: keyEncodeTransformStrategy)
     }
 
     /**

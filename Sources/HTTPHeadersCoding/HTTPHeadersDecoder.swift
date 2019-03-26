@@ -26,6 +26,7 @@ public struct HTTPHeadersDecoder {
     private let userInfo: [CodingUserInfoKey: Any]
     
     public typealias KeyDecodingStrategy = ShapeKeyDecodingStrategy
+    public typealias KeyDecodeTransformStrategy = ShapeKeyDecodeTransformStrategy
     
     /// The strategy to use for decoding maps.
     public enum MapDecodingStrategy {
@@ -57,13 +58,16 @@ public struct HTTPHeadersDecoder {
      - Parameters:
         - keyDecodingStrategy: the `KeyDecodingStrategy` to use for decoding.
         - mapDecodingStrategy: the `MapDecodingStrategy` to use for decoding.
+        - keyDecodeTransformStrategy: the `KeyDecodeTransformStrategy` to use for decoding.
      */
     public init(userInfo: [CodingUserInfoKey: Any] = [:],
                 keyDecodingStrategy: KeyDecodingStrategy = .useAsShapeSeparator("-"),
-                mapDecodingStrategy: MapDecodingStrategy = .singleHeader) {
+                mapDecodingStrategy: MapDecodingStrategy = .singleHeader,
+                keyDecodeTransformStrategy: KeyDecodeTransformStrategy = .none) {
         self.options = StandardDecodingOptions(
             shapeKeyDecodingStrategy: keyDecodingStrategy,
-            shapeMapDecodingStrategy: mapDecodingStrategy.shapeMapDecodingStrategy)
+            shapeMapDecodingStrategy: mapDecodingStrategy.shapeMapDecodingStrategy,
+            shapeKeyDecodeTransformStrategy: keyDecodeTransformStrategy)
         self.userInfo = userInfo
     }
     

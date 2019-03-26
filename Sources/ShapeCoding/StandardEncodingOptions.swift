@@ -58,15 +58,30 @@ public enum ShapeMapEncodingStrategy {
     case separateShapeEntriesWith(keyTag: String, valueTag: String)
 }
 
+/// The strategy to use for transforming shape keys.
+public enum ShapeKeyEncodeTransformStrategy {
+    /// The shape keys will not be transformed.
+    case none
+    
+    /// The first character of shape keys will be capitialized.
+    case capitalizeFirstCharacter
+    
+    /// The shape key will be transformed using the provided function.
+    case custom((String) -> String)
+}
+
 /// The standard encoding options to use in conjunction with
 /// StandardShapeSingleValueEncodingContainerDelegate.
 public struct StandardEncodingOptions {
     public let shapeKeyEncodingStrategy: ShapeKeyEncodingStrategy
     public let shapeMapEncodingStrategy: ShapeMapEncodingStrategy
+    public let shapeKeyEncodeTransformStrategy: ShapeKeyEncodeTransformStrategy
     
     public init(shapeKeyEncodingStrategy: ShapeKeyEncodingStrategy,
-                shapeMapEncodingStrategy: ShapeMapEncodingStrategy) {
+                shapeMapEncodingStrategy: ShapeMapEncodingStrategy,
+                shapeKeyEncodeTransformStrategy: ShapeKeyEncodeTransformStrategy) {
         self.shapeKeyEncodingStrategy = shapeKeyEncodingStrategy
         self.shapeMapEncodingStrategy = shapeMapEncodingStrategy
+        self.shapeKeyEncodeTransformStrategy = shapeKeyEncodeTransformStrategy
     }
 }

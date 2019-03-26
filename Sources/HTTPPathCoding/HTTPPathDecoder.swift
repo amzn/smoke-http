@@ -30,17 +30,22 @@ public struct HTTPPathDecoder {
     private let userInfo: [CodingUserInfoKey: Any]
     
     public typealias KeyDecodingStrategy = ShapeKeyDecodingStrategy
+    public typealias KeyDecodeTransformStrategy = ShapeKeyDecodeTransformStrategy
     
     /**
      Initializer.
      
      - Parameters:
         - keyDecodingStrategy: the `KeyDecodingStrategy` to use for decoding.
+        - keyDecodeTransformStrategy: the `KeyDecodeTransformStrategy` to use for decoding.
      */
     public init(userInfo: [CodingUserInfoKey: Any] = [:],
-                keyDecodingStrategy: KeyDecodingStrategy = .useAsShapeSeparator(".")) {
-        self.options = StandardDecodingOptions(shapeKeyDecodingStrategy: keyDecodingStrategy,
-                                               shapeMapDecodingStrategy: .singleShapeEntry)
+                keyDecodingStrategy: KeyDecodingStrategy = .useAsShapeSeparator("."),
+                keyDecodeTransformStrategy: KeyDecodeTransformStrategy = .none) {
+        self.options = StandardDecodingOptions(
+            shapeKeyDecodingStrategy: keyDecodingStrategy,
+            shapeMapDecodingStrategy: .singleShapeEntry,
+            shapeKeyDecodeTransformStrategy: keyDecodeTransformStrategy)
         self.userInfo = userInfo
     }
     

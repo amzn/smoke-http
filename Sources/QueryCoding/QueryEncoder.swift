@@ -29,6 +29,7 @@ import ShapeCoding
 /// Dictionary entries are indicated based on the provided `MapEncodingStrategy`
 public class QueryEncoder {
     public typealias KeyEncodingStrategy = ShapeKeyEncodingStrategy
+    public typealias KeyEncodeTransformStrategy = ShapeKeyEncodeTransformStrategy
 
     internal let options: StandardEncodingOptions
     
@@ -64,11 +65,16 @@ public class QueryEncoder {
                                By default uses `.useAsShapeSeparator(".")`.
         - mapEncodingStrategy: the `MapEncodingStrategy` to use for encoding.
                                By default uses `.singleQueryEntry`.
+        - KeyEncodeTransformStrategy: the `KeyEncodeTransformStrategy` to use for transforming keys.
+                               By default uses `.none`.
      */
     public init(keyEncodingStrategy: KeyEncodingStrategy = .useAsShapeSeparator("."),
-                mapEncodingStrategy: MapEncodingStrategy = .singleQueryEntry) {
-        self.options = StandardEncodingOptions(shapeKeyEncodingStrategy: keyEncodingStrategy,
-                                               shapeMapEncodingStrategy: mapEncodingStrategy.shapeMapEncodingStrategy)
+                mapEncodingStrategy: MapEncodingStrategy = .singleQueryEntry,
+                keyEncodeTransformStrategy: KeyEncodeTransformStrategy = .none) {
+        self.options = StandardEncodingOptions(
+            shapeKeyEncodingStrategy: keyEncodingStrategy,
+            shapeMapEncodingStrategy: mapEncodingStrategy.shapeMapEncodingStrategy,
+            shapeKeyEncodeTransformStrategy: keyEncodeTransformStrategy)
     }
 
     /**
