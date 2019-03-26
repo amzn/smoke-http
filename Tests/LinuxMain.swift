@@ -23,6 +23,7 @@ import XCTest
 
 XCTMain([
     testCase(StandardShapeParserTests.allTests),
+    testCase(ShapeSingleValueEncodingContainerTests.allTests),
     testCase(SmokeHTTPClientTests.allTests),
     testCase(QueryEncoderTests.allTests),
     testCase(HTTPHeadersEncoderTests.allTests),

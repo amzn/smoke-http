@@ -31,6 +31,7 @@ import ShapeCoding
 /// ie. HeadersInput(theType: TheType(foo: "Value1", bar: "Value2")) --> ["theArrayfoo": "Value1", "theArraybar": "Value2"]
 public class HTTPHeadersEncoder {
     public typealias KeyEncodingStrategy = ShapeKeyEncodingStrategy
+    public typealias KeyEncodeTransformStrategy = ShapeKeyEncodeTransformStrategy
 
     internal let options: StandardEncodingOptions
     
@@ -66,11 +67,16 @@ public class HTTPHeadersEncoder {
                                By default uses `.useAsShapeSeparator("-")`.
         - mapEncodingStrategy: the `MapEncodingStrategy` to use for encoding.
                                By default uses `.singleHeader`.
+        - KeyEncodeTransformStrategy: the `KeyEncodeTransformStrategy` to use for transforming keys.
+                               By default uses `.none`.
      */
     public init(keyEncodingStrategy: KeyEncodingStrategy = .useAsShapeSeparator("-"),
-                mapEncodingStrategy: MapEncodingStrategy = .singleHeader) {
-        self.options = StandardEncodingOptions(shapeKeyEncodingStrategy: keyEncodingStrategy,
-                                               shapeMapEncodingStrategy: mapEncodingStrategy.shapeMapEncodingStrategy)
+                mapEncodingStrategy: MapEncodingStrategy = .singleHeader,
+                KeyEncodeTransformStrategy: KeyEncodeTransformStrategy = .none) {
+        self.options = StandardEncodingOptions(
+            shapeKeyEncodingStrategy: keyEncodingStrategy,
+            shapeMapEncodingStrategy: mapEncodingStrategy.shapeMapEncodingStrategy,
+            shapeKeyEncodeTransformStrategy: KeyEncodeTransformStrategy)
     }
 
     /**

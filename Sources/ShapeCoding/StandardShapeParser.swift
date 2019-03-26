@@ -69,6 +69,25 @@ public struct StandardShapeParser {
         try entries.forEach { try addEntry($0) }
     }
     
+    private func transformKey(_ untransformedKey: String) -> String {
+        let key: String
+        switch decoderOptions.shapeKeyDecodeTransformStrategy {
+        case .none:
+            key = untransformedKey
+        case .uncapitalizeFirstCharacter:
+            if untransformedKey.count > 0 {
+                key = untransformedKey.prefix(1).lowercased()
+                    + untransformedKey.dropFirst()
+            } else {
+                key = ""
+            }
+        case .custom(let transform):
+            key = transform(untransformedKey)
+        }
+        
+        return key
+    }
+    
     mutating func parseWithShapeSeparator(with entries: [(String, String?)],
                                           separatorCharacter: Character) throws {
         var nonNestedShapeEntries: [(String, String?)] = []
@@ -98,20 +117,24 @@ public struct StandardShapeParser {
         
         // iterate through the nested shape entries
         try nestedShapeEntries.forEach { shape in
-            try parse(shapeName: shape.key, with: shape.value)
+            let key = transformKey(shape.key)
+            
+            try parse(shapeName: key, with: shape.value)
         }
     }
     
     mutating func addEntry(_ entry: (String, String?)) throws {
+        let key = transformKey(entry.0)
+        
         if let value = entry.1 {
             guard let removedPercentEncoding = value.removingPercentEncoding else {
                 throw DecodingError.dataCorrupted(DecodingError.Context(
                     codingPath: codingPath,
                     debugDescription: "Unable to remove percent encoding from value '\(value)'"))
             }
-            try addChildMutableShape(shapeName: entry.0, mutableShape: .string(removedPercentEncoding))
+            try addChildMutableShape(shapeName: key, mutableShape: .string(removedPercentEncoding))
         } else {
-            try addChildMutableShape(shapeName: entry.0, mutableShape: .null)
+            try addChildMutableShape(shapeName: key, mutableShape: .null)
         }
     }
     

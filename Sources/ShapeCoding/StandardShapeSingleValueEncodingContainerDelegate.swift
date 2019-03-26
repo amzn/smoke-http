@@ -60,9 +60,24 @@ ShapeSingleValueEncodingContainerDelegate {
             let sortedValues = values.sorted { (left, right) in left.key < right.key }
 
             try sortedValues.enumerated().forEach { entry in
-                let innerKey = entry.element.key
+                let innerKey: String
                 let index = entry.offset
                 let keyToUse: String
+                
+                let untransformedKey = entry.element.key
+                switch options.shapeKeyEncodeTransformStrategy {
+                case .none:
+                    innerKey = untransformedKey
+                case .capitalizeFirstCharacter:
+                    if untransformedKey.count > 0 {
+                        innerKey = untransformedKey.prefix(1).capitalized
+                            + untransformedKey.dropFirst()
+                    } else {
+                        innerKey = ""
+                    }
+                case .custom(let transform):
+                    innerKey = transform(untransformedKey)
+                }
 
                 // if this isn't the root and using the separateShapeEntriesWith strategy
                 if !isRoot, case let .separateShapeEntriesWith(keyTag: keyTag, valueTag: valueTag) = options.shapeMapEncodingStrategy {
