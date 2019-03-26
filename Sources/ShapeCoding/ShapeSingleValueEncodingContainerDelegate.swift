@@ -36,4 +36,13 @@ public protocol ShapeSingleValueEncodingContainerDelegate {
         key: String?,
         isRoot: Bool,
         elements: inout [(String, String?)]) throws
+    
+    /**
+     Function to return the `RawShape` instance that represents the provider `ContainerValueType`.
+ 
+     - Parameters:
+        - containerValue: the containerValue to return the `RawShape` for.
+     - Returns: the corresponding `RawShape` instance.
+     */
+    func rawShapeForEncodingContainer(containerValue: ContainerValueType?) throws -> RawShape
 }

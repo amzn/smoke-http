@@ -37,6 +37,13 @@ public protocol ShapeElement {
          - elements: the array to append elements from this element to.
      */
     func getSerializedElements(_ key: String?, isRoot: Bool, elements: inout [(String, String?)]) throws
+    
+    /**
+     Function to return the `RawShape` instance that represents this `ShapeElement`.
+ 
+     - Returns: the corresponding `RawShape` instance.
+     */
+    func asRawShape() throws -> RawShape
 }
 
 /// Conform String to the `ShapeElement` protocol such that it returns itself as
@@ -47,6 +54,10 @@ extension String: ShapeElement {
         } else {
             throw ShapeEncoderError.typeNotShapeCompatible("String cannot be used as a shape element without a key")
         }
+    }
+    
+    public func asRawShape() throws -> RawShape {
+        return .string(self)
     }
 }
 

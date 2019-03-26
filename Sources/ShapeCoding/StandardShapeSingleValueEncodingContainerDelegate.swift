@@ -105,4 +105,25 @@ ShapeSingleValueEncodingContainerDelegate {
             }
         }
     }
+    
+    public func rawShapeForEncodingContainer(containerValue: ContainerValueType?) throws -> RawShape {
+        // the encoding process must have placed a value in this container
+        guard let containerValue = containerValue else {
+            fatalError("Attempted to access uninitialized container.")
+        }
+        
+        switch containerValue {
+        case .singleValue(let value):
+            // get the raw shape for container value
+            return try value.asRawShape()
+        case .unkeyedContainer(let values):
+            let transformedArray = try values.map { try $0.asRawShape() }
+            
+            return .array(transformedArray)
+        case .keyedContainer(let values):
+            let transformedDictionary = try values.mapValues { try $0.asRawShape() }
+            
+            return .dictionary(transformedDictionary)
+        }
+    }
 }
