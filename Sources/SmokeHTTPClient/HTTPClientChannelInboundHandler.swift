@@ -112,10 +112,10 @@ public final class HTTPClientChannelInboundHandler: ChannelInboundHandler {
             let byteBufferSize = byteBuffer.readableBytes
             let newData = byteBuffer.readData(length: byteBufferSize)
             
-            if var previousPartialBody = partialBody,
+            if var newPartialBody = partialBody,
                 let newData = newData {
-                    previousPartialBody += newData
-                    partialBody = previousPartialBody
+                    newPartialBody += newData
+                    partialBody = newPartialBody
             } else if let newData = newData {
                 partialBody = newData
             }
