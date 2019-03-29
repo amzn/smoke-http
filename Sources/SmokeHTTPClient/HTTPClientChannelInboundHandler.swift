@@ -109,7 +109,8 @@ public final class HTTPClientChannelInboundHandler: ChannelInboundHandler {
             Log.verbose("Request head received.")
         // This is part of the response body
         case .body(var byteBuffer):
-            let newData = byteBuffer.readData(length: byteBuffer.readableBytes)
+            let byteBufferSize = byteBuffer.readableBytes
+            let newData = byteBuffer.readData(length: byteBufferSize)
             
             if var previousPartialBody = partialBody,
                 let newData = newData {
@@ -119,7 +120,7 @@ public final class HTTPClientChannelInboundHandler: ChannelInboundHandler {
                 partialBody = newData
             }
             
-            Log.verbose("Request body of \(byteBuffer.readableBytes) bytes received.")
+            Log.verbose("Request body part of \(byteBufferSize) bytes received.")
         // This is the response end
         case .end:
             Log.verbose("Request end received.")
