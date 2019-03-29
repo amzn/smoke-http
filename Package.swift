@@ -46,7 +46,7 @@ let package = Package(
         // Targets can depend on other targets in this package, and on products in packages which this package depends on.
         .target(
             name: "SmokeHTTPClient",
-            dependencies: ["LoggerAPI", "NIO", "NIOHTTP1", "NIOOpenSSL"]),
+            dependencies: ["LoggerAPI", "NIO", "NIOHTTP1", "NIOFoundationCompat", "NIOOpenSSL"]),
         .target(
             name: "QueryCoding",
             dependencies: ["ShapeCoding"]),

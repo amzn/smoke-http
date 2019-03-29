@@ -34,6 +34,9 @@ public class HTTPClient {
     /// The connection timeout in seconds
     public let connectionTimeoutSeconds: Int
     
+    /// The TLSConfiguration to use for connections from this client
+    private let tlsConfiguration: TLSConfiguration?
+    
     /**
      Enumeration specifying how the event loop is provided for a channel established by this client.
      */
@@ -85,6 +88,7 @@ public class HTTPClient {
         self.endpointPort = endpointPort
         self.contentType = contentType
         self.clientDelegate = clientDelegate
+        self.tlsConfiguration = clientDelegate.getTLSConfiguration()
         self.connectionTimeoutSeconds = connectionTimeoutSeconds
         self.stateLock = NSLock()
         self.state = .active
@@ -180,7 +184,7 @@ public class HTTPClient {
 
         let sslHandler: OpenSSLClientHandler?
         let endpointScheme: String
-        if let tlsConfiguration = clientDelegate.getTLSConfiguration() {
+        if let tlsConfiguration = tlsConfiguration {
             let sslContext = try SSLContext(configuration: tlsConfiguration)
             sslHandler = try OpenSSLClientHandler(context: sslContext,
                                                   serverHostname: endpointHostName)
@@ -222,6 +226,7 @@ public class HTTPClient {
         if let sslHandler = sslHandler {
             bootstrap = ClientBootstrap(group: eventLoopGroup)
                 .connectTimeout(TimeAmount.seconds(self.connectionTimeoutSeconds))
+                .channelOption(ChannelOptions.socket(SocketOptionLevel(SOL_SOCKET), SO_REUSEADDR), value: 1)
                 .channelInitializer { channel in
                     channel.pipeline.add(handler: sslHandler).then {
                         channel.pipeline.addHTTPClientHandlers().then {
@@ -232,6 +237,7 @@ public class HTTPClient {
         } else {
             bootstrap = ClientBootstrap(group: eventLoopGroup)
                 .connectTimeout(TimeAmount.seconds(self.connectionTimeoutSeconds))
+                .channelOption(ChannelOptions.socket(SocketOptionLevel(SOL_SOCKET), SO_REUSEADDR), value: 1)
                 .channelInitializer { channel in
                     channel.pipeline.addHTTPClientHandlers().then {
                         channel.pipeline.add(handler: handler)
