@@ -149,7 +149,7 @@ public final class HTTPClientChannelInboundHandler: ChannelInboundHandler {
             Log.verbose("Channel closed on complete response.")
         }
 
-        Log.verbose("Handling body with \(partialBody?.count ?? 0) size.")
+        Log.verbose("Handling response body with \(partialBody?.count ?? 0) size.")
 
         // ensure the response head from received
         guard let responseHead = responseHead else {
