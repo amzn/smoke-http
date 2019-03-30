@@ -20,6 +20,7 @@ import NIO
 import NIOHTTP1
 import NIOOpenSSL
 import NIOTLS
+import NIOFoundationCompat
 import LoggerAPI
 
 internal struct HttpHeaderNames {
@@ -52,8 +53,8 @@ public final class HTTPClientChannelInboundHandler: ChannelInboundHandler {
     public let additionalHeaders: [(String, String)]
     /// The http head of the response received
     public var responseHead: HTTPResponseHead?
-    /// The list of previous body ByteBuffers received.
-    public var bodyParts: [ByteBuffer] = []
+    /// The body data previously received.
+    public var partialBody: Data?
 
     /// A completion handler to pass any recieved response to.
     private let completion: (HTTPResult<HTTPResponseComponents>) -> ()
@@ -107,10 +108,19 @@ public final class HTTPClientChannelInboundHandler: ChannelInboundHandler {
             responseHead = request
             Log.verbose("Request head received.")
         // This is part of the response body
-        case .body(let byteBuffer):
-            // store this part of the body
-            bodyParts.append(byteBuffer)
-            Log.verbose("Request body of \(byteBuffer.readableBytes) bytes received.")
+        case .body(var byteBuffer):
+            let byteBufferSize = byteBuffer.readableBytes
+            let newData = byteBuffer.readData(length: byteBufferSize)
+            
+            if var newPartialBody = partialBody,
+                let newData = newData {
+                    newPartialBody += newData
+                    partialBody = newPartialBody
+            } else if let newData = newData {
+                partialBody = newData
+            }
+            
+            Log.verbose("Request body part of \(byteBufferSize) bytes received.")
         // This is the response end
         case .end:
             Log.verbose("Request end received.")
@@ -139,22 +149,7 @@ public final class HTTPClientChannelInboundHandler: ChannelInboundHandler {
             Log.verbose("Channel closed on complete response.")
         }
 
-        Log.verbose("Reducing \(bodyParts.count) body parts into body.")
-
-        // concatenate any parts into a single byte array
-        let bodyBytes: [UInt8] = bodyParts.reduce([]) { (partialBytes, part) in
-            let partBytes = part.getBytes(at: 0, length: part.readableBytes)
-
-            if let partBytes = partBytes {
-                return partialBytes + partBytes
-            } else {
-                return partialBytes
-            }
-        }
-
-        Log.verbose("Reduced body with \(bodyBytes.count) size.")
-
-        let responseBodyData = !bodyBytes.isEmpty ? Data(bytes: bodyBytes) : nil
+        Log.verbose("Handling body with \(partialBody?.count ?? 0) size.")
 
         // ensure the response head from received
         guard let responseHead = responseHead else {
@@ -169,9 +164,9 @@ public final class HTTPClientChannelInboundHandler: ChannelInboundHandler {
         
         let headers = getHeadersFromResponse(header: responseHead)
         let responseComponents = HTTPResponseComponents(headers: headers,
-                                                        body: responseBodyData)
+                                                        body: partialBody)
 
-        if let bodyData = responseBodyData {
+        if let bodyData = partialBody {
             Log.verbose("Got response from endpoint: \(endpointUrl) and path: \(endpointPath) with " +
                 "headers: \(responseHead) and body: \(bodyData)")
         } else {
@@ -195,7 +190,7 @@ public final class HTTPClientChannelInboundHandler: ChannelInboundHandler {
         }
 
         // Handle client delegated errors
-        if let error = delegate.handleErrorResponses(responseHead: responseHead, responseBodyData: responseBodyData) {
+        if let error = delegate.handleErrorResponses(responseHead: responseHead, responseBodyData: partialBody) {
             completion(.error(error))
             return
         }
