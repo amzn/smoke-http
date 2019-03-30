@@ -104,9 +104,9 @@ public final class HTTPClientChannelInboundHandler: ChannelInboundHandler {
 
         switch responsePart {
         // This is the response head
-        case .head(let request):
-            responseHead = request
-            Log.verbose("Request head received.")
+        case .head(let response):
+            responseHead = response
+            Log.verbose("Response head received.")
         // This is part of the response body
         case .body(var byteBuffer):
             let byteBufferSize = byteBuffer.readableBytes
@@ -120,10 +120,10 @@ public final class HTTPClientChannelInboundHandler: ChannelInboundHandler {
                 partialBody = newData
             }
             
-            Log.verbose("Request body part of \(byteBufferSize) bytes received.")
+            Log.verbose("Response body part of \(byteBufferSize) bytes received.")
         // This is the response end
         case .end:
-            Log.verbose("Request end received.")
+            Log.verbose("Response end received.")
             // the head and all possible body parts have been received,
             // handle this response
             handleCompleteResponse(context: ctx)
