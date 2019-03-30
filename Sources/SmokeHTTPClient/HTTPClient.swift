@@ -70,13 +70,16 @@ public class HTTPClient {
      Initializer.
 
      - Parameters:
-     - endpointHostName: The server hostname to contact for requests from this client.
-     - endpointPort: The server port to connect to.
-     - contentType: The content type of the payload being sent by this client.
-     - clientDelegate: Delegate for the HTTP client that provides client-specific logic for handling HTTP requests.
-     - channelInboundHandlerDelegate: Delegate for the HTTP channel inbound handler that provides client-specific logic
-     -                                around HTTP request/response settings.
-     - connectionTimeoutSeconds: The time in second the client should wait for a response. The default is 10 seconds.
+         - endpointHostName: The server hostname to contact for requests from this client.
+         - endpointPort: The server port to connect to.
+         - contentType: The content type of the payload being sent by this client.
+         - clientDelegate: Delegate for the HTTP client that provides client-specific logic for handling HTTP requests.
+         - channelInboundHandlerDelegate: Delegate for the HTTP channel inbound handler that provides client-specific logic
+         -                                around HTTP request/response settings.
+         - connectionTimeoutSeconds: The time in second the client should wait for a response. The default is 10 seconds.
+         - eventLoopProvider: Provides the event loop to be used by the client.
+                              If not specified, the client will create a new multi-threaded event loop
+                              with the number of threads specified by `System.coreCount`.
      */
     public init(endpointHostName: String,
                 endpointPort: Int,
@@ -152,7 +155,7 @@ public class HTTPClient {
      Waits for the client to be closed. If close() is not called,
      this will block forever.
      */
-    public func wait() throws {
+    public func wait() {
         if !isClosed() {
             closureDispatchGroup.wait()
         }
