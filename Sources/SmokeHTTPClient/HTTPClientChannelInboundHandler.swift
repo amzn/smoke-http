@@ -104,9 +104,9 @@ public final class HTTPClientChannelInboundHandler: ChannelInboundHandler {
 
         switch responsePart {
         // This is the response head
-        case .head(let request):
-            responseHead = request
-            Log.verbose("Request head received.")
+        case .head(let response):
+            responseHead = response
+            Log.verbose("Response head received.")
         // This is part of the response body
         case .body(var byteBuffer):
             let byteBufferSize = byteBuffer.readableBytes
@@ -120,13 +120,14 @@ public final class HTTPClientChannelInboundHandler: ChannelInboundHandler {
                 partialBody = newData
             }
             
-            Log.verbose("Request body part of \(byteBufferSize) bytes received.")
+            Log.verbose("Response body part of \(byteBufferSize) bytes received.")
         // This is the response end
         case .end:
-            Log.verbose("Request end received.")
+            Log.verbose("Response end received.")
             // the head and all possible body parts have been received,
             // handle this response
-            handleCompleteResponse(context: ctx)
+            handleCompleteResponse(context: ctx, bodyData: partialBody)
+            partialBody = nil
         }
     }
     
@@ -141,7 +142,7 @@ public final class HTTPClientChannelInboundHandler: ChannelInboundHandler {
     /*
      Handles when the response has been completely received.
      */
-    func handleCompleteResponse(context ctx: ChannelHandlerContext) {
+    func handleCompleteResponse(context ctx: ChannelHandlerContext, bodyData: Data?) {
         // always close the channel context after the processing in this method
         defer {
             Log.verbose("Closing channel on complete response.")
@@ -149,7 +150,7 @@ public final class HTTPClientChannelInboundHandler: ChannelInboundHandler {
             Log.verbose("Channel closed on complete response.")
         }
 
-        Log.verbose("Handling body with \(partialBody?.count ?? 0) size.")
+        Log.verbose("Handling response body with \(bodyData?.count ?? 0) size.")
 
         // ensure the response head from received
         guard let responseHead = responseHead else {
@@ -164,9 +165,9 @@ public final class HTTPClientChannelInboundHandler: ChannelInboundHandler {
         
         let headers = getHeadersFromResponse(header: responseHead)
         let responseComponents = HTTPResponseComponents(headers: headers,
-                                                        body: partialBody)
+                                                        body: bodyData)
 
-        if let bodyData = partialBody {
+        if let bodyData = bodyData {
             Log.verbose("Got response from endpoint: \(endpointUrl) and path: \(endpointPath) with " +
                 "headers: \(responseHead) and body: \(bodyData)")
         } else {
@@ -190,7 +191,7 @@ public final class HTTPClientChannelInboundHandler: ChannelInboundHandler {
         }
 
         // Handle client delegated errors
-        if let error = delegate.handleErrorResponses(responseHead: responseHead, responseBodyData: partialBody) {
+        if let error = delegate.handleErrorResponses(responseHead: responseHead, responseBodyData: bodyData) {
             completion(.error(error))
             return
         }

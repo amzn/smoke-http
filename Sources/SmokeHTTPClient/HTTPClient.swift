@@ -51,11 +51,11 @@ public class HTTPClient {
     
     private enum State {
         case active
-        case shuttingDown
+        case closing
         case closed
     }
     
-    private let closedSemaphore = DispatchSemaphore(value: 0)
+    private let closureDispatchGroup: DispatchGroup
     private var state: State
     private var stateLock: NSLock
     
@@ -70,13 +70,16 @@ public class HTTPClient {
      Initializer.
 
      - Parameters:
-     - endpointHostName: The server hostname to contact for requests from this client.
-     - endpointPort: The server port to connect to.
-     - contentType: The content type of the payload being sent by this client.
-     - clientDelegate: Delegate for the HTTP client that provides client-specific logic for handling HTTP requests.
-     - channelInboundHandlerDelegate: Delegate for the HTTP channel inbound handler that provides client-specific logic
-     -                                around HTTP request/response settings.
-     - connectionTimeoutSeconds: The time in second the client should wait for a response. The default is 10 seconds.
+         - endpointHostName: The server hostname to contact for requests from this client.
+         - endpointPort: The server port to connect to.
+         - contentType: The content type of the payload being sent by this client.
+         - clientDelegate: Delegate for the HTTP client that provides client-specific logic for handling HTTP requests.
+         - channelInboundHandlerDelegate: Delegate for the HTTP channel inbound handler that provides client-specific logic
+         -                                around HTTP request/response settings.
+         - connectionTimeoutSeconds: The time in second the client should wait for a response. The default is 10 seconds.
+         - eventLoopProvider: Provides the event loop to be used by the client.
+                              If not specified, the client will create a new multi-threaded event loop
+                              with the number of threads specified by `System.coreCount`.
      */
     public init(endpointHostName: String,
                 endpointPort: Int,
@@ -92,6 +95,10 @@ public class HTTPClient {
         self.connectionTimeoutSeconds = connectionTimeoutSeconds
         self.stateLock = NSLock()
         self.state = .active
+        self.closureDispatchGroup = DispatchGroup()
+        // enter the DispatchGroup during initialization so waiting for the
+        // closure of an initalized or started client will wait
+        closureDispatchGroup.enter()
 
         switch eventLoopProvider {
         case .spawnNewThreads:
@@ -107,8 +114,8 @@ public class HTTPClient {
      De-initializer. Report if the client is not closed.
      */
     deinit {
-        guard case .closed = state else {
-            return Log.error("HTTPClient was not shutdown properly prior to de-initialization.")
+        guard isClosed() else {
+            return Log.error("HTTPClient was not closed properly prior to de-initialization.")
         }
     }
     
@@ -118,41 +125,30 @@ public class HTTPClient {
      times.
      */
     public func close() {
-        stateLock.lock()
-        defer {
-            stateLock.unlock()
-        }
+        let doCloseClient = updateOnClosureStart()
         
-        // if the client is already closed or shutting down
-        switch state {
-        case .closed, .shuttingDown:
+        guard doCloseClient else {
+            // already closing or closed, nothing to do
             return
-        case .active:
-            break
         }
         
         // if this client owns the EventLoopGroup
         if ownEventLoopGroup {
-            state = .shuttingDown
-
             eventLoopGroup.shutdownGracefully { _ in
-                self.stateLock.lock()
-                defer {
-                    self.stateLock.unlock()
-                }
-                
-                self.signalClientClosure()
+                self.closeClient()
             }
         } else {
             // nothing to do as the EventLoopGroup isn't owned by the client,
             // close immediately
-            signalClientClosure()
+            closeClient()
         }
     }
     
-    private func signalClientClosure() {
-        state = .closed
-        closedSemaphore.signal()
+    private func closeClient() {
+        self.updateStateOnClosureComplete()
+        
+        // release any waiters for closure
+        self.closureDispatchGroup.leave()
     }
     
     /**
@@ -160,14 +156,9 @@ public class HTTPClient {
      this will block forever.
      */
     public func wait() {
-        self.stateLock.lock()
-        if case .closed = state {
-            self.stateLock.unlock()
-            return
+        if !isClosed() {
+            closureDispatchGroup.wait()
         }
-        self.stateLock.unlock()
-        
-        closedSemaphore.wait()
     }
 
     func executeAsync<InputType>(
@@ -246,5 +237,65 @@ public class HTTPClient {
         }
 
         return try bootstrap.connect(host: endpointHostName, port: endpointPort).wait()
+    }
+    
+    /**
+     Updates the Lifecycle state on a closure request.
+     
+     - Returns: if the closure request should be acted upon (and the client closed).
+     Will be false if the client is already closing or has closed.
+     */
+    private func updateOnClosureStart() -> Bool {
+        stateLock.lock()
+        defer {
+            stateLock.unlock()
+        }
+        
+        let doCloseClient: Bool
+        switch state {
+        case .active:
+            state = .closing
+            
+            doCloseClient = true
+        case .closing, .closed:
+            // nothing to do; already closing or closed
+            doCloseClient = false
+        }
+        
+        return doCloseClient
+    }
+    
+    /**
+     Updates the Lifecycle state on closure completion.
+     */
+    private func updateStateOnClosureComplete() {
+        stateLock.lock()
+        defer {
+            stateLock.unlock()
+        }
+        
+        guard case .closing = state else {
+            fatalError("HTTPClientError closure completed when in expected state: \(state)")
+        }
+        
+        state = .closed
+    }
+    
+    /**
+     Indicates if the client is currently closed.
+     
+     - Returns: if the client is currently closed.
+     */
+    private func isClosed() -> Bool {
+        stateLock.lock()
+        defer {
+            stateLock.unlock()
+        }
+        
+        if case .closed = state {
+            return true
+        }
+        
+        return false
     }
 }
