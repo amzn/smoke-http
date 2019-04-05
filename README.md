@@ -36,6 +36,10 @@ to your Package.swift-
 dependencies: [
     .package(url: "https://github.com/amzn/smoke-http.git", from: "1.0.0")
 ]
+
+.target(
+    name: ...,
+    dependencies: [..., "SmokeHTTPClient"]),
 ```
 
 ## Step 2: Construct a HTTPClient
