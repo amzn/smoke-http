@@ -25,6 +25,35 @@ The benefit of this package is to consolidate all HTTPClient logic into one loca
 
 To use SmokeHTTPClient, a user can instantiate an ```HTTPClient``` in the constructor of their specific client with instantiated delegates (```HTTPClientDelegate```, ```HTTPClientChannelInboundHandlerDelegate```) that are defined by the client-specific logic.
 
+# Getting Started
+
+## Step 1: Add the SmokeHTTP dependency
+
+SmokeHTTP uses the Swift Package Manager. To use the framework, add the following dependency
+to your Package.swift-
+
+```swift
+dependencies: [
+    .package(url: "https://github.com/amzn/smoke-http.git", from: "1.0.0")
+]
+```
+
+## Step 2: Construct a HTTPClient
+
+Construct a HTTPClient using the following code-
+
+```swift
+import SmokeHTTPClient
+
+let httpClient = HTTPClient(endpointHostName: endpointHostName,
+                            endpointPort: endpointPort,
+                            contentType: contentType,
+                            clientDelegate: clientDelegate,
+                            connectionTimeoutSeconds: connectionTimeoutSeconds)
+```
+
+where ```clientDelegate``` conforms to the ```HTTPClientDelegate``` protocol.
+
 ## License
 
 This library is licensed under the Apache 2.0 License.
