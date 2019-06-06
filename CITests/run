@@ -6,7 +6,7 @@ swiftLintVersion=0.33.0
 USE_SWIFT_LINT=$1
 
 apt-get update
-apt-get -y install libssl-dev
+apt-get -y install libssl-dev libz-dev
 
 workspaceRoot=($PWD)
 srcRoot=$workspaceRoot/sources
