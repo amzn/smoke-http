@@ -19,7 +19,7 @@ import Foundation
 import ShapeCoding
 
 public extension Array where Element == String {
-    public func getShapeForTemplate(
+    func getShapeForTemplate(
             templateSegments: [HTTPPathSegment],
             decoderOptions: StandardDecodingOptions = StandardDecodingOptions(
                 shapeKeyDecodingStrategy: .useAsShapeSeparator("."),
