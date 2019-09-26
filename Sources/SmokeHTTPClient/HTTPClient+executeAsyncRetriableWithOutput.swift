@@ -137,7 +137,7 @@ public extension HTTPClient {
         - retryConfiguration: the retry configuration for this request.
         - retryOnError: function that should return if the provided error is retryable.
      */
-    public func executeAsyncRetriableWithOutput<InputType, OutputType>(
+    func executeAsyncRetriableWithOutput<InputType, OutputType>(
             endpointOverride: URL? = nil,
             endpointPath: String,
             httpMethod: HTTPMethod,
@@ -172,7 +172,7 @@ public extension HTTPClient {
         - retryConfiguration: the retry configuration for this request.
         - retryOnError: function that should return if the provided error is retryable.
      */
-    public func executeAsyncRetriableWithOutput<InputType, OutputType, InvocationStrategyType>(
+    func executeAsyncRetriableWithOutput<InputType, OutputType, InvocationStrategyType>(
             endpointOverride: URL? = nil,
             endpointPath: String,
             httpMethod: HTTPMethod,
