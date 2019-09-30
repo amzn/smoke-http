@@ -18,7 +18,7 @@
 import Foundation
 import NIO
 import NIOHTTP1
-import NIOOpenSSL
+import NIOSSL
 import NIOTLS
 import LoggerAPI
 

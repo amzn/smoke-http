@@ -17,7 +17,7 @@
 
 import Foundation
 import NIOHTTP1
-import NIOOpenSSL
+import NIOSSL
 
 /**
  Delegate protocol that handles client-specific logic.

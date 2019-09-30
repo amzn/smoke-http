@@ -18,7 +18,7 @@
 import Foundation
 import NIO
 import NIOHTTP1
-import NIOOpenSSL
+import NIOSSL
 import NIOTLS
 import LoggerAPI
 
@@ -32,7 +32,7 @@ public class HTTPClient {
     /// Delegate that provides client-specific logic for handling HTTP requests
     public let clientDelegate: HTTPClientDelegate
     /// The connection timeout in seconds
-    public let connectionTimeoutSeconds: Int
+    public let connectionTimeoutSeconds: Int64
     
     /// The TLSConfiguration to use for connections from this client
     private let tlsConfiguration: TLSConfiguration?
@@ -85,7 +85,7 @@ public class HTTPClient {
                 endpointPort: Int,
                 contentType: String,
                 clientDelegate: HTTPClientDelegate,
-                connectionTimeoutSeconds: Int = 10,
+                connectionTimeoutSeconds: Int64 = 10,
                 eventLoopProvider: EventLoopProvider = .spawnNewThreads) {
         self.endpointHostName = endpointHostName
         self.endpointPort = endpointPort
@@ -173,12 +173,12 @@ public class HTTPClient {
         let endpointHostName = endpointOverride?.host ?? self.endpointHostName
         let endpointPort = endpointOverride?.port ?? self.endpointPort
 
-        let sslHandler: OpenSSLClientHandler?
+        let sslHandler: NIOSSLClientHandler?
         let endpointScheme: String
         if let tlsConfiguration = tlsConfiguration {
-            let sslContext = try SSLContext(configuration: tlsConfiguration)
-            sslHandler = try OpenSSLClientHandler(context: sslContext,
-                                                  serverHostname: endpointHostName)
+            let sslContext = try NIOSSLContext(configuration: tlsConfiguration)
+            sslHandler = try NIOSSLClientHandler(context: sslContext,
+                                                 serverHostname: endpointHostName)
             endpointScheme = "https"
         } else {
             sslHandler = nil
@@ -219,9 +219,9 @@ public class HTTPClient {
                 .connectTimeout(TimeAmount.seconds(self.connectionTimeoutSeconds))
                 .channelOption(ChannelOptions.socket(SocketOptionLevel(SOL_SOCKET), SO_REUSEADDR), value: 1)
                 .channelInitializer { channel in
-                    channel.pipeline.add(handler: sslHandler).then {
-                        channel.pipeline.addHTTPClientHandlers().then {
-                            channel.pipeline.add(handler: handler)
+                    channel.pipeline.addHandler(sslHandler).flatMap {
+                        channel.pipeline.addHTTPClientHandlers().flatMap {
+                            channel.pipeline.addHandler(handler)
                         }
                     }
             }
@@ -230,8 +230,8 @@ public class HTTPClient {
                 .connectTimeout(TimeAmount.seconds(self.connectionTimeoutSeconds))
                 .channelOption(ChannelOptions.socket(SocketOptionLevel(SOL_SOCKET), SO_REUSEADDR), value: 1)
                 .channelInitializer { channel in
-                    channel.pipeline.addHTTPClientHandlers().then {
-                        channel.pipeline.add(handler: handler)
+                    channel.pipeline.addHTTPClientHandlers().flatMap {
+                        channel.pipeline.addHandler(handler)
                     }
             }
         }
