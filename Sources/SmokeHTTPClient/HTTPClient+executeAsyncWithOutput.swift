@@ -41,7 +41,7 @@ public extension HTTPClient {
             httpMethod: HTTPMethod,
             input: InputType,
             completion: @escaping (HTTPResult<OutputType>) -> (),
-            handlerDelegate: HTTPClientChannelInboundHandlerDelegate) throws -> Channel
+            handlerDelegate: HTTPClientChannelInboundHandlerDelegate) throws -> EventLoopFuture<Channel>
         where InputType: HTTPRequestInputProtocol, OutputType: HTTPResponseOutputProtocol {
             return try executeAsyncWithOutput(
                 endpointOverride: endpointOverride,
@@ -71,7 +71,7 @@ public extension HTTPClient {
             input: InputType,
             completion: @escaping (HTTPResult<OutputType>) -> (),
             asyncResponseInvocationStrategy: InvocationStrategyType,
-            handlerDelegate: HTTPClientChannelInboundHandlerDelegate) throws -> Channel
+            handlerDelegate: HTTPClientChannelInboundHandlerDelegate) throws -> EventLoopFuture<Channel>
             where InputType: HTTPRequestInputProtocol, InvocationStrategyType: AsyncResponseInvocationStrategy,
         InvocationStrategyType.OutputType == HTTPResult<OutputType>,
         OutputType: HTTPResponseOutputProtocol {
@@ -107,20 +107,28 @@ public extension HTTPClient {
         }
 
         // submit the asynchronous request
-        let channel = try executeAsync(endpointOverride: endpointOverride,
-                                       endpointPath: endpointPath,
-                                       httpMethod: httpMethod,
-                                       input: input,
-                                       completion: wrappingCompletion,
-                                       handlerDelegate: handlerDelegate)
+        let channelFuture = try executeAsync(endpointOverride: endpointOverride,
+                                             endpointPath: endpointPath,
+                                             httpMethod: httpMethod,
+                                             input: input,
+                                             completion: wrappingCompletion,
+                                             handlerDelegate: handlerDelegate)
 
-        channel.closeFuture.whenComplete { result in
-            // if this channel is being closed and no response has been recorded
-            if !hasComplete {
-                completion(.error(HTTPClient.unexpectedClosureType))
+        channelFuture.whenComplete { result in
+            switch result {
+            case .success(let channel):
+                channel.closeFuture.whenComplete { _ in
+                    // if this channel is being closed and no response has been recorded
+                    if !hasComplete {
+                        completion(.error(HTTPClient.unexpectedClosureType))
+                    }
+                }
+            case .failure(let error):
+                // there was an issue creating the channel
+                completion(.error(error))
             }
         }
 
-        return channel
+        return channelFuture
     }
 }
