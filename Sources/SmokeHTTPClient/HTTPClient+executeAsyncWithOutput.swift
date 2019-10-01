@@ -35,7 +35,7 @@ public extension HTTPClient {
      - completion: Completion handler called with the response body or any error.
      - handlerDelegate: the delegate used to customize the request's channel handler.
      */
-    public func executeAsyncWithOutput<InputType, OutputType>(
+    func executeAsyncWithOutput<InputType, OutputType>(
             endpointOverride: URL? = nil,
             endpointPath: String,
             httpMethod: HTTPMethod,
@@ -64,7 +64,7 @@ public extension HTTPClient {
      - asyncResponseInvocationStrategy: The invocation strategy for the response from this request.
      - handlerDelegate: the delegate used to customize the request's channel handler.
      */
-    public func executeAsyncWithOutput<InputType, OutputType, InvocationStrategyType>(
+    func executeAsyncWithOutput<InputType, OutputType, InvocationStrategyType>(
             endpointOverride: URL? = nil,
             endpointPath: String,
             httpMethod: HTTPMethod,
