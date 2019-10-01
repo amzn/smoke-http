@@ -34,7 +34,7 @@ public extension HTTPClient {
      - Returns: the response body.
      - Throws: If an error occurred during the request.
      */
-    public func executeSyncWithOutput<InputType, OutputType>(
+    func executeSyncWithOutput<InputType, OutputType>(
         endpointOverride: URL? = nil,
         endpointPath: String,
         httpMethod: HTTPMethod,

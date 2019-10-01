@@ -20,7 +20,7 @@ import Foundation
 public extension ShapeDecoder {
     
     /// Returns the given value unboxed from a container.
-    public func unbox(_ value: Shape?, as type: Bool.Type) throws -> Bool? {
+    func unbox(_ value: Shape?, as type: Bool.Type) throws -> Bool? {
         guard let currentValue = value else { return nil }
         
         guard case .string(let unboxedValue) = currentValue else {
@@ -35,7 +35,7 @@ public extension ShapeDecoder {
         return convertedValue
     }
     
-    public func unbox(_ value: Shape?, as type: Int.Type) throws -> Int? {
+    func unbox(_ value: Shape?, as type: Int.Type) throws -> Int? {
         guard let currentValue = value else { return nil }
         
         guard case .string(let unboxedValue) = currentValue else {
@@ -50,7 +50,7 @@ public extension ShapeDecoder {
         return convertedValue
     }
     
-    public func unbox(_ value: Shape?, as type: Int8.Type) throws -> Int8? {
+    func unbox(_ value: Shape?, as type: Int8.Type) throws -> Int8? {
         guard let currentValue = value else { return nil }
         
         guard case .string(let unboxedValue) = currentValue else {
@@ -65,7 +65,7 @@ public extension ShapeDecoder {
         return convertedValue
     }
     
-    public func unbox(_ value: Shape?, as type: Int16.Type) throws -> Int16? {
+    func unbox(_ value: Shape?, as type: Int16.Type) throws -> Int16? {
         guard let currentValue = value else { return nil }
         
         guard case .string(let unboxedValue) = currentValue else {
@@ -80,7 +80,7 @@ public extension ShapeDecoder {
         return convertedValue
     }
     
-    public func unbox(_ value: Shape?, as type: Int32.Type) throws -> Int32? {
+    func unbox(_ value: Shape?, as type: Int32.Type) throws -> Int32? {
         guard let currentValue = value else { return nil }
         
         guard case .string(let unboxedValue) = currentValue else {
@@ -95,7 +95,7 @@ public extension ShapeDecoder {
         return convertedValue
     }
     
-    public func unbox(_ value: Shape?, as type: Int64.Type) throws -> Int64? {
+    func unbox(_ value: Shape?, as type: Int64.Type) throws -> Int64? {
         guard let currentValue = value else { return nil }
         
         guard case .string(let unboxedValue) = currentValue else {
@@ -110,7 +110,7 @@ public extension ShapeDecoder {
         return convertedValue
     }
     
-    public func unbox(_ value: Shape?, as type: UInt.Type) throws -> UInt? {
+    func unbox(_ value: Shape?, as type: UInt.Type) throws -> UInt? {
         guard let currentValue = value else { return nil }
         
         guard case .string(let unboxedValue) = currentValue else {
@@ -125,7 +125,7 @@ public extension ShapeDecoder {
         return convertedValue
     }
     
-    public func unbox(_ value: Shape?, as type: UInt8.Type) throws -> UInt8? {
+    func unbox(_ value: Shape?, as type: UInt8.Type) throws -> UInt8? {
         guard let currentValue = value else { return nil }
         
         guard case .string(let unboxedValue) = currentValue else {
@@ -140,7 +140,7 @@ public extension ShapeDecoder {
         return convertedValue
     }
     
-    public func unbox(_ value: Shape?, as type: UInt16.Type) throws -> UInt16? {
+    func unbox(_ value: Shape?, as type: UInt16.Type) throws -> UInt16? {
         guard let currentValue = value else { return nil }
         
         guard case .string(let unboxedValue) = currentValue else {
@@ -155,7 +155,7 @@ public extension ShapeDecoder {
         return convertedValue
     }
     
-    public func unbox(_ value: Shape?, as type: UInt32.Type) throws -> UInt32? {
+    func unbox(_ value: Shape?, as type: UInt32.Type) throws -> UInt32? {
         guard let currentValue = value else { return nil }
         
         guard case .string(let unboxedValue) = currentValue else {
@@ -170,7 +170,7 @@ public extension ShapeDecoder {
         return convertedValue
     }
     
-    public func unbox(_ value: Shape?, as type: UInt64.Type) throws -> UInt64? {
+    func unbox(_ value: Shape?, as type: UInt64.Type) throws -> UInt64? {
         guard let currentValue = value else { return nil }
         
         guard case .string(let unboxedValue) = currentValue else {
@@ -185,7 +185,7 @@ public extension ShapeDecoder {
         return convertedValue
     }
     
-    public func unbox(_ value: Shape?, as type: Float.Type) throws -> Float? {
+    func unbox(_ value: Shape?, as type: Float.Type) throws -> Float? {
         guard let currentValue = value else { return nil }
         
         guard case .string(let unboxedValue) = currentValue else {
@@ -200,7 +200,7 @@ public extension ShapeDecoder {
         return convertedValue
     }
     
-    public func unbox(_ value: Shape?, as type: Double.Type) throws -> Double? {
+    func unbox(_ value: Shape?, as type: Double.Type) throws -> Double? {
         guard let currentValue = value else { return nil }
         
         guard case .string(let unboxedValue) = currentValue else {
@@ -215,7 +215,7 @@ public extension ShapeDecoder {
         return convertedValue
     }
     
-    public func unbox(_ value: Shape?, as type: String.Type) throws -> String? {
+    func unbox(_ value: Shape?, as type: String.Type) throws -> String? {
         guard let currentValue = value else { return nil }
         
         guard case .string(let unboxedValue) = currentValue else {
@@ -225,7 +225,7 @@ public extension ShapeDecoder {
         return unboxedValue
     }
     
-    public func unbox(_ value: Shape?, as type: Date.Type) throws -> Date? {
+    func unbox(_ value: Shape?, as type: Date.Type) throws -> Date? {
         guard let currentValue = value else {
             return nil
         }
@@ -242,7 +242,7 @@ public extension ShapeDecoder {
         return convertedValue
     }
     
-    public func unbox(_ value: Shape?, as type: Data.Type) throws -> Data? {
+    func unbox(_ value: Shape?, as type: Data.Type) throws -> Data? {
         guard let currentValue = value else { return nil }
         
         guard case .string(let unboxedValue) = currentValue else {
@@ -257,7 +257,7 @@ public extension ShapeDecoder {
         return convertedValue
     }
     
-    public func unbox(_ value: Shape?, as type: Decimal.Type) throws -> Decimal? {
+    func unbox(_ value: Shape?, as type: Decimal.Type) throws -> Decimal? {
         guard let currentValue = value else { return nil }
         
         guard case .string(let unboxedValue) = currentValue else {
@@ -272,7 +272,7 @@ public extension ShapeDecoder {
         return Decimal(convertedDoubleValue)
     }
     
-    public func unbox<T: Decodable>(_ value: Shape?, as type: T.Type, isRoot: Bool = false) throws -> T? {
+    func unbox<T: Decodable>(_ value: Shape?, as type: T.Type, isRoot: Bool = false) throws -> T? {
         let decoded: T
         if type == Date.self {
             guard let date = try self.unbox(value, as: Date.self) else { return nil }
