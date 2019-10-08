@@ -59,8 +59,8 @@ public class HTTPClient {
     private var state: State
     private var stateLock: NSLock
     
-    static let unexpectedClosureType =
-        HTTPError.connectionError("Http request was unexpectedly closed without returning a response.")
+    static let unexpectedClosureType = HTTPClientError(responseCode: 500,
+        cause: HTTPError.connectionError("Http request was unexpectedly closed without returning a response."))
 
     /// The event loop used by requests/responses from this client
     let eventLoopGroup: EventLoopGroup
@@ -166,7 +166,7 @@ public class HTTPClient {
             endpointPath: String,
             httpMethod: HTTPMethod,
             input: InputType,
-            completion: @escaping (HTTPResult<HTTPResponseComponents>) -> (),
+            completion: @escaping (Result<HTTPResponseComponents, HTTPClientError>) -> (),
             handlerDelegate: HTTPClientChannelInboundHandlerDelegate) throws -> Channel
             where InputType: HTTPRequestInputProtocol {
 

@@ -28,29 +28,29 @@ public extension HTTPClient {
      */
     private class ExecuteAsyncWithOutputRetriable<InputType, OutputType, InvocationStrategyType>
             where InputType: HTTPRequestInputProtocol, InvocationStrategyType: AsyncResponseInvocationStrategy,
-            InvocationStrategyType.OutputType == HTTPResult<OutputType>,
+            InvocationStrategyType.OutputType == Result<OutputType, HTTPClientError>,
             OutputType: HTTPResponseOutputProtocol {
         let endpointOverride: URL?
         let endpointPath: String
         let httpMethod: HTTPMethod
         let input: InputType
-        let outerCompletion: (HTTPResult<OutputType>) -> ()
+        let outerCompletion: (Result<OutputType, HTTPClientError>) -> ()
         let asyncResponseInvocationStrategy: InvocationStrategyType
         let handlerDelegate: HTTPClientChannelInboundHandlerDelegate
         let httpClient: HTTPClient
         let retryConfiguration: HTTPClientRetryConfiguration
-        let retryOnError: (Swift.Error) -> Bool
+        let retryOnError: (HTTPClientError) -> Bool
         let queue = DispatchQueue.global()
         
         var retriesRemaining: Int
         
         init(endpointOverride: URL?, endpointPath: String, httpMethod: HTTPMethod,
-             input: InputType, outerCompletion: @escaping (HTTPResult<OutputType>) -> (),
+             input: InputType, outerCompletion: @escaping (Result<OutputType, HTTPClientError>) -> (),
              asyncResponseInvocationStrategy: InvocationStrategyType,
              handlerDelegate: HTTPClientChannelInboundHandlerDelegate,
              httpClient: HTTPClient,
              retryConfiguration: HTTPClientRetryConfiguration,
-             retryOnError: @escaping (Swift.Error) -> Bool) {
+             retryOnError: @escaping (HTTPClientError) -> Bool) {
             self.endpointOverride = endpointOverride
             self.endpointPath = endpointPath
             self.httpMethod = httpMethod
@@ -73,11 +73,11 @@ public extension HTTPClient {
                                                       handlerDelegate: handlerDelegate)
         }
         
-        func completion(innerResult: HTTPResult<OutputType>) {
-            let result: HTTPResult<OutputType>
+        func completion(innerResult: Result<OutputType, HTTPClientError>) {
+            let result: Result<OutputType, HTTPClientError>
 
             switch innerResult {
-            case .error(let error):
+            case .failure(let error):
                 let shouldRetryOnError = retryOnError(error)
                 
                 // if there are retries remaining and we should retry on this error
@@ -99,7 +99,7 @@ public extension HTTPClient {
                             return
                         } catch {
                             // its attempting to retry causes an error; complete with the provided error
-                            self.outerCompletion(.error(error))
+                            self.outerCompletion(.failure(HTTPClientError(responseCode: 400, cause: error)))
                         }
                     }
                     
@@ -114,8 +114,8 @@ public extension HTTPClient {
                 }
                 
                 // its an error; complete with the provided error
-                result = .error(error)
-            case .response:
+                result = .failure(error)
+            case .success:
                 result = innerResult
             }
 
@@ -142,10 +142,10 @@ public extension HTTPClient {
             endpointPath: String,
             httpMethod: HTTPMethod,
             input: InputType,
-            completion: @escaping (HTTPResult<OutputType>) -> (),
+            completion: @escaping (Result<OutputType, HTTPClientError>) -> (),
             handlerDelegate: HTTPClientChannelInboundHandlerDelegate,
             retryConfiguration: HTTPClientRetryConfiguration,
-            retryOnError: @escaping (Swift.Error) -> Bool) throws
+            retryOnError: @escaping (HTTPClientError) -> Bool) throws
         where InputType: HTTPRequestInputProtocol, OutputType: HTTPResponseOutputProtocol {
             try executeAsyncRetriableWithOutput(
                 endpointOverride: endpointOverride,
@@ -153,7 +153,7 @@ public extension HTTPClient {
                 httpMethod: httpMethod,
                 input: input,
                 completion: completion,
-                asyncResponseInvocationStrategy: GlobalDispatchQueueAsyncResponseInvocationStrategy<HTTPResult<OutputType>>(),
+                asyncResponseInvocationStrategy: GlobalDispatchQueueAsyncResponseInvocationStrategy<Result<OutputType, HTTPClientError>>(),
                 handlerDelegate: handlerDelegate,
                 retryConfiguration: retryConfiguration,
                 retryOnError: retryOnError)
@@ -177,13 +177,13 @@ public extension HTTPClient {
             endpointPath: String,
             httpMethod: HTTPMethod,
             input: InputType,
-            completion: @escaping (HTTPResult<OutputType>) -> (),
+            completion: @escaping (Result<OutputType, HTTPClientError>) -> (),
             asyncResponseInvocationStrategy: InvocationStrategyType,
             handlerDelegate: HTTPClientChannelInboundHandlerDelegate,
             retryConfiguration: HTTPClientRetryConfiguration,
-            retryOnError: @escaping (Swift.Error) -> Bool) throws
+            retryOnError: @escaping (HTTPClientError) -> Bool) throws
             where InputType: HTTPRequestInputProtocol, InvocationStrategyType: AsyncResponseInvocationStrategy,
-        InvocationStrategyType.OutputType == HTTPResult<OutputType>,
+        InvocationStrategyType.OutputType == Result<OutputType, HTTPClientError>,
         OutputType: HTTPResponseOutputProtocol {
 
             let retriable = ExecuteAsyncWithOutputRetriable(

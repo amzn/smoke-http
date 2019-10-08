@@ -23,7 +23,7 @@ public protocol HTTPClientChannelInboundHandlerDelegate {
 
     func addClientSpecificHeaders(handler: HTTPClientChannelInboundHandler) -> [(String, String)]
 
-    func handleErrorResponses(responseHead: HTTPResponseHead, responseBodyData: Data?) -> Error?
+    func handleErrorResponses(responseHead: HTTPResponseHead, responseBodyData: Data?) -> HTTPClientError?
 }
 
 public struct DefaultHTTPClientChannelInboundHandlerDelegate {
@@ -33,7 +33,7 @@ public struct DefaultHTTPClientChannelInboundHandlerDelegate {
         return []
     }
 
-    func handleErrorResponses(responseHead: HTTPResponseHead, responseBodyData: Data?) -> Error? {
+    func handleErrorResponses(responseHead: HTTPResponseHead, responseBodyData: Data?) -> HTTPClientError? {
         return nil
     }
 }

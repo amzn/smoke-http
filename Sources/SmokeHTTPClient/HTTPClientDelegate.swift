@@ -26,7 +26,7 @@ public protocol HTTPClientDelegate {
 
     /// Gets the error corresponding to a client response body on the response head and body data.
     func getResponseError(responseHead: HTTPResponseHead,
-                          responseComponents: HTTPResponseComponents) throws -> Error
+                          responseComponents: HTTPResponseComponents) throws -> HTTPClientError
 
     /**
      Gets the encoded input body and path with a query string for a client request.
