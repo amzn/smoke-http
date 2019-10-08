@@ -77,14 +77,14 @@ public extension HTTPClient {
             
             var hasComplete = false
             // create a wrapping completion handler to pass to the ChannelInboundHandler
-            let wrappingCompletion: (HTTPResult<HTTPResponseComponents>) -> () = { (rawResult) in
-                let result: Error?
+            let wrappingCompletion: (Result<HTTPResponseComponents, HTTPClientError>) -> () = { (rawResult) in
+                let result: HTTPClientError?
                 
                 switch rawResult {
-                case .error(let error):
+                case .failure(let error):
                     // its an error, complete with this error
                     result = error
-                case .response:
+                case .success:
                     // its a successful completion, complete with an empty error.
                     result = nil
                 }

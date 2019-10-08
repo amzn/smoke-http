@@ -57,9 +57,9 @@ public final class HTTPClientChannelInboundHandler: ChannelInboundHandler {
     public var partialBody: Data?
 
     /// A completion handler to pass any recieved response to.
-    private let completion: (HTTPResult<HTTPResponseComponents>) -> ()
+    private let completion: (Result<HTTPResponseComponents, HTTPClientError>) -> ()
     /// A function that provides an Error based on the payload provided.
-    private let errorProvider: (HTTPResponseHead, HTTPResponseComponents) throws -> Error
+    private let errorProvider: (HTTPResponseHead, HTTPResponseComponents) throws -> HTTPClientError
     /// Delegate that provides client-specific logic
     private let delegate: HTTPClientChannelInboundHandlerDelegate
 
@@ -82,8 +82,8 @@ public final class HTTPClientChannelInboundHandler: ChannelInboundHandler {
          httpMethod: HTTPMethod,
          bodyData: Data,
          additionalHeaders: [(String, String)],
-         errorProvider: @escaping (HTTPResponseHead, HTTPResponseComponents) throws -> Error,
-         completion: @escaping (HTTPResult<HTTPResponseComponents>) -> (),
+         errorProvider: @escaping (HTTPResponseHead, HTTPResponseComponents) throws -> HTTPClientError,
+         completion: @escaping (Result<HTTPResponseComponents, HTTPClientError>) -> (),
          channelInboundHandlerDelegate: HTTPClientChannelInboundHandlerDelegate) {
         self.contentType = contentType
         self.endpointUrl = endpointUrl
@@ -154,12 +154,13 @@ public final class HTTPClientChannelInboundHandler: ChannelInboundHandler {
 
         // ensure the response head from received
         guard let responseHead = responseHead else {
-            let error = HTTPError.badResponse("Response head was not received")
+            let cause = HTTPError.badResponse("Response head was not received")
+            let error = HTTPClientError(responseCode: 400, cause: cause)
 
             Log.error("Response head was not received")
 
             // complete with this error
-            completion(.error(error))
+            completion(.failure(error))
             return
         }
         
@@ -186,27 +187,29 @@ public final class HTTPClientChannelInboundHandler: ChannelInboundHandler {
         // if the response status is ok
         if isSuccess {
             // complete with the response data (potentially empty)
-            completion(.response(responseComponents))
+            completion(.success(responseComponents))
             return
         }
 
         // Handle client delegated errors
         if let error = delegate.handleErrorResponses(responseHead: responseHead, responseBodyData: bodyData) {
-            completion(.error(error))
+            completion(.failure(error))
             return
         }
 
-        let responseError: Error
+        let responseError: HTTPClientError
         do {
             // attempt to get the error from the provider
             responseError = try errorProvider(responseHead, responseComponents)
+        } catch let error as HTTPClientError {
+            responseError = error
         } catch {
             // if the provider throws an error, use this error
-            responseError = error
+            responseError = HTTPClientError(responseCode: 400, cause: error)
         }
 
         // complete with the error
-        completion(.error(responseError))
+        completion(.failure(responseError))
     }
 
     /**

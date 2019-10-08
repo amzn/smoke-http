@@ -29,7 +29,7 @@ public protocol AsyncResponseInvocationStrategy {
      the specified response.
 
      - Parameters:
-        - response: The HTTPResult to invocate the completion handler with.
+        - response: The Result to invocate the completion handler with.
         - completion: The completion handler to invocate.
      */
     func invokeResponse(response: OutputType,
