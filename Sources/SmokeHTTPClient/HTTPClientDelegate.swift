@@ -18,6 +18,7 @@
 import Foundation
 import NIOHTTP1
 import NIOSSL
+import Logging
 
 /**
  Delegate protocol that handles client-specific logic.
@@ -26,7 +27,8 @@ public protocol HTTPClientDelegate {
 
     /// Gets the error corresponding to a client response body on the response head and body data.
     func getResponseError(responseHead: HTTPResponseHead,
-                          responseComponents: HTTPResponseComponents) throws -> HTTPClientError
+                          responseComponents: HTTPResponseComponents,
+                          invocationReporting: HTTPClientInvocationReporting) throws -> HTTPClientError
 
     /**
      Gets the encoded input body and path with a query string for a client request.
@@ -37,12 +39,14 @@ public protocol HTTPClientDelegate {
      */
     func encodeInputAndQueryString<InputType>(
         input: InputType,
-        httpPath: String) throws -> HTTPRequestComponents
+        httpPath: String,
+        invocationReporting: HTTPClientInvocationReporting) throws -> HTTPRequestComponents
     where InputType: HTTPRequestInputProtocol
 
     /// Gets the decoded output base on the response body.
     func decodeOutput<OutputType>(output: Data?,
-                                  headers: [(String, String)]) throws -> OutputType
+                                  headers: [(String, String)],
+                                  invocationReporting: HTTPClientInvocationReporting) throws -> OutputType
     where OutputType: HTTPResponseOutputProtocol
 
     /// Gets the TLS configuration required for HTTPClient's use-case.

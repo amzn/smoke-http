@@ -20,7 +20,7 @@ import Foundation
 /**
  HTTP Request Input that only has a body.
  */
-public struct BodyHTTPRequestInput<BodyType: Encodable> : HTTPRequestInputProtocol {
+public struct BodyHTTPRequestInput<BodyType: Encodable>: HTTPRequestInputProtocol {
     public let queryEncodable: BodyType?
     public let pathEncodable: BodyType?
     public let bodyEncodable: BodyType?

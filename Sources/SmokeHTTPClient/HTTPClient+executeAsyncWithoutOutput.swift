@@ -20,7 +20,8 @@ import NIO
 import NIOHTTP1
 import NIOSSL
 import NIOTLS
-import LoggerAPI
+import Logging
+import Metrics
 
 public extension HTTPClient {
     /**
@@ -29,19 +30,19 @@ public extension HTTPClient {
      rather than executing on a thread from SwiftNIO.
      
      - Parameters:
-     - endpointPath: The endpoint path for this request.
-     - httpMethod: The http method to use for this request.
-     - input: the input body data to send with this request.
-     - completion: Completion handler called with an error if one occurs or nil otherwise.
-     - handlerDelegate: the delegate used to customize the request's channel handler.
+        - endpointPath: The endpoint path for this request.
+        - httpMethod: The http method to use for this request.
+        - input: the input body data to send with this request.
+        - completion: Completion handler called with an error if one occurs or nil otherwise.
+        - invocationContext: context to use for this invocation.
      */
     func executeAsyncWithoutOutput<InputType>(
         endpointOverride: URL? = nil,
         endpointPath: String,
         httpMethod: HTTPMethod,
         input: InputType,
-        completion: @escaping (Error?) -> (),
-        handlerDelegate: HTTPClientChannelInboundHandlerDelegate) throws -> EventLoopFuture<Channel>
+        completion: @escaping (HTTPClientError?) -> (),
+        invocationContext: HTTPClientInvocationContext) throws -> EventLoopFuture<Channel>
         where InputType: HTTPRequestInputProtocol {
             return try executeAsyncWithoutOutput(
                 endpointOverride: endpointOverride,
@@ -49,31 +50,38 @@ public extension HTTPClient {
                 httpMethod: httpMethod,
                 input: input,
                 completion: completion,
-                asyncResponseInvocationStrategy: GlobalDispatchQueueAsyncResponseInvocationStrategy<Error?>(),
-                handlerDelegate: handlerDelegate)
+                asyncResponseInvocationStrategy: GlobalDispatchQueueAsyncResponseInvocationStrategy<HTTPClientError?>(),
+                invocationContext: invocationContext)
     }
     
     /**
      Submits a request that will not return a response body to this client asynchronously.
      
      - Parameters:
-     - endpointPath: The endpoint path for this request.
-     - httpMethod: The http method to use for this request.
-     - input: the input body data to send with this request.
-     - completion: Completion handler called with an error if one occurs or nil otherwise.
-     - asyncResponseInvocationStrategy: The invocation strategy for the response from this request.
-     - handlerDelegate: the delegate used to customize the request's channel handler.
+        - endpointPath: The endpoint path for this request.
+        - httpMethod: The http method to use for this request.
+        - input: the input body data to send with this request.
+        - completion: Completion handler called with an error if one occurs or nil otherwise.
+        - asyncResponseInvocationStrategy: The invocation strategy for the response from this request.
+        - invocationContext: context to use for this invocation.
      */
     func executeAsyncWithoutOutput<InputType, InvocationStrategyType>(
         endpointOverride: URL? = nil,
         endpointPath: String,
         httpMethod: HTTPMethod,
         input: InputType,
-        completion: @escaping (Error?) -> (),
+        completion: @escaping (HTTPClientError?) -> (),
         asyncResponseInvocationStrategy: InvocationStrategyType,
-        handlerDelegate: HTTPClientChannelInboundHandlerDelegate) throws -> EventLoopFuture<Channel>
+        invocationContext: HTTPClientInvocationContext) throws -> EventLoopFuture<Channel>
         where InputType: HTTPRequestInputProtocol, InvocationStrategyType: AsyncResponseInvocationStrategy,
-        InvocationStrategyType.OutputType == Error? {
+        InvocationStrategyType.OutputType == HTTPClientError? {
+            
+            let latencyMetricDetails: (Date, Metrics.Timer)?
+            if let latencyTimer = invocationContext.reporting.latencyTimer {
+                latencyMetricDetails = (Date(), latencyTimer)
+            } else {
+                latencyMetricDetails = nil
+            }
             
             var hasComplete = false
             // create a wrapping completion handler to pass to the ChannelInboundHandler
@@ -84,9 +92,24 @@ public extension HTTPClient {
                 case .failure(let error):
                     // its an error, complete with this error
                     result = error
+                    
+                    // report failure metric
+                    switch error.category {
+                    case .clientError:
+                        invocationContext.reporting.failure4XXCounter?.increment()
+                    case .serverError:
+                        invocationContext.reporting.failure5XXCounter?.increment()
+                    }
                 case .success:
                     // its a successful completion, complete with an empty error.
                     result = nil
+                    
+                    // report success metric
+                    invocationContext.reporting.successCounter?.increment()
+                }
+                
+                if let durationMetricDetails = latencyMetricDetails {
+                    durationMetricDetails.1.recordMicroseconds(Date().timeIntervalSince(durationMetricDetails.0))
                 }
                 
                 asyncResponseInvocationStrategy.invokeResponse(response: result, completion: completion)
@@ -99,7 +122,7 @@ public extension HTTPClient {
                                                  httpMethod: httpMethod,
                                                  input: input,
                                                  completion: wrappingCompletion,
-                                                 handlerDelegate: handlerDelegate)
+                                                 invocationContext: invocationContext)
             
             channelFuture.whenComplete { result in
                 switch result {
@@ -112,7 +135,7 @@ public extension HTTPClient {
                     }
                 case .failure(let error):
                     // there was an issue creating the channel
-                    completion(error)
+                    completion(HTTPClientError(responseCode: 500, cause: error))
                 }
             }
             

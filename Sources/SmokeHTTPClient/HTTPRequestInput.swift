@@ -23,8 +23,7 @@ import Foundation
 public struct HTTPRequestInput<QueryType: Encodable,
                                PathType: Encodable,
                                BodyType: Encodable,
-                               AdditionalHeadersType: Encodable>
-: HTTPRequestInputProtocol {
+                               AdditionalHeadersType: Encodable>: HTTPRequestInputProtocol {
     public let queryEncodable: QueryType?
     public let pathEncodable: PathType?
     public let bodyEncodable: BodyType?

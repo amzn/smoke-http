@@ -11,27 +11,24 @@
 // express or implied. See the License for the specific language governing
 // permissions and limitations under the License.
 //
-//  QueryHTTPRequestInput.swift
+//  HTTPClientInvocationContext.swift
 //  SmokeHTTPClient
 //
 
 import Foundation
+import Logging
+import Metrics
 
 /**
- HTTP Request Input that only has a query.
+ A context related to the invocation of the HTTPClient.
  */
-public struct QueryHTTPRequestInput<QueryType: Encodable>: HTTPRequestInputProtocol {
-    public let queryEncodable: QueryType?
-    public let pathEncodable: QueryType?
-    public let bodyEncodable: QueryType?
-    public let additionalHeadersEncodable: QueryType?
-    public let pathPostfix: String?
-
-    public init(encodable: QueryType) {
-        self.queryEncodable = encodable
-        self.pathEncodable = nil
-        self.bodyEncodable = nil
-        self.additionalHeadersEncodable = nil
-        self.pathPostfix = nil
+public struct HTTPClientInvocationContext {
+    public let reporting: HTTPClientInvocationReporting
+    public let handlerDelegate: HTTPClientChannelInboundHandlerDelegate
+    
+    public init(reporting: HTTPClientInvocationReporting,
+                handlerDelegate: HTTPClientChannelInboundHandlerDelegate) {
+        self.reporting = reporting
+        self.handlerDelegate = handlerDelegate
     }
 }

@@ -20,7 +20,8 @@ import NIO
 import NIOHTTP1
 import NIOSSL
 import NIOTLS
-import LoggerAPI
+import Logging
+import Metrics
 
 public extension HTTPClient {
     /**
@@ -29,11 +30,11 @@ public extension HTTPClient {
      rather than executing on a thread from SwiftNIO.
 
      - Parameters:
-     - endpointPath: The endpoint path for this request.
-     - httpMethod: The http method to use for this request.
-     - input: the input body data to send with this request.
-     - completion: Completion handler called with the response body or any error.
-     - handlerDelegate: the delegate used to customize the request's channel handler.
+        - endpointPath: The endpoint path for this request.
+        - httpMethod: The http method to use for this request.
+        - input: the input body data to send with this request.
+        - completion: Completion handler called with the response body or any error.
+        - invocationContext: context to use for this invocation.
      */
     func executeAsyncWithOutput<InputType, OutputType>(
             endpointOverride: URL? = nil,
@@ -41,7 +42,7 @@ public extension HTTPClient {
             httpMethod: HTTPMethod,
             input: InputType,
             completion: @escaping (Result<OutputType, HTTPClientError>) -> (),
-            handlerDelegate: HTTPClientChannelInboundHandlerDelegate) throws -> EventLoopFuture<Channel>
+            invocationContext: HTTPClientInvocationContext) throws -> EventLoopFuture<Channel>
         where InputType: HTTPRequestInputProtocol, OutputType: HTTPResponseOutputProtocol {
             return try executeAsyncWithOutput(
                 endpointOverride: endpointOverride,
@@ -50,19 +51,19 @@ public extension HTTPClient {
                 input: input,
                 completion: completion,
                 asyncResponseInvocationStrategy: GlobalDispatchQueueAsyncResponseInvocationStrategy<Result<OutputType, HTTPClientError>>(),
-                handlerDelegate: handlerDelegate)
+                invocationContext: invocationContext)
     }
 
     /**
      Submits a request that will return a response body to this client asynchronously.
 
      - Parameters:
-     - endpointPath: The endpoint path for this request.
-     - httpMethod: The http method to use for this request.
-     - input: the input body data to send with this request.
-     - completion: Completion handler called with the response body or any error.
-     - asyncResponseInvocationStrategy: The invocation strategy for the response from this request.
-     - handlerDelegate: the delegate used to customize the request's channel handler.
+         - endpointPath: The endpoint path for this request.
+         - httpMethod: The http method to use for this request.
+         - input: the input body data to send with this request.
+         - completion: Completion handler called with the response body or any error.
+         - asyncResponseInvocationStrategy: The invocation strategy for the response from this request.
+         - invocationContext: context to use for this invocation.
      */
     func executeAsyncWithOutput<InputType, OutputType, InvocationStrategyType>(
             endpointOverride: URL? = nil,
@@ -71,10 +72,17 @@ public extension HTTPClient {
             input: InputType,
             completion: @escaping (Result<OutputType, HTTPClientError>) -> (),
             asyncResponseInvocationStrategy: InvocationStrategyType,
-            handlerDelegate: HTTPClientChannelInboundHandlerDelegate) throws -> EventLoopFuture<Channel>
+            invocationContext: HTTPClientInvocationContext) throws -> EventLoopFuture<Channel>
             where InputType: HTTPRequestInputProtocol, InvocationStrategyType: AsyncResponseInvocationStrategy,
         InvocationStrategyType.OutputType == Result<OutputType, HTTPClientError>,
         OutputType: HTTPResponseOutputProtocol {
+            
+        let durationMetricDetails: (Date, Metrics.Timer)?
+        if let durationTimer = invocationContext.reporting.latencyTimer {
+            durationMetricDetails = (Date(), durationTimer)
+        } else {
+            durationMetricDetails = nil
+        }
 
         var hasComplete = false
         let requestDelegate = clientDelegate
@@ -87,19 +95,38 @@ public extension HTTPClient {
             case .failure(let error):
                 // its an error; complete with the provided error
                 result = .failure(error)
+                
+                // report failure metric
+                switch error.category {
+                case .clientError:
+                    invocationContext.reporting.failure4XXCounter?.increment()
+                case .serverError:
+                    invocationContext.reporting.failure5XXCounter?.increment()
+                }
             case .success(let response):
                 do {
                     // decode the provided body into the desired type
                     let output: OutputType = try requestDelegate.decodeOutput(
                         output: response.body,
-                        headers: response.headers)
+                        headers: response.headers,
+                        invocationReporting: invocationContext.reporting)
 
                     // complete with the decoded type
                     result = .success(output)
+                    
+                    // report success metric
+                    invocationContext.reporting.successCounter?.increment()
                 } catch {
                     // if there was a decoding error, complete with that error
                     result = .failure(HTTPClientError(responseCode: 400, cause: error))
+                    
+                    // report success metric
+                    invocationContext.reporting.failure4XXCounter?.increment()
                 }
+            }
+            
+            if let durationMetricDetails = durationMetricDetails {
+                durationMetricDetails.1.recordMicroseconds(Date().timeIntervalSince(durationMetricDetails.0))
             }
 
             asyncResponseInvocationStrategy.invokeResponse(response: result, completion: completion)
@@ -112,8 +139,8 @@ public extension HTTPClient {
                                              httpMethod: httpMethod,
                                              input: input,
                                              completion: wrappingCompletion,
-                                             handlerDelegate: handlerDelegate)
-
+                                             invocationContext: invocationContext)
+            
         channelFuture.whenComplete { result in
             switch result {
             case .success(let channel):

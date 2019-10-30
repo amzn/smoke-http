@@ -20,35 +20,34 @@ import NIO
 import NIOHTTP1
 import NIOSSL
 import NIOTLS
-import LoggerAPI
+import Logging
 
 public extension HTTPClient {
-    private struct AsyncErrorResult {
-        let error: Error?
-    }
     
     /**
      Submits a request that will not return a response body to this client synchronously.
      
      - Parameters:
-     - endpointPath: The endpoint path for this request.
-     - httpMethod: The http method to use for this request.
-     - input: the input body data to send with this request.
-     - handlerDelegate: the delegate used to customize the request's channel handler.
-     - Throws: If an error occurred during the request.
+         - endpointPath: The endpoint path for this request.
+         - httpMethod: The http method to use for this request.
+         - input: the input body data to send with this request.
+         - invocationContext: context to use for this invocation.
+         - Throws: If an error occurred during the request.
      */
     func executeSyncWithoutOutput<InputType>(
         endpointOverride: URL? = nil,
         endpointPath: String,
         httpMethod: HTTPMethod,
         input: InputType,
-        handlerDelegate: HTTPClientChannelInboundHandlerDelegate) throws
+        invocationContext: HTTPClientInvocationContext) throws
         where InputType: HTTPRequestInputProtocol {
-            var responseError: AsyncErrorResult?
+            var responseError: HTTPClientError?
             let completedSemaphore = DispatchSemaphore(value: 0)
             
-            let completion: (Error?) -> () = { error in
-                responseError = AsyncErrorResult(error: error)
+            let completion: (HTTPClientError?) -> () = { error in
+                if let error = error {
+                    responseError = HTTPClientError(responseCode: 500, cause: error)
+                }
                 completedSemaphore.signal()
             }
             
@@ -59,8 +58,8 @@ public extension HTTPClient {
                 input: input,
                 completion: completion,
                 // the completion handler can be safely executed on a SwiftNIO thread
-                asyncResponseInvocationStrategy: SameThreadAsyncResponseInvocationStrategy<Error?>(),
-                handlerDelegate: handlerDelegate)
+                asyncResponseInvocationStrategy: SameThreadAsyncResponseInvocationStrategy<HTTPClientError?>(),
+                invocationContext: invocationContext)
             
             channelFuture.whenComplete { result in
                 switch result {
@@ -68,20 +67,21 @@ public extension HTTPClient {
                     channel.closeFuture.whenComplete { _ in
                         // if this channel is being closed and no response has been recorded
                         if responseError == nil {
-                            responseError = AsyncErrorResult(error: HTTPClient.unexpectedClosureType)
+                            responseError = HTTPClientError(responseCode: 500,
+                                                            cause: HTTPClient.unexpectedClosureType)
                             completedSemaphore.signal()
                         }
                     }
                 case .failure(let error):
                     // there was an issue creating the channel
-                    responseError = AsyncErrorResult(error: error)
+                    responseError = HTTPClientError(responseCode: 500, cause: error)
                     completedSemaphore.signal()
                 }
             }
             
             completedSemaphore.wait()
             
-            if let error = responseError?.error {
+            if let error = responseError {
                 throw error
             }
     }

@@ -17,23 +17,27 @@
 
 import Foundation
 import NIOHTTP1
+import Logging
 
 public protocol HTTPClientChannelInboundHandlerDelegate {
     var specifyContentHeadersForZeroLengthBody: Bool { get }
 
-    func addClientSpecificHeaders(handler: HTTPClientChannelInboundHandler) -> [(String, String)]
+    func addClientSpecificHeaders(handler: HTTPClientChannelInboundHandler, invocationReporting: HTTPClientInvocationReporting) -> [(String, String)]
 
-    func handleErrorResponses(responseHead: HTTPResponseHead, responseBodyData: Data?) -> HTTPClientError?
+    func handleErrorResponses(responseHead: HTTPResponseHead, responseBodyData: Data?,
+                              invocationReporting: HTTPClientInvocationReporting) -> HTTPClientError?
 }
 
-public struct DefaultHTTPClientChannelInboundHandlerDelegate {
-    let specifyContentHeadersForZeroLengthBody: Bool = true
+public struct DefaultHTTPClientChannelInboundHandlerDelegate: HTTPClientChannelInboundHandlerDelegate {
+    public let specifyContentHeadersForZeroLengthBody: Bool = true
 
-    func addClientSpecificHeaders(handler: HTTPClientChannelInboundHandler) -> [(String, String)] {
+    public func addClientSpecificHeaders(handler: HTTPClientChannelInboundHandler,
+                                         invocationReporting: HTTPClientInvocationReporting) -> [(String, String)] {
         return []
     }
 
-    func handleErrorResponses(responseHead: HTTPResponseHead, responseBodyData: Data?) -> HTTPClientError? {
+    public func handleErrorResponses(responseHead: HTTPResponseHead, responseBodyData: Data?,
+                                     invocationReporting: HTTPClientInvocationReporting) -> HTTPClientError? {
         return nil
     }
 }
