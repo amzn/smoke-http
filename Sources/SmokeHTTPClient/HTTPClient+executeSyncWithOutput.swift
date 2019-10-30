@@ -43,10 +43,10 @@ public extension HTTPClient {
         where InputType: HTTPRequestInputProtocol,
         OutputType: HTTPResponseOutputProtocol {
             
-            var responseResult: HTTPResult<OutputType>?
+            var responseResult: Result<OutputType, HTTPClientError>?
             let completedSemaphore = DispatchSemaphore(value: 0)
             
-            let completion: (HTTPResult<OutputType>) -> () = { result in
+            let completion: (Result<OutputType, HTTPClientError>) -> () = { result in
                 responseResult = result
                 completedSemaphore.signal()
             }
@@ -58,7 +58,7 @@ public extension HTTPClient {
                 input: input,
                 completion: completion,
                 // the completion handler can be safely executed on a SwiftNIO thread
-                asyncResponseInvocationStrategy: SameThreadAsyncResponseInvocationStrategy<HTTPResult<OutputType>>(),
+                asyncResponseInvocationStrategy: SameThreadAsyncResponseInvocationStrategy<Result<OutputType, HTTPClientError>>(),
                 handlerDelegate: handlerDelegate)
             
             channelFuture.whenComplete { result in
@@ -67,13 +67,13 @@ public extension HTTPClient {
                     channel.closeFuture.whenComplete { _ in
                         // if this channel is being closed and no response has been recorded
                         if responseResult == nil {
-                            responseResult = .error(HTTPClient.unexpectedClosureType)
+                            responseResult = .failure(HTTPClient.unexpectedClosureType)
                             completedSemaphore.signal()
                         }
                     }
                 case .failure(let error):
                     // there was an issue creating the channel
-                    responseResult = .error(error)
+                    responseResult = .failure(HTTPClientError(responseCode: 500, cause: error))
                     completedSemaphore.signal()
                 }
             }
@@ -88,9 +88,9 @@ public extension HTTPClient {
             Log.verbose("Got response from \(endpointOverride?.host ?? endpointHostName) - response received: \(result)")
             
             switch result {
-            case .error(let error):
+            case .failure(let error):
                 throw error
-            case .response(let response):
+            case .success(let response):
                 return response
             }
     }

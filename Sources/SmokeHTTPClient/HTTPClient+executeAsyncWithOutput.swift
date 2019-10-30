@@ -40,7 +40,7 @@ public extension HTTPClient {
             endpointPath: String,
             httpMethod: HTTPMethod,
             input: InputType,
-            completion: @escaping (HTTPResult<OutputType>) -> (),
+            completion: @escaping (Result<OutputType, HTTPClientError>) -> (),
             handlerDelegate: HTTPClientChannelInboundHandlerDelegate) throws -> EventLoopFuture<Channel>
         where InputType: HTTPRequestInputProtocol, OutputType: HTTPResponseOutputProtocol {
             return try executeAsyncWithOutput(
@@ -49,7 +49,7 @@ public extension HTTPClient {
                 httpMethod: httpMethod,
                 input: input,
                 completion: completion,
-                asyncResponseInvocationStrategy: GlobalDispatchQueueAsyncResponseInvocationStrategy<HTTPResult<OutputType>>(),
+                asyncResponseInvocationStrategy: GlobalDispatchQueueAsyncResponseInvocationStrategy<Result<OutputType, HTTPClientError>>(),
                 handlerDelegate: handlerDelegate)
     }
 
@@ -69,25 +69,25 @@ public extension HTTPClient {
             endpointPath: String,
             httpMethod: HTTPMethod,
             input: InputType,
-            completion: @escaping (HTTPResult<OutputType>) -> (),
+            completion: @escaping (Result<OutputType, HTTPClientError>) -> (),
             asyncResponseInvocationStrategy: InvocationStrategyType,
             handlerDelegate: HTTPClientChannelInboundHandlerDelegate) throws -> EventLoopFuture<Channel>
             where InputType: HTTPRequestInputProtocol, InvocationStrategyType: AsyncResponseInvocationStrategy,
-        InvocationStrategyType.OutputType == HTTPResult<OutputType>,
+        InvocationStrategyType.OutputType == Result<OutputType, HTTPClientError>,
         OutputType: HTTPResponseOutputProtocol {
 
         var hasComplete = false
         let requestDelegate = clientDelegate
         // create a wrapping completion handler to pass to the ChannelInboundHandler
         // that will decode the returned body into the desired decodable type.
-        let wrappingCompletion: (HTTPResult<HTTPResponseComponents>) -> () = { (rawResult) in
-            let result: HTTPResult<OutputType>
+        let wrappingCompletion: (Result<HTTPResponseComponents, HTTPClientError>) -> () = { (rawResult) in
+            let result: Result<OutputType, HTTPClientError>
 
             switch rawResult {
-            case .error(let error):
+            case .failure(let error):
                 // its an error; complete with the provided error
-                result = .error(error)
-            case .response(let response):
+                result = .failure(error)
+            case .success(let response):
                 do {
                     // decode the provided body into the desired type
                     let output: OutputType = try requestDelegate.decodeOutput(
@@ -95,10 +95,10 @@ public extension HTTPClient {
                         headers: response.headers)
 
                     // complete with the decoded type
-                    result = .response(output)
+                    result = .success(output)
                 } catch {
                     // if there was a decoding error, complete with that error
-                    result = .error(error)
+                    result = .failure(HTTPClientError(responseCode: 400, cause: error))
                 }
             }
 
@@ -120,12 +120,12 @@ public extension HTTPClient {
                 channel.closeFuture.whenComplete { _ in
                     // if this channel is being closed and no response has been recorded
                     if !hasComplete {
-                        completion(.error(HTTPClient.unexpectedClosureType))
+                        completion(.failure(HTTPClient.unexpectedClosureType))
                     }
                 }
             case .failure(let error):
                 // there was an issue creating the channel
-                completion(.error(error))
+                completion(.failure(HTTPClientError(responseCode: 500, cause: error)))
             }
         }
 
