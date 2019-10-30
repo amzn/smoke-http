@@ -51,19 +51,29 @@ public extension HTTPClient {
                 completedSemaphore.signal()
             }
             
-            let channel = try executeAsyncWithOutput(endpointOverride: endpointOverride,
-                                                     endpointPath: endpointPath,
-                                                     httpMethod: httpMethod,
-                                                     input: input,
-                                                     completion: completion,
-                                                     // the completion handler can be safely executed on a SwiftNIO thread
+            let channelFuture = try executeAsyncWithOutput(
+                endpointOverride: endpointOverride,
+                endpointPath: endpointPath,
+                httpMethod: httpMethod,
+                input: input,
+                completion: completion,
+                // the completion handler can be safely executed on a SwiftNIO thread
                 asyncResponseInvocationStrategy: SameThreadAsyncResponseInvocationStrategy<Result<OutputType, HTTPClientError>>(),
                 handlerDelegate: handlerDelegate)
             
-            channel.closeFuture.whenComplete { result in
-                // if this channel is being closed and no response has been recorded
-                if responseResult == nil {
-                    responseResult = .failure(HTTPClient.unexpectedClosureType)
+            channelFuture.whenComplete { result in
+                switch result {
+                case .success(let channel):
+                    channel.closeFuture.whenComplete { _ in
+                        // if this channel is being closed and no response has been recorded
+                        if responseResult == nil {
+                            responseResult = .failure(HTTPClient.unexpectedClosureType)
+                            completedSemaphore.signal()
+                        }
+                    }
+                case .failure(let error):
+                    // there was an issue creating the channel
+                    responseResult = .failure(HTTPClientError(responseCode: 500, cause: error))
                     completedSemaphore.signal()
                 }
             }
