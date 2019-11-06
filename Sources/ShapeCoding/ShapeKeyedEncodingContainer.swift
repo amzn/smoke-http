@@ -17,7 +17,7 @@
 
 import Foundation
 
-internal struct ShapeKeyedEncodingContainer<K: CodingKey> : KeyedEncodingContainerProtocol {
+internal struct ShapeKeyedEncodingContainer<K: CodingKey>: KeyedEncodingContainerProtocol {
     typealias Key = K
 
     private let enclosingContainer: ShapeSingleValueEncodingContainer

@@ -20,7 +20,8 @@ import NIO
 import NIOHTTP1
 import NIOSSL
 import NIOTLS
-import LoggerAPI
+import Logging
+import Metrics
 
 public extension HTTPClient {
     /**
@@ -33,10 +34,12 @@ public extension HTTPClient {
         let endpointPath: String
         let httpMethod: HTTPMethod
         let input: InputType
-        let handlerDelegate: HTTPClientChannelInboundHandlerDelegate
+        let invocationContext: HTTPClientInvocationContext
+        let innerInvocationContext: HTTPClientInvocationContext
         let httpClient: HTTPClient
         let retryConfiguration: HTTPClientRetryConfiguration
-        let retryOnError: (Swift.Error) -> Bool
+        let retryOnError: (HTTPClientError) -> Bool
+        let latencyMetricDetails: (Date, Metrics.Timer)?
         
         var retriesRemaining: Int
         
@@ -44,7 +47,7 @@ public extension HTTPClient {
         
         init(endpointOverride: URL?, endpointPath: String, httpMethod: HTTPMethod,
              input: InputType,
-             handlerDelegate: HTTPClientChannelInboundHandlerDelegate,
+             invocationContext: HTTPClientInvocationContext,
              httpClient: HTTPClient,
              retryConfiguration: HTTPClientRetryConfiguration,
              retryOnError: @escaping (Swift.Error) -> Bool) {
@@ -52,26 +55,71 @@ public extension HTTPClient {
             self.endpointPath = endpointPath
             self.httpMethod = httpMethod
             self.input = input
-            self.handlerDelegate = handlerDelegate
+            self.invocationContext = invocationContext
             self.httpClient = httpClient
             self.retryConfiguration = retryConfiguration
             self.retriesRemaining = retryConfiguration.numRetries
             self.retryOnError = retryOnError
+            
+            if let latencyTimer = invocationContext.reporting.latencyTimer {
+                self.latencyMetricDetails = (Date(), latencyTimer)
+            } else {
+                self.latencyMetricDetails = nil
+            }
+            // When using retry wrappers, the `HTTPClient` itself shouldn't record any metrics.
+            let innerReporting = HTTPClientInnerRetryInvocationReporting(logger: invocationContext.reporting.logger)
+            self.innerInvocationContext = HTTPClientInvocationContext(reporting: innerReporting, handlerDelegate: invocationContext.handlerDelegate)
         }
         
         func executeSyncWithOutput() throws -> OutputType {
+            defer {
+                // report the retryCount metric
+                let retryCount = retryConfiguration.numRetries - retriesRemaining
+                invocationContext.reporting.retryCountRecorder?.record(retryCount)
+                
+                if let durationMetricDetails = latencyMetricDetails {
+                    durationMetricDetails.1.recordMicroseconds(Date().timeIntervalSince(durationMetricDetails.0))
+                }
+            }
+            
             do {
                 // submit the synchronous request
-                return try httpClient.executeSyncWithOutput(endpointOverride: endpointOverride,
-                                                              endpointPath: endpointPath, httpMethod: httpMethod,
-                                                              input: input, handlerDelegate: handlerDelegate)
-            } catch {
+                let value: OutputType = try httpClient.executeSyncWithOutput(endpointOverride: endpointOverride,
+                                                                             endpointPath: endpointPath, httpMethod: httpMethod,
+                                                                             input: input, invocationContext: innerInvocationContext)
+                
+                // report success metric
+                invocationContext.reporting.successCounter?.increment()
+                
+                return value
+            } catch let error as HTTPClientError {
+                // report failure metric
+                switch error.category {
+                case .clientError:
+                    invocationContext.reporting.failure4XXCounter?.increment()
+                case .serverError:
+                    invocationContext.reporting.failure5XXCounter?.increment()
+                }
+                
                 return try completeOnError(error: error)
+            } catch {
+                // report success metric
+                invocationContext.reporting.failure4XXCounter?.increment()
+                
+                return try completeOnError(error: HTTPClientError(responseCode: 400, cause: error))
             }
         }
         
-        func completeOnError(error: Error) throws -> OutputType {
-            let shouldRetryOnError = retryOnError(error)
+        func completeOnError(error: HTTPClientError) throws -> OutputType {
+            let shouldRetryOnError: Bool
+            switch error.category {
+            case .clientError:
+                // never retry
+                shouldRetryOnError = false
+            case .serverError:
+                shouldRetryOnError = retryOnError(error)
+            }
+            let logger = invocationContext.reporting.logger
             
             // if there are retries remaining and we should retry on this error
             if retriesRemaining > 0 && shouldRetryOnError {
@@ -81,16 +129,15 @@ public extension HTTPClient {
                 let currentRetriesRemaining = retriesRemaining
                 retriesRemaining -= 1
                 
-                Log.debug("Request failed with error: \(error). Remaining retries: \(currentRetriesRemaining). "
-                        + "Retrying in \(retryInterval) ms.")
+                logger.debug("Request failed with error: \(error). Remaining retries: \(currentRetriesRemaining). Retrying in \(retryInterval) ms.")
                 usleep(useconds_t(retryInterval * milliToMicroSeconds))
-                Log.debug("Reattempting request due to remaining retries: \(currentRetriesRemaining)")
+                logger.debug("Reattempting request due to remaining retries: \(currentRetriesRemaining)")
                 return try executeSyncWithOutput()
             } else {
                 if !shouldRetryOnError {
-                    Log.debug("Request not retried due to error returned: \(error)")
+                    logger.debug("Request not retried due to error returned: \(error)")
                 } else {
-                    Log.debug("Request not retried due to maximum retries: \(retryConfiguration.numRetries)")
+                    logger.debug("Request not retried due to maximum retries: \(retryConfiguration.numRetries)")
                 }
                 
                 throw error
@@ -105,7 +152,7 @@ public extension HTTPClient {
         - endpointPath: The endpoint path for this request.
         - httpMethod: The http method to use for this request.
         - input: the input body data to send with this request.
-        - handlerDelegate: the delegate used to customize the request's channel handler.
+        - invocationContext: context to use for this invocation.
         - retryConfiguration: the retry configuration for this request.
         - retryOnError: function that should return if the provided error is retryable.
      */
@@ -114,7 +161,7 @@ public extension HTTPClient {
         endpointPath: String,
         httpMethod: HTTPMethod,
         input: InputType,
-        handlerDelegate: HTTPClientChannelInboundHandlerDelegate,
+        invocationContext: HTTPClientInvocationContext,
         retryConfiguration: HTTPClientRetryConfiguration,
         retryOnError: @escaping (Swift.Error) -> Bool) throws -> OutputType
         where InputType: HTTPRequestInputProtocol,
@@ -123,7 +170,7 @@ public extension HTTPClient {
             let retriable = ExecuteSyncWithOutputRetriable<InputType, OutputType>(
                 endpointOverride: endpointOverride, endpointPath: endpointPath,
                 httpMethod: httpMethod, input: input,
-                handlerDelegate: handlerDelegate, httpClient: self,
+                invocationContext: invocationContext, httpClient: self,
                 retryConfiguration: retryConfiguration,
                 retryOnError: retryOnError)
             

@@ -11,27 +11,22 @@
 // express or implied. See the License for the specific language governing
 // permissions and limitations under the License.
 //
-//  QueryHTTPRequestInput.swift
+//  HTTPClientInnerRetryInvocationReporting.swift
 //  SmokeHTTPClient
 //
 
 import Foundation
+import Logging
+import Metrics
 
 /**
- HTTP Request Input that only has a query.
+ When using retry wrappers, the `HTTPClient` itself shouldn't record any metrics.
  */
-public struct QueryHTTPRequestInput<QueryType: Encodable>: HTTPRequestInputProtocol {
-    public let queryEncodable: QueryType?
-    public let pathEncodable: QueryType?
-    public let bodyEncodable: QueryType?
-    public let additionalHeadersEncodable: QueryType?
-    public let pathPostfix: String?
-
-    public init(encodable: QueryType) {
-        self.queryEncodable = encodable
-        self.pathEncodable = nil
-        self.bodyEncodable = nil
-        self.additionalHeadersEncodable = nil
-        self.pathPostfix = nil
-    }
+internal struct HTTPClientInnerRetryInvocationReporting: HTTPClientInvocationReporting {
+    let logger: Logging.Logger
+    let successCounter: Metrics.Counter? = nil
+    let failure5XXCounter: Metrics.Counter? = nil
+    let failure4XXCounter: Metrics.Counter? = nil
+    let retryCountRecorder: Metrics.Recorder? = nil
+    let latencyTimer: Metrics.Timer? = nil
 }

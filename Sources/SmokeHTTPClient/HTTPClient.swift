@@ -20,7 +20,7 @@ import NIO
 import NIOHTTP1
 import NIOSSL
 import NIOTLS
-import LoggerAPI
+import Logging
 
 public class HTTPClient {
     /// The server hostname to contact for requests from this client.
@@ -115,7 +115,9 @@ public class HTTPClient {
      */
     deinit {
         guard isClosed() else {
-            return Log.error("HTTPClient was not closed properly prior to de-initialization.")
+            let logger = Logger(label: "com.amazon.HTTPClient")
+            
+            return logger.error("HTTPClient was not closed properly prior to de-initialization.")
         }
     }
     
@@ -167,7 +169,7 @@ public class HTTPClient {
             httpMethod: HTTPMethod,
             input: InputType,
             completion: @escaping (Result<HTTPResponseComponents, HTTPClientError>) -> (),
-            handlerDelegate: HTTPClientChannelInboundHandlerDelegate) throws -> EventLoopFuture<Channel>
+            invocationContext: HTTPClientInvocationContext) throws -> EventLoopFuture<Channel>
             where InputType: HTTPRequestInputProtocol {
 
         let endpointHostName = endpointOverride?.host ?? self.endpointHostName
@@ -187,7 +189,8 @@ public class HTTPClient {
 
         let requestComponents = try clientDelegate.encodeInputAndQueryString(
             input: input,
-            httpPath: endpointPath)
+            httpPath: endpointPath,
+            invocationReporting: invocationContext.reporting)
 
         let pathWithQuery = requestComponents.pathWithQuery
 
@@ -200,7 +203,8 @@ public class HTTPClient {
             throw HTTPError.invalidRequest("Request endpoint '\(endpoint)' not valid URL.")
         }
 
-        Log.verbose("Sending \(httpMethod) request to endpoint: \(endpoint) at path: \(sendPath).")
+        let logger = invocationContext.reporting.logger
+        logger.debug("Sending \(httpMethod) request to endpoint: \(endpoint) at path: \(sendPath).")
 
         let handler = HTTPClientChannelInboundHandler(contentType: contentType,
                                                       endpointUrl: url,
@@ -210,7 +214,8 @@ public class HTTPClient {
                                                       additionalHeaders: additionalHeaders,
                                                       errorProvider: clientDelegate.getResponseError,
                                                       completion: completion,
-                                                      channelInboundHandlerDelegate: handlerDelegate)
+                                                      channelInboundHandlerDelegate: invocationContext.handlerDelegate,
+                                                      invocationReporting: invocationContext.reporting)
 
         let bootstrap: ClientBootstrap
         // include the sslHandler in the channel pipeline if there one

@@ -66,9 +66,7 @@ public struct HTTPPathSegment: Equatable {
         }
         
         let invalidMultiSegments = segments.dropLast().filter { segment in
-            return segment.tokens.reduce(false) { (initial, current) in
-                return initial || current.isMultiSegment
-            }
+            return segment.tokens.map { $0.isMultiSegment }.contains(true)
         }
         
         guard invalidMultiSegments.isEmpty else {

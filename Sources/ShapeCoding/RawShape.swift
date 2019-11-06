@@ -63,7 +63,7 @@ public enum RawShape: Equatable, Codable {
         case .string(let string):
             return .string(string)
         case .dictionary(let dictionary):
-            let transformedDictionary = dictionary.mapValues{ $0.asShape }
+            let transformedDictionary = dictionary.mapValues { $0.asShape }
             
             return .dictionary(transformedDictionary)
         case .array(let array):

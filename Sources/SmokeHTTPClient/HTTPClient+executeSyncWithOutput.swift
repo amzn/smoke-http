@@ -20,26 +20,26 @@ import NIO
 import NIOHTTP1
 import NIOSSL
 import NIOTLS
-import LoggerAPI
+import Logging
 
 public extension HTTPClient {
     /**
      Submits a request that will return a response body to this client synchronously.
      
      - Parameters:
-     - endpointPath: The endpoint path for this request.
-     - httpMethod: The http method to use for this request.
-     - input: the input body data to send with this request.
-     - handlerDelegate: the delegate used to customize the request's channel handler.
-     - Returns: the response body.
-     - Throws: If an error occurred during the request.
+         - endpointPath: The endpoint path for this request.
+         - httpMethod: The http method to use for this request.
+         - input: the input body data to send with this request.
+         - invocationContext: context to use for this invocation.
+         - Returns: the response body.
+         - Throws: If an error occurred during the request.
      */
     func executeSyncWithOutput<InputType, OutputType>(
         endpointOverride: URL? = nil,
         endpointPath: String,
         httpMethod: HTTPMethod,
         input: InputType,
-        handlerDelegate: HTTPClientChannelInboundHandlerDelegate) throws -> OutputType
+        invocationContext: HTTPClientInvocationContext) throws -> OutputType
         where InputType: HTTPRequestInputProtocol,
         OutputType: HTTPResponseOutputProtocol {
             
@@ -59,7 +59,7 @@ public extension HTTPClient {
                 completion: completion,
                 // the completion handler can be safely executed on a SwiftNIO thread
                 asyncResponseInvocationStrategy: SameThreadAsyncResponseInvocationStrategy<Result<OutputType, HTTPClientError>>(),
-                handlerDelegate: handlerDelegate)
+                invocationContext: invocationContext)
             
             channelFuture.whenComplete { result in
                 switch result {
@@ -78,14 +78,15 @@ public extension HTTPClient {
                 }
             }
             
-            Log.verbose("Waiting for response from \(endpointOverride?.host ?? endpointHostName) ...")
+            let logger = invocationContext.reporting.logger
+            logger.debug("Waiting for response from \(endpointOverride?.host ?? endpointHostName) ...")
             completedSemaphore.wait()
             
             guard let result = responseResult else {
                 throw HTTPError.connectionError("Http request was closed without returning a response.")
             }
             
-            Log.verbose("Got response from \(endpointOverride?.host ?? endpointHostName) - response received: \(result)")
+            logger.debug("Got response from \(endpointOverride?.host ?? endpointHostName) - response received: \(result)")
             
             switch result {
             case .failure(let error):
