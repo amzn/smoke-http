@@ -35,8 +35,7 @@ internal struct HttpHeaderNames {
  Implementation of the ChannelInboundHandler protocol that handles sending
  data to the server and receiving a response.
  */
-public final class HTTPClientChannelInboundHandler<InvocationReportingType: HTTPClientInvocationReporting,
-        HandlerDelegateType: HTTPClientChannelInboundHandlerDelegate>: ChannelInboundHandler {
+public final class HTTPClientChannelInboundHandler<InvocationReportingType: HTTPClientInvocationReporting>: ChannelInboundHandler {
     public typealias InboundIn = HTTPClientResponsePart
     public typealias OutboundOut = HTTPClientRequestPart
 
@@ -63,7 +62,9 @@ public final class HTTPClientChannelInboundHandler<InvocationReportingType: HTTP
     /// A function that provides an Error based on the payload provided.
     private let errorProvider: (HTTPResponseHead, HTTPResponseComponents, InvocationReportingType) throws -> HTTPClientError
     /// Delegate that provides client-specific logic
-    private let delegate: HandlerDelegateType
+    /// TODO: It is possible for this type to be generic with the HTTPClientChannelInboundHandlerDelegate once compatibility
+    /// with Swift 5.0 is dropped (requires the ability to refer to Self as a generic parameter)
+    private let delegate: HTTPClientChannelInboundHandlerDelegate
     private let invocationReporting: InvocationReportingType
 
     /**
@@ -87,7 +88,7 @@ public final class HTTPClientChannelInboundHandler<InvocationReportingType: HTTP
          additionalHeaders: [(String, String)],
          errorProvider: @escaping (HTTPResponseHead, HTTPResponseComponents, InvocationReportingType) throws -> HTTPClientError,
          completion: @escaping (Result<HTTPResponseComponents, HTTPClientError>) -> (),
-         channelInboundHandlerDelegate: HandlerDelegateType,
+         channelInboundHandlerDelegate: HTTPClientChannelInboundHandlerDelegate,
          invocationReporting: InvocationReportingType) {
         self.contentType = contentType
         self.endpointUrl = endpointUrl

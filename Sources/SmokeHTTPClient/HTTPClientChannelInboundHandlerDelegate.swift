@@ -23,7 +23,7 @@ public protocol HTTPClientChannelInboundHandlerDelegate {
     var specifyContentHeadersForZeroLengthBody: Bool { get }
 
     func addClientSpecificHeaders<InvocationReportingType: HTTPClientInvocationReporting>(
-        handler: HTTPClientChannelInboundHandler<InvocationReportingType, Self>,
+        handler: HTTPClientChannelInboundHandler<InvocationReportingType>,
         invocationReporting: InvocationReportingType) -> [(String, String)]
 
     func handleErrorResponses<InvocationReportingType: HTTPClientInvocationReporting>(
@@ -35,7 +35,7 @@ public struct DefaultHTTPClientChannelInboundHandlerDelegate: HTTPClientChannelI
     public let specifyContentHeadersForZeroLengthBody: Bool = true
 
     public func addClientSpecificHeaders<InvocationReportingType: HTTPClientInvocationReporting>(
-            handler: HTTPClientChannelInboundHandler<InvocationReportingType, Self>,
+            handler: HTTPClientChannelInboundHandler<InvocationReportingType>,
             invocationReporting: InvocationReportingType) -> [(String, String)] {
         return []
     }
