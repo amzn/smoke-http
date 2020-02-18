@@ -34,12 +34,12 @@ public extension HTTPClient {
          - invocationContext: context to use for this invocation.
          - Throws: If an error occurred during the request.
      */
-    func executeSyncWithoutOutput<InputType>(
+    func executeSyncWithoutOutput<InputType, InvocationReportingType: HTTPClientInvocationReporting, HandlerDelegateType: HTTPClientChannelInboundHandlerDelegate>(
         endpointOverride: URL? = nil,
         endpointPath: String,
         httpMethod: HTTPMethod,
         input: InputType,
-        invocationContext: HTTPClientInvocationContext) throws
+        invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>) throws
         where InputType: HTTPRequestInputProtocol {
             var responseError: HTTPClientError?
             let completedSemaphore = DispatchSemaphore(value: 0)

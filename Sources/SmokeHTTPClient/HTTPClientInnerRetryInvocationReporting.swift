@@ -22,7 +22,9 @@ import Metrics
 /**
  When using retry wrappers, the `HTTPClient` itself shouldn't record any metrics.
  */
-internal struct HTTPClientInnerRetryInvocationReporting: HTTPClientInvocationReporting {
+internal struct HTTPClientInnerRetryInvocationReporting<TraceContextType: InvocationTraceContext>: HTTPClientInvocationReporting {
+    let internalRequestId: String
+    let traceContext: TraceContextType
     let logger: Logging.Logger
     let successCounter: Metrics.Counter? = nil
     let failure5XXCounter: Metrics.Counter? = nil

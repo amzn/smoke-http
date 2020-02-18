@@ -22,22 +22,27 @@ import Logging
 public protocol HTTPClientChannelInboundHandlerDelegate {
     var specifyContentHeadersForZeroLengthBody: Bool { get }
 
-    func addClientSpecificHeaders(handler: HTTPClientChannelInboundHandler, invocationReporting: HTTPClientInvocationReporting) -> [(String, String)]
+    func addClientSpecificHeaders<InvocationReportingType: HTTPClientInvocationReporting>(
+        handler: HTTPClientChannelInboundHandler<InvocationReportingType, Self>,
+        invocationReporting: InvocationReportingType) -> [(String, String)]
 
-    func handleErrorResponses(responseHead: HTTPResponseHead, responseBodyData: Data?,
-                              invocationReporting: HTTPClientInvocationReporting) -> HTTPClientError?
+    func handleErrorResponses<InvocationReportingType: HTTPClientInvocationReporting>(
+        responseHead: HTTPResponseHead, responseBodyData: Data?,
+        invocationReporting: InvocationReportingType) -> HTTPClientError?
 }
 
 public struct DefaultHTTPClientChannelInboundHandlerDelegate: HTTPClientChannelInboundHandlerDelegate {
     public let specifyContentHeadersForZeroLengthBody: Bool = true
 
-    public func addClientSpecificHeaders(handler: HTTPClientChannelInboundHandler,
-                                         invocationReporting: HTTPClientInvocationReporting) -> [(String, String)] {
+    public func addClientSpecificHeaders<InvocationReportingType: HTTPClientInvocationReporting>(
+            handler: HTTPClientChannelInboundHandler<InvocationReportingType, Self>,
+            invocationReporting: InvocationReportingType) -> [(String, String)] {
         return []
     }
 
-    public func handleErrorResponses(responseHead: HTTPResponseHead, responseBodyData: Data?,
-                                     invocationReporting: HTTPClientInvocationReporting) -> HTTPClientError? {
+    public func handleErrorResponses<InvocationReportingType: HTTPClientInvocationReporting>(
+            responseHead: HTTPResponseHead, responseBodyData: Data?,
+            invocationReporting: InvocationReportingType) -> HTTPClientError? {
         return nil
     }
 }

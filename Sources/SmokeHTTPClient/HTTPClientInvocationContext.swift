@@ -22,12 +22,12 @@ import Metrics
 /**
  A context related to the invocation of the HTTPClient.
  */
-public struct HTTPClientInvocationContext {
-    public let reporting: HTTPClientInvocationReporting
-    public let handlerDelegate: HTTPClientChannelInboundHandlerDelegate
+public struct HTTPClientInvocationContext<InvocationReportingType: HTTPClientInvocationReporting, HandlerDelegateType: HTTPClientChannelInboundHandlerDelegate> {
+    public let reporting: InvocationReportingType
+    public let handlerDelegate: HandlerDelegateType
     
-    public init(reporting: HTTPClientInvocationReporting,
-                handlerDelegate: HTTPClientChannelInboundHandlerDelegate) {
+    public init(reporting: InvocationReportingType,
+                handlerDelegate: HandlerDelegateType) {
         self.reporting = reporting
         self.handlerDelegate = handlerDelegate
     }

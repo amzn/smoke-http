@@ -34,12 +34,12 @@ public extension HTTPClient {
          - Returns: the response body.
          - Throws: If an error occurred during the request.
      */
-    func executeSyncWithOutput<InputType, OutputType>(
+    func executeSyncWithOutput<InputType, OutputType, InvocationReportingType: HTTPClientInvocationReporting, HandlerDelegateType: HTTPClientChannelInboundHandlerDelegate>(
         endpointOverride: URL? = nil,
         endpointPath: String,
         httpMethod: HTTPMethod,
         input: InputType,
-        invocationContext: HTTPClientInvocationContext) throws -> OutputType
+        invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>) throws -> OutputType
         where InputType: HTTPRequestInputProtocol,
         OutputType: HTTPResponseOutputProtocol {
             

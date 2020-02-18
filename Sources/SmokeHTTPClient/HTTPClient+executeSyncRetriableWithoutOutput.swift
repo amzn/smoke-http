@@ -33,14 +33,16 @@ public extension HTTPClient {
     /**
      Helper type that manages the state of a retriable sync request.
      */
-    private class ExecuteSyncWithoutOutputRetriable<InputType>
+    private class ExecuteSyncWithoutOutputRetriable<InputType,
+        InvocationReportingType: HTTPClientInvocationReporting, HandlerDelegateType: HTTPClientChannelInboundHandlerDelegate>
             where InputType: HTTPRequestInputProtocol {
         let endpointOverride: URL?
         let endpointPath: String
         let httpMethod: HTTPMethod
         let input: InputType
-        let invocationContext: HTTPClientInvocationContext
-        let innerInvocationContext: HTTPClientInvocationContext
+        let invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>
+        let innerInvocationContext:
+            HTTPClientInvocationContext<HTTPClientInnerRetryInvocationReporting<InvocationReportingType.TraceContextType>, HandlerDelegateType>
         let httpClient: HTTPClient
         let retryConfiguration: HTTPClientRetryConfiguration
         let retryOnError: (Swift.Error) -> Bool
@@ -50,7 +52,7 @@ public extension HTTPClient {
         
         init(endpointOverride: URL?, endpointPath: String, httpMethod: HTTPMethod,
              input: InputType,
-             invocationContext: HTTPClientInvocationContext,
+             invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>,
              httpClient: HTTPClient,
              retryConfiguration: HTTPClientRetryConfiguration,
              retryOnError: @escaping (Swift.Error) -> Bool) {
@@ -70,7 +72,9 @@ public extension HTTPClient {
                 self.latencyMetricDetails = nil
             }
             // When using retry wrappers, the `HTTPClient` itself shouldn't record any metrics.
-            let innerReporting = HTTPClientInnerRetryInvocationReporting(logger: invocationContext.reporting.logger)
+            let innerReporting = HTTPClientInnerRetryInvocationReporting(internalRequestId: invocationContext.reporting.internalRequestId,
+                                                                         traceContext: invocationContext.reporting.traceContext,
+                                                                         logger: invocationContext.reporting.logger)
             self.innerInvocationContext = HTTPClientInvocationContext(reporting: innerReporting, handlerDelegate: invocationContext.handlerDelegate)
         }
         
@@ -157,17 +161,18 @@ public extension HTTPClient {
         - retryConfiguration: the retry configuration for this request.
         - retryOnError: function that should return if the provided error is retryable.
      */
-    func executeSyncRetriableWithoutOutput<InputType>(
+    func executeSyncRetriableWithoutOutput<InputType,
+        InvocationReportingType: HTTPClientInvocationReporting, HandlerDelegateType: HTTPClientChannelInboundHandlerDelegate>(
         endpointOverride: URL? = nil,
         endpointPath: String,
         httpMethod: HTTPMethod,
         input: InputType,
-        invocationContext: HTTPClientInvocationContext,
+        invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>,
         retryConfiguration: HTTPClientRetryConfiguration,
         retryOnError: @escaping (Swift.Error) -> Bool) throws
         where InputType: HTTPRequestInputProtocol {
 
-            let retriable = ExecuteSyncWithoutOutputRetriable<InputType>(
+            let retriable = ExecuteSyncWithoutOutputRetriable<InputType, InvocationReportingType, HandlerDelegateType>(
                 endpointOverride: endpointOverride, endpointPath: endpointPath,
                 httpMethod: httpMethod, input: input,
                 invocationContext: invocationContext, httpClient: self,

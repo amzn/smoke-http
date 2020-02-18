@@ -36,13 +36,14 @@ public extension HTTPClient {
         - completion: Completion handler called with the response body or any error.
         - invocationContext: context to use for this invocation.
      */
-    func executeAsyncWithOutput<InputType, OutputType>(
+    func executeAsyncWithOutput<InputType, OutputType,
+        InvocationReportingType: HTTPClientInvocationReporting, HandlerDelegateType: HTTPClientChannelInboundHandlerDelegate>(
             endpointOverride: URL? = nil,
             endpointPath: String,
             httpMethod: HTTPMethod,
             input: InputType,
             completion: @escaping (Result<OutputType, HTTPClientError>) -> (),
-            invocationContext: HTTPClientInvocationContext) throws -> EventLoopFuture<Channel>
+            invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>) throws -> EventLoopFuture<Channel>
         where InputType: HTTPRequestInputProtocol, OutputType: HTTPResponseOutputProtocol {
             return try executeAsyncWithOutput(
                 endpointOverride: endpointOverride,
@@ -65,14 +66,15 @@ public extension HTTPClient {
          - asyncResponseInvocationStrategy: The invocation strategy for the response from this request.
          - invocationContext: context to use for this invocation.
      */
-    func executeAsyncWithOutput<InputType, OutputType, InvocationStrategyType>(
+    func executeAsyncWithOutput<InputType, OutputType, InvocationStrategyType,
+        InvocationReportingType: HTTPClientInvocationReporting, HandlerDelegateType: HTTPClientChannelInboundHandlerDelegate>(
             endpointOverride: URL? = nil,
             endpointPath: String,
             httpMethod: HTTPMethod,
             input: InputType,
             completion: @escaping (Result<OutputType, HTTPClientError>) -> (),
             asyncResponseInvocationStrategy: InvocationStrategyType,
-            invocationContext: HTTPClientInvocationContext) throws -> EventLoopFuture<Channel>
+            invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>) throws -> EventLoopFuture<Channel>
             where InputType: HTTPRequestInputProtocol, InvocationStrategyType: AsyncResponseInvocationStrategy,
         InvocationStrategyType.OutputType == Result<OutputType, HTTPClientError>,
         OutputType: HTTPResponseOutputProtocol {
