@@ -163,13 +163,13 @@ public class HTTPClient {
         }
     }
 
-    func executeAsync<InputType>(
+    func executeAsync<InputType, InvocationReportingType: HTTPClientInvocationReporting, HandlerDelegateType: HTTPClientChannelInboundHandlerDelegate>(
             endpointOverride: URL? = nil,
             endpointPath: String,
             httpMethod: HTTPMethod,
             input: InputType,
             completion: @escaping (Result<HTTPResponseComponents, HTTPClientError>) -> (),
-            invocationContext: HTTPClientInvocationContext) throws -> EventLoopFuture<Channel>
+            invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>) throws -> EventLoopFuture<Channel>
             where InputType: HTTPRequestInputProtocol {
 
         let endpointHostName = endpointOverride?.host ?? self.endpointHostName

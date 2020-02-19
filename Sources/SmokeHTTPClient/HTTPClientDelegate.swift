@@ -26,9 +26,10 @@ import Logging
 public protocol HTTPClientDelegate {
 
     /// Gets the error corresponding to a client response body on the response head and body data.
-    func getResponseError(responseHead: HTTPResponseHead,
-                          responseComponents: HTTPResponseComponents,
-                          invocationReporting: HTTPClientInvocationReporting) throws -> HTTPClientError
+    func getResponseError<InvocationReportingType: HTTPClientInvocationReporting>(
+        responseHead: HTTPResponseHead,
+        responseComponents: HTTPResponseComponents,
+        invocationReporting: InvocationReportingType) throws -> HTTPClientError
 
     /**
      Gets the encoded input body and path with a query string for a client request.
@@ -37,16 +38,17 @@ public protocol HTTPClientDelegate {
         - input: The input used to define the request.
         - httpPath: The http path for the request.
      */
-    func encodeInputAndQueryString<InputType>(
+    func encodeInputAndQueryString<InputType, InvocationReportingType: HTTPClientInvocationReporting>(
         input: InputType,
         httpPath: String,
-        invocationReporting: HTTPClientInvocationReporting) throws -> HTTPRequestComponents
+        invocationReporting: InvocationReportingType) throws -> HTTPRequestComponents
     where InputType: HTTPRequestInputProtocol
 
     /// Gets the decoded output base on the response body.
-    func decodeOutput<OutputType>(output: Data?,
-                                  headers: [(String, String)],
-                                  invocationReporting: HTTPClientInvocationReporting) throws -> OutputType
+    func decodeOutput<OutputType, InvocationReportingType: HTTPClientInvocationReporting>(
+        output: Data?,
+        headers: [(String, String)],
+        invocationReporting: InvocationReportingType) throws -> OutputType
     where OutputType: HTTPResponseOutputProtocol
 
     /// Gets the TLS configuration required for HTTPClient's use-case.

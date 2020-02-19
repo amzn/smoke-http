@@ -23,9 +23,16 @@ import Metrics
  A context related to reporting on the invocation of the HTTPClient.
  */
 public protocol HTTPClientInvocationReporting {
+    associatedtype TraceContextType: InvocationTraceContext
     
     /// The `Logging.Logger` to use for logging for this invocation.
     var logger: Logging.Logger { get }
+    
+    /// The internal Request Id associated with this invocation.
+    var internalRequestId: String { get }
+    
+    /// The trace context associated with this invocation.
+    var traceContext: TraceContextType { get }
     
     /// The `Metrics.Counter` to record the success of this invocation.
     var successCounter: Metrics.Counter? { get }

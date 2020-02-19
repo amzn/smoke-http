@@ -35,7 +35,7 @@ internal struct HttpHeaderNames {
  Implementation of the ChannelInboundHandler protocol that handles sending
  data to the server and receiving a response.
  */
-public final class HTTPClientChannelInboundHandler: ChannelInboundHandler {
+public final class HTTPClientChannelInboundHandler<InvocationReportingType: HTTPClientInvocationReporting>: ChannelInboundHandler {
     public typealias InboundIn = HTTPClientResponsePart
     public typealias OutboundOut = HTTPClientRequestPart
 
@@ -55,14 +55,17 @@ public final class HTTPClientChannelInboundHandler: ChannelInboundHandler {
     public var responseHead: HTTPResponseHead?
     /// The body data previously received.
     public var partialBody: Data?
+    public var outwardsRequestContext: InvocationReportingType.TraceContextType.OutwardsRequestContext?
 
     /// A completion handler to pass any recieved response to.
     private let completion: (Result<HTTPResponseComponents, HTTPClientError>) -> ()
     /// A function that provides an Error based on the payload provided.
-    private let errorProvider: (HTTPResponseHead, HTTPResponseComponents, HTTPClientInvocationReporting) throws -> HTTPClientError
+    private let errorProvider: (HTTPResponseHead, HTTPResponseComponents, InvocationReportingType) throws -> HTTPClientError
     /// Delegate that provides client-specific logic
+    /// TODO: It is possible for this type to be generic with the HTTPClientChannelInboundHandlerDelegate once compatibility
+    /// with Swift 5.0 is dropped (requires the ability to refer to Self as a generic parameter)
     private let delegate: HTTPClientChannelInboundHandlerDelegate
-    private let invocationReporting: HTTPClientInvocationReporting
+    private let invocationReporting: InvocationReportingType
 
     /**
      Initializer.
@@ -83,10 +86,10 @@ public final class HTTPClientChannelInboundHandler: ChannelInboundHandler {
          httpMethod: HTTPMethod,
          bodyData: Data,
          additionalHeaders: [(String, String)],
-         errorProvider: @escaping (HTTPResponseHead, HTTPResponseComponents, HTTPClientInvocationReporting) throws -> HTTPClientError,
+         errorProvider: @escaping (HTTPResponseHead, HTTPResponseComponents, InvocationReportingType) throws -> HTTPClientError,
          completion: @escaping (Result<HTTPResponseComponents, HTTPClientError>) -> (),
          channelInboundHandlerDelegate: HTTPClientChannelInboundHandlerDelegate,
-         invocationReporting: HTTPClientInvocationReporting) {
+         invocationReporting: InvocationReportingType) {
         self.contentType = contentType
         self.endpointUrl = endpointUrl
         self.endpointPath = endpointPath
@@ -164,6 +167,11 @@ public final class HTTPClientChannelInboundHandler: ChannelInboundHandler {
             let error = HTTPClientError(responseCode: 400, cause: cause)
 
             logger.error("Response head was not received")
+            
+            invocationReporting.traceContext.handleOutwardsRequestFailure(outwardsRequestContext: self.outwardsRequestContext,
+                                                                          logger: self.invocationReporting.logger,
+                                                                          internalRequestId: self.invocationReporting.internalRequestId,
+                                                                          responseHead: nil,bodyData: bodyData, error: error)
 
             // complete with this error
             completion(.failure(error))
@@ -192,6 +200,11 @@ public final class HTTPClientChannelInboundHandler: ChannelInboundHandler {
 
         // if the response status is ok
         if isSuccess {
+            invocationReporting.traceContext.handleOutwardsRequestSuccess(outwardsRequestContext: self.outwardsRequestContext,
+                                                                          logger: self.invocationReporting.logger,
+                                                                          internalRequestId: self.invocationReporting.internalRequestId,
+                                                                          responseHead: responseHead, bodyData: bodyData)
+            
             // complete with the response data (potentially empty)
             completion(.success(responseComponents))
             return
@@ -201,6 +214,11 @@ public final class HTTPClientChannelInboundHandler: ChannelInboundHandler {
         if let error = delegate.handleErrorResponses(responseHead: responseHead,
                                                      responseBodyData: bodyData,
                                                      invocationReporting: invocationReporting) {
+            invocationReporting.traceContext.handleOutwardsRequestFailure(outwardsRequestContext: self.outwardsRequestContext,
+                                                                          logger: self.invocationReporting.logger,
+                                                                          internalRequestId: self.invocationReporting.internalRequestId,
+                                                                          responseHead: responseHead, bodyData: bodyData, error: error)
+            
             completion(.failure(error))
             return
         }
@@ -215,6 +233,11 @@ public final class HTTPClientChannelInboundHandler: ChannelInboundHandler {
             // if the provider throws an error, use this error
             responseError = HTTPClientError(responseCode: 400, cause: error)
         }
+        
+        invocationReporting.traceContext.handleOutwardsRequestFailure(outwardsRequestContext: self.outwardsRequestContext,
+                                                                      logger: self.invocationReporting.logger,
+                                                                      internalRequestId: self.invocationReporting.internalRequestId,
+                                                                      responseHead: responseHead, bodyData: bodyData, error: responseError)
 
         // complete with the error
         completion(.failure(responseError))
@@ -250,8 +273,15 @@ public final class HTTPClientChannelInboundHandler: ChannelInboundHandler {
         headers.append(("Accept", "*/*"))
 
         // Create the request head
-        var httpRequestHead = HTTPRequestHead(version: HTTPVersion(major: 1, minor: 1),
+        let httpVersion = HTTPVersion(major: 1, minor: 1)
+        var httpRequestHead = HTTPRequestHead(version: httpVersion,
                                               method: httpMethod, uri: endpointPath)
+        
+        self.outwardsRequestContext = invocationReporting.traceContext.handleOutwardsRequestStart(method: httpMethod, uri: endpointPath, version: httpVersion,
+                                                                                                  logger: self.invocationReporting.logger,
+                                                                                                  internalRequestId: self.invocationReporting.internalRequestId,
+                                                                                                  headers: &headers, bodyData: bodyData)
+        
         httpRequestHead.headers = HTTPHeaders(headers)
 
         // copy the body data to a ByteBuffer

@@ -36,13 +36,13 @@ public extension HTTPClient {
         - completion: Completion handler called with an error if one occurs or nil otherwise.
         - invocationContext: context to use for this invocation.
      */
-    func executeAsyncWithoutOutput<InputType>(
+    func executeAsyncWithoutOutput<InputType, InvocationReportingType: HTTPClientInvocationReporting, HandlerDelegateType: HTTPClientChannelInboundHandlerDelegate>(
         endpointOverride: URL? = nil,
         endpointPath: String,
         httpMethod: HTTPMethod,
         input: InputType,
         completion: @escaping (HTTPClientError?) -> (),
-        invocationContext: HTTPClientInvocationContext) throws -> EventLoopFuture<Channel>
+        invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>) throws -> EventLoopFuture<Channel>
         where InputType: HTTPRequestInputProtocol {
             return try executeAsyncWithoutOutput(
                 endpointOverride: endpointOverride,
@@ -65,14 +65,15 @@ public extension HTTPClient {
         - asyncResponseInvocationStrategy: The invocation strategy for the response from this request.
         - invocationContext: context to use for this invocation.
      */
-    func executeAsyncWithoutOutput<InputType, InvocationStrategyType>(
+    func executeAsyncWithoutOutput<InputType, InvocationStrategyType,
+            InvocationReportingType: HTTPClientInvocationReporting, HandlerDelegateType: HTTPClientChannelInboundHandlerDelegate>(
         endpointOverride: URL? = nil,
         endpointPath: String,
         httpMethod: HTTPMethod,
         input: InputType,
         completion: @escaping (HTTPClientError?) -> (),
         asyncResponseInvocationStrategy: InvocationStrategyType,
-        invocationContext: HTTPClientInvocationContext) throws -> EventLoopFuture<Channel>
+        invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>) throws -> EventLoopFuture<Channel>
         where InputType: HTTPRequestInputProtocol, InvocationStrategyType: AsyncResponseInvocationStrategy,
         InvocationStrategyType.OutputType == HTTPClientError? {
             
