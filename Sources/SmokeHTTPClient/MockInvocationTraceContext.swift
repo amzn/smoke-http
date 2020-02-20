@@ -22,13 +22,15 @@ import NIOHTTP1
 public struct MockInvocationTraceContext: InvocationTraceContext {
     public typealias OutwardsRequestContext = String
     
+    public let outwardsRequestContext = "OutwardsRequestContext"
+    
     public init() {
         
     }
     
     public func handleOutwardsRequestStart(method: HTTPMethod, uri: String, version: HTTPVersion, logger: Logger, internalRequestId: String,
                                     headers: inout [(String, String)], bodyData: Data) -> String {
-        return "OutwardsRequestContext"
+        return self.outwardsRequestContext
     }
     
     public func handleOutwardsRequestSuccess(outwardsRequestContext: String?, logger: Logger, internalRequestId: String,
