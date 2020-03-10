@@ -91,9 +91,10 @@ public extension HTTPClient {
             
             do {
                 // submit the synchronous request
-                try httpClient.executeSyncWithoutOutput(endpointOverride: endpointOverride,
-                                                              endpointPath: endpointPath, httpMethod: httpMethod,
-                                                              input: input, invocationContext: innerInvocationContext)
+                try httpClient.executeSyncWithoutOutputWithWrappedInvocationContext(
+                    endpointOverride: endpointOverride,
+                    endpointPath: endpointPath, httpMethod: httpMethod,
+                    input: input, invocationContext: innerInvocationContext)
                 
                 // report success metric
                 invocationContext.reporting.successCounter?.increment()
@@ -171,11 +172,12 @@ public extension HTTPClient {
         retryConfiguration: HTTPClientRetryConfiguration,
         retryOnError: @escaping (Swift.Error) -> Bool) throws
         where InputType: HTTPRequestInputProtocol {
+            let wrappingInvocationContext = invocationContext.withOutgoingRequestIdLoggerMetadata()
 
-            let retriable = ExecuteSyncWithoutOutputRetriable<InputType, InvocationReportingType, HandlerDelegateType>(
+            let retriable = ExecuteSyncWithoutOutputRetriable(
                 endpointOverride: endpointOverride, endpointPath: endpointPath,
                 httpMethod: httpMethod, input: input,
-                invocationContext: invocationContext, httpClient: self,
+                invocationContext: wrappingInvocationContext, httpClient: self,
                 retryConfiguration: retryConfiguration,
                 retryOnError: retryOnError)
             

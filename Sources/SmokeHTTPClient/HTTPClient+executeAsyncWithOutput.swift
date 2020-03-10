@@ -54,7 +54,7 @@ public extension HTTPClient {
                 asyncResponseInvocationStrategy: GlobalDispatchQueueAsyncResponseInvocationStrategy<Result<OutputType, HTTPClientError>>(),
                 invocationContext: invocationContext)
     }
-
+    
     /**
      Submits a request that will return a response body to this client asynchronously.
 
@@ -67,6 +67,41 @@ public extension HTTPClient {
          - invocationContext: context to use for this invocation.
      */
     func executeAsyncWithOutput<InputType, OutputType, InvocationStrategyType,
+        InvocationReportingType: HTTPClientInvocationReporting, HandlerDelegateType: HTTPClientChannelInboundHandlerDelegate>(
+            endpointOverride: URL? = nil,
+            endpointPath: String,
+            httpMethod: HTTPMethod,
+            input: InputType,
+            completion: @escaping (Result<OutputType, HTTPClientError>) -> (),
+            asyncResponseInvocationStrategy: InvocationStrategyType,
+            invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>) throws -> EventLoopFuture<Channel>
+            where InputType: HTTPRequestInputProtocol, InvocationStrategyType: AsyncResponseInvocationStrategy,
+        InvocationStrategyType.OutputType == Result<OutputType, HTTPClientError>,
+        OutputType: HTTPResponseOutputProtocol {
+            let wrappingInvocationContext = invocationContext.withOutgoingRequestIdLoggerMetadata()
+            
+            return try executeAsyncWithOutputWithWrappedInvocationContext(
+                endpointOverride: endpointOverride,
+                endpointPath: endpointPath,
+                httpMethod: httpMethod,
+                input: input,
+                completion: completion,
+                asyncResponseInvocationStrategy: asyncResponseInvocationStrategy,
+                invocationContext: wrappingInvocationContext)
+    }
+
+    /**
+     Submits a request that will return a response body to this client asynchronously. To be called when the `InvocationContext` has already been wrapped with an outgoingRequestId aware Logger.
+
+     - Parameters:
+         - endpointPath: The endpoint path for this request.
+         - httpMethod: The http method to use for this request.
+         - input: the input body data to send with this request.
+         - completion: Completion handler called with the response body or any error.
+         - asyncResponseInvocationStrategy: The invocation strategy for the response from this request.
+         - invocationContext: context to use for this invocation.
+     */
+    internal func executeAsyncWithOutputWithWrappedInvocationContext<InputType, OutputType, InvocationStrategyType,
         InvocationReportingType: HTTPClientInvocationReporting, HandlerDelegateType: HTTPClientChannelInboundHandlerDelegate>(
             endpointOverride: URL? = nil,
             endpointPath: String,

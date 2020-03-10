@@ -82,11 +82,12 @@ public extension HTTPClient {
         
         func executeAsyncWithOutput() throws {
             // submit the asynchronous request
-            _ = try httpClient.executeAsyncWithOutput(endpointOverride: endpointOverride,
-                                                      endpointPath: endpointPath, httpMethod: httpMethod,
-                                                      input: input, completion: completion,
-                                                      asyncResponseInvocationStrategy: asyncResponseInvocationStrategy,
-                                                      invocationContext: innerInvocationContext)
+            _ = try httpClient.executeAsyncWithOutputWithWrappedInvocationContext(
+                endpointOverride: endpointOverride,
+                endpointPath: endpointPath, httpMethod: httpMethod,
+                input: input, completion: completion,
+                asyncResponseInvocationStrategy: asyncResponseInvocationStrategy,
+                invocationContext: innerInvocationContext)
         }
         
         func completion(innerResult: Result<OutputType, HTTPClientError>) {
@@ -223,12 +224,13 @@ public extension HTTPClient {
         where InputType: HTTPRequestInputProtocol, InvocationStrategyType: AsyncResponseInvocationStrategy,
         InvocationStrategyType.OutputType == Result<OutputType, HTTPClientError>,
         OutputType: HTTPResponseOutputProtocol {
-
+            let wrappingInvocationContext = invocationContext.withOutgoingRequestIdLoggerMetadata()
+            
             let retriable = ExecuteAsyncWithOutputRetriable(
                 endpointOverride: endpointOverride, endpointPath: endpointPath,
                 httpMethod: httpMethod, input: input, outerCompletion: completion,
                 asyncResponseInvocationStrategy: asyncResponseInvocationStrategy,
-                invocationContext: invocationContext, httpClient: self,
+                invocationContext: wrappingInvocationContext, httpClient: self,
                 retryConfiguration: retryConfiguration,
                 retryOnError: retryOnError)
             

@@ -19,6 +19,8 @@ import Foundation
 import Logging
 import Metrics
 
+private let outgoingRequestId = "outgoingRequestId"
+
 /**
  A context related to the invocation of the HTTPClient.
  */
@@ -30,5 +32,26 @@ public struct HTTPClientInvocationContext<InvocationReportingType: HTTPClientInv
                 handlerDelegate: HandlerDelegateType) {
         self.reporting = reporting
         self.handlerDelegate = handlerDelegate
+    }
+}
+
+extension HTTPClientInvocationContext {
+    func withOutgoingRequestIdLoggerMetadata() ->
+            HTTPClientInvocationContext<StandardHTTPClientInvocationReporting<InvocationReportingType.TraceContextType>, HandlerDelegateType> {
+        var outwardInvocationLogger = reporting.logger
+        outwardInvocationLogger[metadataKey: outgoingRequestId] = "\(UUID().uuidString)"
+        
+        let wrappingInvocationReporting = StandardHTTPClientInvocationReporting(
+            internalRequestId: reporting.internalRequestId,
+            traceContext: reporting.traceContext,
+            logger: outwardInvocationLogger,
+            successCounter: reporting.successCounter,
+            failure5XXCounter: reporting.failure5XXCounter,
+            failure4XXCounter: reporting.failure4XXCounter,
+            retryCountRecorder: reporting.retryCountRecorder,
+            latencyTimer: reporting.latencyTimer)
+        return HTTPClientInvocationContext<StandardHTTPClientInvocationReporting<InvocationReportingType.TraceContextType>,
+                HandlerDelegateType>(reporting: wrappingInvocationReporting,
+                                     handlerDelegate: handlerDelegate)
     }
 }

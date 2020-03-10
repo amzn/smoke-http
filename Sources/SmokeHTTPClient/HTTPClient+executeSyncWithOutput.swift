@@ -42,6 +42,36 @@ public extension HTTPClient {
         invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>) throws -> OutputType
         where InputType: HTTPRequestInputProtocol,
         OutputType: HTTPResponseOutputProtocol {
+            let wrappingInvocationContext = invocationContext.withOutgoingRequestIdLoggerMetadata()
+            
+            return try executeSyncWithOutputWithWrappedInvocationContext(
+                endpointOverride: endpointOverride,
+                endpointPath: endpointPath,
+                httpMethod: httpMethod,
+                input: input,
+                invocationContext: wrappingInvocationContext)
+    }
+    
+    /**
+     Submits a request that will return a response body to this client synchronously. To be called when the `InvocationContext` has already been wrapped with an outgoingRequestId aware Logger.
+     
+     - Parameters:
+         - endpointPath: The endpoint path for this request.
+         - httpMethod: The http method to use for this request.
+         - input: the input body data to send with this request.
+         - invocationContext: context to use for this invocation.
+         - Returns: the response body.
+         - Throws: If an error occurred during the request.
+     */
+    internal func executeSyncWithOutputWithWrappedInvocationContext<InputType, OutputType, InvocationReportingType: HTTPClientInvocationReporting,
+            HandlerDelegateType: HTTPClientChannelInboundHandlerDelegate>(
+        endpointOverride: URL? = nil,
+        endpointPath: String,
+        httpMethod: HTTPMethod,
+        input: InputType,
+        invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>) throws -> OutputType
+        where InputType: HTTPRequestInputProtocol,
+        OutputType: HTTPResponseOutputProtocol {
             
             var responseResult: Result<OutputType, HTTPClientError>?
             let completedSemaphore = DispatchSemaphore(value: 0)

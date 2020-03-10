@@ -76,6 +76,40 @@ public extension HTTPClient {
         invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>) throws -> EventLoopFuture<Channel>
         where InputType: HTTPRequestInputProtocol, InvocationStrategyType: AsyncResponseInvocationStrategy,
         InvocationStrategyType.OutputType == HTTPClientError? {
+            let wrappingInvocationContext = invocationContext.withOutgoingRequestIdLoggerMetadata()
+            
+            return try executeAsyncWithoutOutputWithWrappedInvocationContext(
+                endpointOverride: endpointOverride,
+                endpointPath: endpointPath,
+                httpMethod: httpMethod,
+                input: input,
+                completion: completion,
+                asyncResponseInvocationStrategy: asyncResponseInvocationStrategy,
+                invocationContext: wrappingInvocationContext)
+    }
+    
+    /**
+     Submits a request that will not return a response body to this client asynchronously. To be called when the `InvocationContext` has already been wrapped with an outgoingRequestId aware Logger.
+     
+     - Parameters:
+        - endpointPath: The endpoint path for this request.
+        - httpMethod: The http method to use for this request.
+        - input: the input body data to send with this request.
+        - completion: Completion handler called with an error if one occurs or nil otherwise.
+        - asyncResponseInvocationStrategy: The invocation strategy for the response from this request.
+        - invocationContext: context to use for this invocation.
+     */
+    internal func executeAsyncWithoutOutputWithWrappedInvocationContext<InputType, InvocationStrategyType,
+            InvocationReportingType: HTTPClientInvocationReporting, HandlerDelegateType: HTTPClientChannelInboundHandlerDelegate>(
+        endpointOverride: URL? = nil,
+        endpointPath: String,
+        httpMethod: HTTPMethod,
+        input: InputType,
+        completion: @escaping (HTTPClientError?) -> (),
+        asyncResponseInvocationStrategy: InvocationStrategyType,
+        invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>) throws -> EventLoopFuture<Channel>
+        where InputType: HTTPRequestInputProtocol, InvocationStrategyType: AsyncResponseInvocationStrategy,
+        InvocationStrategyType.OutputType == HTTPClientError? {
             
             let latencyMetricDetails: (Date, Metrics.Timer)?
             if let latencyTimer = invocationContext.reporting.latencyTimer {
