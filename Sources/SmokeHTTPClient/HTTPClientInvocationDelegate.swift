@@ -17,13 +17,29 @@
 
 import Foundation
 import AsyncHTTPClient
+import NIOHTTP1
 import Logging
+
+public struct HTTPRequestParameters {
+    /// The content type of the payload being sent.
+    public let contentType: String
+    /// The endpoint url to request a response from.
+    public let endpointUrl: URL
+    /// The path to request a response from.
+    public let endpointPath: String
+    /// The http method to use for the request.
+    public let httpMethod: HTTPMethod
+    /// The request body data to use.
+    public let bodyData: Data
+    /// Any additional headers to add
+    public let additionalHeaders: [(String, String)]
+}
 
 public protocol HTTPClientInvocationDelegate {
     var specifyContentHeadersForZeroLengthBody: Bool { get }
 
     func addClientSpecificHeaders<InvocationReportingType: HTTPClientInvocationReporting>(
-        additionalHeaders: [(String, String)],
+        parameters: HTTPRequestParameters,
         invocationReporting: InvocationReportingType) -> [(String, String)]
 
     func handleErrorResponses<InvocationReportingType: HTTPClientInvocationReporting>(
@@ -35,7 +51,7 @@ public struct DefaultHTTPClientInvocationDelegate: HTTPClientInvocationDelegate 
     public let specifyContentHeadersForZeroLengthBody: Bool = true
 
     public func addClientSpecificHeaders<InvocationReportingType: HTTPClientInvocationReporting>(
-            additionalHeaders: [(String, String)],
+            parameters: HTTPRequestParameters,
             invocationReporting: InvocationReportingType) -> [(String, String)] {
         return []
     }

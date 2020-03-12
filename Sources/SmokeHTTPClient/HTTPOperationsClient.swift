@@ -125,9 +125,19 @@ public struct HTTPOperationsClient {
         let logger = invocationContext.reporting.logger
         logger.debug("Sending \(httpMethod) request to endpoint: \(endpoint) at path: \(sendPath).")
                 
+        guard let url = URL(string: endpoint) else {
+            throw HTTPError.invalidRequest("Request endpoint '\(endpoint)' not valid URL.")
+        }
+                
+        let parameters = HTTPRequestParameters(contentType: contentType,
+                                               endpointUrl: url,
+                                               endpointPath: sendPath,
+                                               httpMethod: httpMethod,
+                                               bodyData: sendBody,
+                                               additionalHeaders: additionalHeaders)
+                
         var requestHeaders = getRequestHeaders(
-            bodyData: sendBody,
-            additionalHeaders: additionalHeaders,
+            parameters: parameters,
             invocationContext: invocationContext)
                 
         let outwardsRequestContext = invocationContext.reporting.traceContext.handleOutwardsRequestStart(
@@ -260,15 +270,15 @@ public struct HTTPOperationsClient {
     
     private func getRequestHeaders<InvocationReportingType: HTTPClientInvocationReporting,
                 HandlerDelegateType: HTTPClientInvocationDelegate>(
-            bodyData: Data,
-            additionalHeaders: [(String, String)],
+            parameters: HTTPRequestParameters,
             invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>) -> HTTPHeaders {
         let delegate = invocationContext.handlerDelegate
         
         var headers = delegate.addClientSpecificHeaders(
-            additionalHeaders: additionalHeaders,
+            parameters: parameters,
             invocationReporting: invocationContext.reporting)
 
+        let bodyData = parameters.bodyData
         // TODO: Move headers out to HTTPClient for UrlRequest
         if bodyData.count > 0 || delegate.specifyContentHeadersForZeroLengthBody {
             headers.append((HttpHeaderNames.contentType, contentType))
