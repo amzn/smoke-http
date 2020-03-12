@@ -31,6 +31,9 @@ internal struct HttpHeaderNames {
     static let contentType = "Content-Type"
 }
 
+/**
+ A wrapper around a `HTTPClient` instance that handles operation request and responses.
+ */
 public struct HTTPOperationsClient {
     /// The server hostname to contact for requests from this client.
     public let endpointHostName: String
@@ -43,7 +46,7 @@ public struct HTTPOperationsClient {
     /// What scheme to use for the endpoint
     let endpointScheme: String
     
-    /// The TLSConfiguration to use for connections from this client
+    /// The `HTTPClient` used for this instance
     private let wrappedHttpClient: HTTPClient
     
     /**
