@@ -16,7 +16,7 @@
 //
 
 import Foundation
-import NIOHTTP1
+import AsyncHTTPClient
 import NIOSSL
 import Logging
 
@@ -27,7 +27,7 @@ public protocol HTTPClientDelegate {
 
     /// Gets the error corresponding to a client response body on the response head and body data.
     func getResponseError<InvocationReportingType: HTTPClientInvocationReporting>(
-        responseHead: HTTPResponseHead,
+        response: HTTPClient.Response,
         responseComponents: HTTPResponseComponents,
         invocationReporting: InvocationReportingType) throws -> HTTPClientError
 

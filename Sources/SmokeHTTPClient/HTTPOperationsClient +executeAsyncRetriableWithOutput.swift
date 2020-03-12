@@ -11,7 +11,7 @@
 // express or implied. See the License for the specific language governing
 // permissions and limitations under the License.
 //
-//  HTTPClient+executeAsyncRetriableWithOutput.swift
+//  HTTPOperationsClient+executeAsyncRetriableWithOutput.swift
 //  SmokeHTTPClient
 //
 
@@ -23,12 +23,12 @@ import NIOTLS
 import Logging
 import Metrics
 
-public extension HTTPClient {
+public extension HTTPOperationsClient {
     /**
      Helper type that manages the state of a retriable async request.
      */
     private class ExecuteAsyncWithOutputRetriable<InputType, OutputType, InvocationStrategyType,
-        InvocationReportingType: HTTPClientInvocationReporting, HandlerDelegateType: HTTPClientChannelInboundHandlerDelegate>
+        InvocationReportingType: HTTPClientInvocationReporting, HandlerDelegateType: HTTPClientInvocationDelegate>
             where InputType: HTTPRequestInputProtocol, InvocationStrategyType: AsyncResponseInvocationStrategy,
             InvocationStrategyType.OutputType == Result<OutputType, HTTPClientError>,
             OutputType: HTTPResponseOutputProtocol {
@@ -41,7 +41,7 @@ public extension HTTPClient {
         let invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>
         let innerInvocationContext:
             HTTPClientInvocationContext<HTTPClientInnerRetryInvocationReporting<InvocationReportingType.TraceContextType>, HandlerDelegateType>
-        let httpClient: HTTPClient
+        let httpClient: HTTPOperationsClient
         let retryConfiguration: HTTPClientRetryConfiguration
         let retryOnError: (HTTPClientError) -> Bool
         let queue = DispatchQueue.global()
@@ -53,7 +53,7 @@ public extension HTTPClient {
              input: InputType, outerCompletion: @escaping (Result<OutputType, HTTPClientError>) -> (),
              asyncResponseInvocationStrategy: InvocationStrategyType,
              invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>,
-             httpClient: HTTPClient,
+             httpClient: HTTPOperationsClient,
              retryConfiguration: HTTPClientRetryConfiguration,
              retryOnError: @escaping (HTTPClientError) -> Bool) {
             self.endpointOverride = endpointOverride
@@ -175,7 +175,7 @@ public extension HTTPClient {
         - retryOnError: function that should return if the provided error is retryable.
      */
     func executeAsyncRetriableWithOutput<InputType, OutputType,
-        InvocationReportingType: HTTPClientInvocationReporting, HandlerDelegateType: HTTPClientChannelInboundHandlerDelegate>(
+        InvocationReportingType: HTTPClientInvocationReporting, HandlerDelegateType: HTTPClientInvocationDelegate>(
             endpointOverride: URL? = nil,
             endpointPath: String,
             httpMethod: HTTPMethod,
@@ -211,7 +211,7 @@ public extension HTTPClient {
         - retryOnError: function that should return if the provided error is retryable.
      */
     func executeAsyncRetriableWithOutput<InputType, OutputType, InvocationStrategyType,
-        InvocationReportingType: HTTPClientInvocationReporting, HandlerDelegateType: HTTPClientChannelInboundHandlerDelegate>(
+        InvocationReportingType: HTTPClientInvocationReporting, HandlerDelegateType: HTTPClientInvocationDelegate>(
             endpointOverride: URL? = nil,
             endpointPath: String,
             httpMethod: HTTPMethod,

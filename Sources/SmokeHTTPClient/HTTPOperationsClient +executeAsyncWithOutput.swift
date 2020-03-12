@@ -11,19 +11,20 @@
 // express or implied. See the License for the specific language governing
 // permissions and limitations under the License.
 //
-//  HTTPClient+executeAsyncWithOutput.swift
+//  HTTPOperationsClient+executeAsyncWithOutput.swift
 //  SmokeHTTPClient
 //
 
 import Foundation
 import NIO
 import NIOHTTP1
+import AsyncHTTPClient
 import NIOSSL
 import NIOTLS
 import Logging
 import Metrics
 
-public extension HTTPClient {
+public extension HTTPOperationsClient {
     /**
      Submits a request that will return a response body to this client asynchronously.
      The completion handler's execution will be scheduled on DispatchQueue.global()
@@ -37,13 +38,13 @@ public extension HTTPClient {
         - invocationContext: context to use for this invocation.
      */
     func executeAsyncWithOutput<InputType, OutputType,
-        InvocationReportingType: HTTPClientInvocationReporting, HandlerDelegateType: HTTPClientChannelInboundHandlerDelegate>(
+        InvocationReportingType: HTTPClientInvocationReporting, HandlerDelegateType: HTTPClientInvocationDelegate>(
             endpointOverride: URL? = nil,
             endpointPath: String,
             httpMethod: HTTPMethod,
             input: InputType,
             completion: @escaping (Result<OutputType, HTTPClientError>) -> (),
-            invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>) throws -> EventLoopFuture<Channel>
+            invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>) throws -> EventLoopFuture<HTTPClient.Response>
         where InputType: HTTPRequestInputProtocol, OutputType: HTTPResponseOutputProtocol {
             return try executeAsyncWithOutput(
                 endpointOverride: endpointOverride,
@@ -67,14 +68,14 @@ public extension HTTPClient {
          - invocationContext: context to use for this invocation.
      */
     func executeAsyncWithOutput<InputType, OutputType, InvocationStrategyType,
-        InvocationReportingType: HTTPClientInvocationReporting, HandlerDelegateType: HTTPClientChannelInboundHandlerDelegate>(
+        InvocationReportingType: HTTPClientInvocationReporting, HandlerDelegateType: HTTPClientInvocationDelegate>(
             endpointOverride: URL? = nil,
             endpointPath: String,
             httpMethod: HTTPMethod,
             input: InputType,
             completion: @escaping (Result<OutputType, HTTPClientError>) -> (),
             asyncResponseInvocationStrategy: InvocationStrategyType,
-            invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>) throws -> EventLoopFuture<Channel>
+            invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>) throws -> EventLoopFuture<HTTPClient.Response>
             where InputType: HTTPRequestInputProtocol, InvocationStrategyType: AsyncResponseInvocationStrategy,
         InvocationStrategyType.OutputType == Result<OutputType, HTTPClientError>,
         OutputType: HTTPResponseOutputProtocol {
@@ -102,14 +103,14 @@ public extension HTTPClient {
          - invocationContext: context to use for this invocation.
      */
     internal func executeAsyncWithOutputWithWrappedInvocationContext<InputType, OutputType, InvocationStrategyType,
-        InvocationReportingType: HTTPClientInvocationReporting, HandlerDelegateType: HTTPClientChannelInboundHandlerDelegate>(
+        InvocationReportingType: HTTPClientInvocationReporting, HandlerDelegateType: HTTPClientInvocationDelegate>(
             endpointOverride: URL? = nil,
             endpointPath: String,
             httpMethod: HTTPMethod,
             input: InputType,
             completion: @escaping (Result<OutputType, HTTPClientError>) -> (),
             asyncResponseInvocationStrategy: InvocationStrategyType,
-            invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>) throws -> EventLoopFuture<Channel>
+            invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>) throws -> EventLoopFuture<HTTPClient.Response>
             where InputType: HTTPRequestInputProtocol, InvocationStrategyType: AsyncResponseInvocationStrategy,
         InvocationStrategyType.OutputType == Result<OutputType, HTTPClientError>,
         OutputType: HTTPResponseOutputProtocol {
@@ -121,7 +122,6 @@ public extension HTTPClient {
             durationMetricDetails = nil
         }
 
-        var hasComplete = false
         let requestDelegate = clientDelegate
         // create a wrapping completion handler to pass to the ChannelInboundHandler
         // that will decode the returned body into the desired decodable type.
@@ -167,32 +167,14 @@ public extension HTTPClient {
             }
 
             asyncResponseInvocationStrategy.invokeResponse(response: result, completion: completion)
-            hasComplete = true
         }
 
         // submit the asynchronous request
-        let channelFuture = try executeAsync(endpointOverride: endpointOverride,
+        return try executeAsync(endpointOverride: endpointOverride,
                                              endpointPath: endpointPath,
                                              httpMethod: httpMethod,
                                              input: input,
                                              completion: wrappingCompletion,
                                              invocationContext: invocationContext)
-            
-        channelFuture.whenComplete { result in
-            switch result {
-            case .success(let channel):
-                channel.closeFuture.whenComplete { _ in
-                    // if this channel is being closed and no response has been recorded
-                    if !hasComplete {
-                        completion(.failure(HTTPClient.unexpectedClosureType))
-                    }
-                }
-            case .failure(let error):
-                // there was an issue creating the channel
-                completion(.failure(HTTPClientError(responseCode: 500, cause: error)))
-            }
-        }
-
-        return channelFuture
     }
 }

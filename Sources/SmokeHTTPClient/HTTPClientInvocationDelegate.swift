@@ -11,37 +11,37 @@
 // express or implied. See the License for the specific language governing
 // permissions and limitations under the License.
 //
-//  HTTPClientChannelInboundHandlerDelegate.swift
+//  HTTPClientInvocationDelegate.swift
 //  SmokeHTTPClient
 //
 
 import Foundation
-import NIOHTTP1
+import AsyncHTTPClient
 import Logging
 
-public protocol HTTPClientChannelInboundHandlerDelegate {
+public protocol HTTPClientInvocationDelegate {
     var specifyContentHeadersForZeroLengthBody: Bool { get }
 
     func addClientSpecificHeaders<InvocationReportingType: HTTPClientInvocationReporting>(
-        handler: HTTPClientChannelInboundHandler<InvocationReportingType>,
+        additionalHeaders: [(String, String)],
         invocationReporting: InvocationReportingType) -> [(String, String)]
 
     func handleErrorResponses<InvocationReportingType: HTTPClientInvocationReporting>(
-        responseHead: HTTPResponseHead, responseBodyData: Data?,
+        response: HTTPClient.Response, responseBodyData: Data?,
         invocationReporting: InvocationReportingType) -> HTTPClientError?
 }
 
-public struct DefaultHTTPClientChannelInboundHandlerDelegate: HTTPClientChannelInboundHandlerDelegate {
+public struct DefaultHTTPClientInvocationDelegate: HTTPClientInvocationDelegate {
     public let specifyContentHeadersForZeroLengthBody: Bool = true
 
     public func addClientSpecificHeaders<InvocationReportingType: HTTPClientInvocationReporting>(
-            handler: HTTPClientChannelInboundHandler<InvocationReportingType>,
+            additionalHeaders: [(String, String)],
             invocationReporting: InvocationReportingType) -> [(String, String)] {
         return []
     }
 
     public func handleErrorResponses<InvocationReportingType: HTTPClientInvocationReporting>(
-            responseHead: HTTPResponseHead, responseBodyData: Data?,
+            response: HTTPClient.Response, responseBodyData: Data?,
             invocationReporting: InvocationReportingType) -> HTTPClientError? {
         return nil
     }
