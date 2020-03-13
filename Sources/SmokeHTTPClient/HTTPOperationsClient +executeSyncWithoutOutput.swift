@@ -11,7 +11,7 @@
 // express or implied. See the License for the specific language governing
 // permissions and limitations under the License.
 //
-//  HTTPClient+executeSyncWithoutOutput.swift
+//  HTTPOperationsClient+executeSyncWithoutOutput.swift
 //  SmokeHTTPClient
 //
 
@@ -22,7 +22,7 @@ import NIOSSL
 import NIOTLS
 import Logging
 
-public extension HTTPClient {
+public extension HTTPOperationsClient {
     
     /**
      Submits a request that will not return a response body to this client synchronously.
@@ -34,7 +34,7 @@ public extension HTTPClient {
          - invocationContext: context to use for this invocation.
          - Throws: If an error occurred during the request.
      */
-    func executeSyncWithoutOutput<InputType, InvocationReportingType: HTTPClientInvocationReporting, HandlerDelegateType: HTTPClientChannelInboundHandlerDelegate>(
+    func executeSyncWithoutOutput<InputType, InvocationReportingType: HTTPClientInvocationReporting, HandlerDelegateType: HTTPClientInvocationDelegate>(
         endpointOverride: URL? = nil,
         endpointPath: String,
         httpMethod: HTTPMethod,
@@ -62,7 +62,7 @@ public extension HTTPClient {
          - Throws: If an error occurred during the request.
      */
     internal func executeSyncWithoutOutputWithWrappedInvocationContext<InputType, InvocationReportingType: HTTPClientInvocationReporting,
-            HandlerDelegateType: HTTPClientChannelInboundHandlerDelegate>(
+            HandlerDelegateType: HTTPClientInvocationDelegate>(
         endpointOverride: URL? = nil,
         endpointPath: String,
         httpMethod: HTTPMethod,
@@ -79,7 +79,7 @@ public extension HTTPClient {
                 completedSemaphore.signal()
             }
             
-            let channelFuture = try executeAsyncWithoutOutput(
+            _ = try executeAsyncWithoutOutput(
                 endpointOverride: endpointOverride,
                 endpointPath: endpointPath,
                 httpMethod: httpMethod,
@@ -88,24 +88,6 @@ public extension HTTPClient {
                 // the completion handler can be safely executed on a SwiftNIO thread
                 asyncResponseInvocationStrategy: SameThreadAsyncResponseInvocationStrategy<HTTPClientError?>(),
                 invocationContext: invocationContext)
-            
-            channelFuture.whenComplete { result in
-                switch result {
-                case .success(let channel):
-                    channel.closeFuture.whenComplete { _ in
-                        // if this channel is being closed and no response has been recorded
-                        if responseError == nil {
-                            responseError = HTTPClientError(responseCode: 500,
-                                                            cause: HTTPClient.unexpectedClosureType)
-                            completedSemaphore.signal()
-                        }
-                    }
-                case .failure(let error):
-                    // there was an issue creating the channel
-                    responseError = HTTPClientError(responseCode: 500, cause: error)
-                    completedSemaphore.signal()
-                }
-            }
             
             completedSemaphore.wait()
             

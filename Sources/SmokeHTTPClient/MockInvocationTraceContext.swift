@@ -18,6 +18,7 @@
 import Foundation
 import Logging
 import NIOHTTP1
+import AsyncHTTPClient
 
 public struct MockInvocationTraceContext: InvocationTraceContext {
     public typealias OutwardsRequestContext = String
@@ -28,18 +29,21 @@ public struct MockInvocationTraceContext: InvocationTraceContext {
         
     }
     
-    public func handleOutwardsRequestStart(method: HTTPMethod, uri: String, version: HTTPVersion, logger: Logger, internalRequestId: String,
-                                    headers: inout [(String, String)], bodyData: Data) -> String {
+    public func handleOutwardsRequestStart(method: HTTPMethod, uri: String, logger: Logger, internalRequestId: String,
+                                    headers: inout HTTPHeaders, bodyData: Data) -> String {
         return self.outwardsRequestContext
     }
     
-    public func handleOutwardsRequestSuccess(outwardsRequestContext: String?, logger: Logger, internalRequestId: String,
-                                      responseHead: HTTPResponseHead?, bodyData: Data?) {
+    public func handleOutwardsRequestSuccess(outwardsRequestContext: String?, logger: Logger,
+                                             internalRequestId: String,
+                                             response: HTTPClient.Response, bodyData: Data?) {
         // do nothing
     }
     
-    public func handleOutwardsRequestFailure(outwardsRequestContext: String?, logger: Logger, internalRequestId: String,
-                                      responseHead: HTTPResponseHead?, bodyData: Data?, error: Error) {
+    public func handleOutwardsRequestFailure(outwardsRequestContext: String?, logger: Logger,
+                                             internalRequestId: String,
+                                             response: HTTPClient.Response?, bodyData: Data?,
+                                             error: Error) {
         // do nothing
     }
 }

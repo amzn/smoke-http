@@ -24,7 +24,7 @@ private let outgoingRequestId = "outgoingRequestId"
 /**
  A context related to the invocation of the HTTPClient.
  */
-public struct HTTPClientInvocationContext<InvocationReportingType: HTTPClientInvocationReporting, HandlerDelegateType: HTTPClientChannelInboundHandlerDelegate> {
+public struct HTTPClientInvocationContext<InvocationReportingType: HTTPClientInvocationReporting, HandlerDelegateType: HTTPClientInvocationDelegate> {
     public let reporting: InvocationReportingType
     public let handlerDelegate: HandlerDelegateType
     

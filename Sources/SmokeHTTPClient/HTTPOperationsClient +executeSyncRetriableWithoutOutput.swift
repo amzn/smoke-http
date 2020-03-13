@@ -11,7 +11,7 @@
 // express or implied. See the License for the specific language governing
 // permissions and limitations under the License.
 //
-//  HTTPClient+executeSyncRetriableWithOutput.swift
+//  HTTPOperationsClient+executeSyncRetriableWithoutOutput.swift
 //  SmokeHTTPClient
 //
 
@@ -23,14 +23,19 @@ import NIOTLS
 import Logging
 import Metrics
 
-public extension HTTPClient {
+private extension Int {
+    var milliFromMicroSeconds: Int {
+        return self * 1000
+    }
+}
+
+public extension HTTPOperationsClient {
     /**
      Helper type that manages the state of a retriable sync request.
      */
-    private class ExecuteSyncWithOutputRetriable<InputType, OutputType,
-            InvocationReportingType: HTTPClientInvocationReporting, HandlerDelegateType: HTTPClientChannelInboundHandlerDelegate>
-            where InputType: HTTPRequestInputProtocol,
-            OutputType: HTTPResponseOutputProtocol {
+    private class ExecuteSyncWithoutOutputRetriable<InputType,
+        InvocationReportingType: HTTPClientInvocationReporting, HandlerDelegateType: HTTPClientInvocationDelegate>
+            where InputType: HTTPRequestInputProtocol {
         let endpointOverride: URL?
         let endpointPath: String
         let httpMethod: HTTPMethod
@@ -38,19 +43,17 @@ public extension HTTPClient {
         let invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>
         let innerInvocationContext:
             HTTPClientInvocationContext<HTTPClientInnerRetryInvocationReporting<InvocationReportingType.TraceContextType>, HandlerDelegateType>
-        let httpClient: HTTPClient
+        let httpClient: HTTPOperationsClient
         let retryConfiguration: HTTPClientRetryConfiguration
-        let retryOnError: (HTTPClientError) -> Bool
+        let retryOnError: (Swift.Error) -> Bool
         let latencyMetricDetails: (Date, Metrics.Timer)?
         
         var retriesRemaining: Int
         
-        let milliToMicroSeconds = 1000
-        
         init(endpointOverride: URL?, endpointPath: String, httpMethod: HTTPMethod,
              input: InputType,
              invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>,
-             httpClient: HTTPClient,
+             httpClient: HTTPOperationsClient,
              retryConfiguration: HTTPClientRetryConfiguration,
              retryOnError: @escaping (Swift.Error) -> Bool) {
             self.endpointOverride = endpointOverride
@@ -75,7 +78,7 @@ public extension HTTPClient {
             self.innerInvocationContext = HTTPClientInvocationContext(reporting: innerReporting, handlerDelegate: invocationContext.handlerDelegate)
         }
         
-        func executeSyncWithOutput() throws -> OutputType {
+        func executeSyncWithoutOutput() throws {
             defer {
                 // report the retryCount metric
                 let retryCount = retryConfiguration.numRetries - retriesRemaining
@@ -88,15 +91,13 @@ public extension HTTPClient {
             
             do {
                 // submit the synchronous request
-                let value: OutputType = try httpClient.executeSyncWithOutputWithWrappedInvocationContext(
+                try httpClient.executeSyncWithoutOutputWithWrappedInvocationContext(
                     endpointOverride: endpointOverride,
                     endpointPath: endpointPath, httpMethod: httpMethod,
                     input: input, invocationContext: innerInvocationContext)
                 
                 // report success metric
                 invocationContext.reporting.successCounter?.increment()
-                
-                return value
             } catch let error as HTTPClientError {
                 // report failure metric
                 switch error.category {
@@ -115,7 +116,7 @@ public extension HTTPClient {
             }
         }
         
-        func completeOnError(error: HTTPClientError) throws -> OutputType {
+        func completeOnError(error: HTTPClientError) throws {
             let shouldRetryOnError: Bool
             switch error.category {
             case .clientError:
@@ -135,9 +136,9 @@ public extension HTTPClient {
                 retriesRemaining -= 1
                 
                 logger.debug("Request failed with error: \(error). Remaining retries: \(currentRetriesRemaining). Retrying in \(retryInterval) ms.")
-                usleep(useconds_t(retryInterval * milliToMicroSeconds))
+                usleep(useconds_t(retryInterval.milliFromMicroSeconds))
                 logger.debug("Reattempting request due to remaining retries: \(currentRetriesRemaining)")
-                return try executeSyncWithOutput()
+                return try executeSyncWithoutOutput()
             } else {
                 if !shouldRetryOnError {
                     logger.debug("Request not retried due to error returned: \(error)")
@@ -161,27 +162,25 @@ public extension HTTPClient {
         - retryConfiguration: the retry configuration for this request.
         - retryOnError: function that should return if the provided error is retryable.
      */
-    func executeSyncRetriableWithOutput<InputType, OutputType,
-            InvocationReportingType: HTTPClientInvocationReporting, HandlerDelegateType: HTTPClientChannelInboundHandlerDelegate>(
+    func executeSyncRetriableWithoutOutput<InputType,
+        InvocationReportingType: HTTPClientInvocationReporting, HandlerDelegateType: HTTPClientInvocationDelegate>(
         endpointOverride: URL? = nil,
         endpointPath: String,
         httpMethod: HTTPMethod,
         input: InputType,
         invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>,
         retryConfiguration: HTTPClientRetryConfiguration,
-        retryOnError: @escaping (Swift.Error) -> Bool) throws -> OutputType
-        where InputType: HTTPRequestInputProtocol,
-        OutputType: HTTPResponseOutputProtocol {
+        retryOnError: @escaping (Swift.Error) -> Bool) throws
+        where InputType: HTTPRequestInputProtocol {
             let wrappingInvocationContext = invocationContext.withOutgoingRequestIdLoggerMetadata()
 
-            let retriable = ExecuteSyncWithOutputRetriable<InputType, OutputType,
-                    StandardHTTPClientInvocationReporting<InvocationReportingType.TraceContextType>, HandlerDelegateType>(
+            let retriable = ExecuteSyncWithoutOutputRetriable(
                 endpointOverride: endpointOverride, endpointPath: endpointPath,
                 httpMethod: httpMethod, input: input,
                 invocationContext: wrappingInvocationContext, httpClient: self,
                 retryConfiguration: retryConfiguration,
                 retryOnError: retryOnError)
             
-            return try retriable.executeSyncWithOutput()
+            return try retriable.executeSyncWithoutOutput()
     }
 }
