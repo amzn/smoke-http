@@ -11,27 +11,25 @@
 // express or implied. See the License for the specific language governing
 // permissions and limitations under the License.
 //
-//  MockCoreInvocationReporting.swift
+//  StandardHTTPClientCoreInvocationReporting.swift
 //  SmokeHTTPClient
 //
 import Foundation
 import Logging
 
-public typealias MockCoreInvocationReporting =
-    StandardHTTPClientCoreInvocationReporting<MockInvocationTraceContext>
-
 /**
-  A type conforming to the `HTTPClientCoreInvocationReporting` protocol, predominantly for testing.
+  A type conforming to the `HTTPClientCoreInvocationReporting` protocol..
  */
-public extension MockCoreInvocationReporting {
-    init(
-            logger: Logger = Logger(label: "com.amazon.SmokeHTTPClient.MockCoreInvocationReporting"),
-            internalRequestId: String = "internalRequestId") {
+public struct StandardHTTPClientCoreInvocationReporting<TraceContextType: InvocationTraceContext>: HTTPClientCoreInvocationReporting {
+    public let logger: Logger
+    public var internalRequestId: String
+    public var traceContext: TraceContextType
+    
+    public init(logger: Logger,
+                internalRequestId: String,
+                traceContext: TraceContextType) {
         self.logger = logger
         self.internalRequestId = internalRequestId
-        self.traceContext = MockInvocationTraceContext()
+        self.traceContext = traceContext
     }
 }
- 
- 
-    
