@@ -16,7 +16,7 @@
 import PackageDescription
 
 let package = Package(
-    name: "SmokeHTTP",
+    name: "smoke-http",
     products: [
         .library(
             name: "SmokeHTTPClient",
