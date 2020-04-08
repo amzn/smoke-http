@@ -1,4 +1,4 @@
-// swift-tools-version:5.2
+// swift-tools-version:5.0
 //
 // Copyright 2018-2020 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 //
@@ -16,7 +16,7 @@
 import PackageDescription
 
 let package = Package(
-    name: "smoke-http",
+    name: "SmokeHTTP",
     products: [
         .library(
             name: "SmokeHTTPClient",
@@ -43,50 +43,35 @@ let package = Package(
     ],
     targets: [
         .target(
-            name: "SmokeHTTPClient", dependencies: [
-                .product(name: "Logging", package: "swift-log"),
-                .product(name: "Metrics", package: "swift-metrics"),
-                .product(name: "NIO", package: "swift-nio"),
-                .product(name: "NIOHTTP1", package: "swift-nio"),
-                .product(name: "NIOFoundationCompat", package: "swift-nio"),
-                .product(name: "NIOSSL", package: "swift-nio-ssl"),
-                .product(name: "AsyncHTTPClient", package: "async-http-client"),
-            ]),
+            name: "SmokeHTTPClient",
+            dependencies: ["Logging", "Metrics", "NIO", "NIOHTTP1",
+                           "NIOFoundationCompat", "NIOSSL", "AsyncHTTPClient"]),
         .target(
-            name: "QueryCoding", dependencies: [
-                .target(name: "ShapeCoding"),
-            ]),
+            name: "QueryCoding",
+            dependencies: ["ShapeCoding"]),
         .target(
-            name: "HTTPHeadersCoding", dependencies: [
-                .target(name: "ShapeCoding"),
-            ]),
+            name: "HTTPHeadersCoding",
+            dependencies: ["ShapeCoding"]),
         .target(
-            name: "HTTPPathCoding", dependencies: [
-                .target(name: "ShapeCoding"),
-            ]),
+            name: "HTTPPathCoding",
+            dependencies: ["ShapeCoding"]),
         .target(
-            name: "ShapeCoding", dependencies: [
-                .product(name: "Logging", package: "swift-log"),
-            ]),
+            name: "ShapeCoding",
+            dependencies: ["Logging"]),
         .testTarget(
-            name: "SmokeHTTPClientTests", dependencies: [
-                .target(name: "SmokeHTTPClient"),
-            ]),
+            name: "SmokeHTTPClientTests",
+            dependencies: ["SmokeHTTPClient"]),
         .testTarget(
-            name: "ShapeCodingTests", dependencies: [
-                .target(name: "ShapeCoding"),
-            ]),
+            name: "ShapeCodingTests",
+            dependencies: ["ShapeCoding"]),
         .testTarget(
-            name: "QueryCodingTests", dependencies: [
-                .target(name: "QueryCoding"),
-            ]),
+            name: "QueryCodingTests",
+            dependencies: ["QueryCoding"]),
         .testTarget(
-            name: "HTTPHeadersCodingTests", dependencies: [
-                .target(name: "HTTPHeadersCoding"),
-            ]),
+            name: "HTTPHeadersCodingTests",
+            dependencies: ["HTTPHeadersCoding"]),
         .testTarget(
-            name: "HTTPPathCodingTests", dependencies: [
-                .target(name: "HTTPPathCoding"),
-            ]),
+            name: "HTTPPathCodingTests",
+            dependencies: ["HTTPPathCoding"]),
     ]
 )
