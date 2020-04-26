@@ -11,13 +11,8 @@
 <a href="http://swift.org">
 <img src="https://img.shields.io/badge/swift-5.2-orange.svg?style=flat" alt="Swift 5.2 Tested">
 </a>
-<a href="http://swift.org">
 <img src="https://img.shields.io/badge/ubuntu-16.04-yellow.svg?style=flat" alt="Ubuntu 16.04 Tested">
-</a>
-<a href="http://swift.org">
 <img src="https://img.shields.io/badge/ubuntu-18.04-yellow.svg?style=flat" alt="Ubuntu 18.04 Tested">
-</a>
-
 <a href="https://gitter.im/SmokeServerSide">
 <img src="https://img.shields.io/badge/chat-on%20gitter-ee115e.svg?style=flat" alt="Join the Smoke Server Side community on gitter">
 </a>
@@ -50,6 +45,8 @@ SmokeHTTP follows the same support policy as followed by SmokeAWS [here](https:/
 SmokeHTTP uses the Swift Package Manager. To use the framework, add the following dependency
 to your Package.swift-
 
+For swift-tools version 5.2 and greater-
+
 ```swift
 dependencies: [
     .package(url: "https://github.com/amzn/smoke-http.git", from: "2.0.0")
@@ -59,6 +56,18 @@ dependencies: [
     ..., 
     .product(name: "SmokeHTTPClient", package: "smoke-http"),
 ]),
+```
+
+For swift-tools version 5.1 and prior-
+
+```swift
+dependencies: [
+    .package(url: "https://github.com/amzn/smoke-http.git", from: "1.0.0")
+]
+
+.target(
+    name: ...,
+    dependencies: [..., "SmokeHTTPClient"]),
 ```
 
 ## Step 2: Construct a HTTPOperationsClient
