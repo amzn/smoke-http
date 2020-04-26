@@ -2,7 +2,6 @@
 <a href="https://travis-ci.com/amzn/smoke-http">
 <img src="https://travis-ci.com/amzn/smoke-http.svg?branch=master" alt="Build - Master Branch">
 </a>
-<img src="https://img.shields.io/badge/os-linux-green.svg?style=flat" alt="Linux">
 <a href="http://swift.org">
 <img src="https://img.shields.io/badge/swift-5.0-orange.svg?style=flat" alt="Swift 5.0 Tested">
 </a>
@@ -30,10 +29,10 @@
 SmokeHTTP is a specialization of the generic HTTP client provided by [async-http-client](https://github.com/swift-server/async-http-client), providing the common functionality required to abstract service operations from the underlying HTTP protocol. This library is primarily used by [SmokeFramework](https://github.com/amzn/smoke-framework) and [SmokeAWS](https://github.com/amzn/smoke-aws). 
 
 This library provides a numer of features on top of those provided by async-http-client-
-1. The `HTTPRequestInputProtocol` and `HTTPResponseOutputProtocol` protocols which provide a mechanism to deconstruct an input type into the different components of a HTTP request and construct an output type from the components of a HTTP response respectively.
+1. The `HTTPRequestInputProtocol` and `HTTPResponseOutputProtocol` protocols provide a mechanism to deconstruct an input type into the different components of a HTTP request and construct an output type from the components of a HTTP response respectively.
 2. Protocol-based strategies for determining the threading-model for asychronous completion handling.
-3. Support for expontential backoff retries
-4. Logging and emittion of invocation metrics
+3. Support for expontential backoff retries.
+4. Logging and emittion of invocation metrics.
 5. An extension point for handing request-level tracing.
 
 ## SmokeHTTPClient
@@ -107,10 +106,10 @@ The inputs to this function are-
 4. **input**: An instance of a type conforming to the `HTTPRequestInputProtocol` protocol.
 5. **completion**: A closure of type `(Result<OutputType, HTTPClientError>) -> ()` used to handle the outcome of the invocation. `OutputType` must be a type that conforms to the  `HTTPResponseOutputProtocol` protocol.
 6. **asyncResponseInvocationStrategy**: An invocation strategy for executing the completion handler. 
-  1. [GlobalDispatchQueueAsyncResponseInvocationStrategy](https://github.com/amzn/smoke-http/blob/master/Sources/SmokeHTTPClient/GlobalDispatchQueueAsyncResponseInvocationStrategy.swift) is provided as the default, which will execute the completion handler on the Global Dispatch Queue. 
-  2. [SameThreadAsyncResponseInvocationStrategy](https://github.com/amzn/smoke-http/blob/master/Sources/SmokeHTTPClient/SameThreadAsyncResponseInvocationStrategy.swift) is also provided which will execute the completion handler on the SwiftNIO callback thread within the client's event loop.
+  *  [GlobalDispatchQueueAsyncResponseInvocationStrategy](https://github.com/amzn/smoke-http/blob/master/Sources/SmokeHTTPClient/GlobalDispatchQueueAsyncResponseInvocationStrategy.swift) is provided as the default, which will execute the completion handler on the Global Dispatch Queue. 
+  *  [SameThreadAsyncResponseInvocationStrategy](https://github.com/amzn/smoke-http/blob/master/Sources/SmokeHTTPClient/SameThreadAsyncResponseInvocationStrategy.swift) is also provided which will execute the completion handler on the SwiftNIO callback thread within the client's event loop.
 7. **invocationContext**: An instance of type `HTTPClientInvocationContext`.
-8. **retryConfiguration**: An instance of type `HTTPClientRetryConfiguration` to indicate how the client should handle automatic retries on falure
+8. **retryConfiguration**: An instance of type `HTTPClientRetryConfiguration` to indicate how the client should handle automatic retries on failure.
 9. . **retryOnError**: A closure of type `(HTTPClientError) -> Bool` that can be used to determine if an automatic retry should occur when the request failures with the provided error.
 
 The complete list of variants for the `HTTPOperationsClient.execute*` functions are
@@ -128,6 +127,8 @@ The complete list of variants for the `HTTPOperationsClient.execute*` functions 
 ## HTTPClientDelegate
 
 The `HTTPClientDelegate` protocol provides a number extension points that can be used to customise a client-
+
+Protocol function requirements-
 1. `getResponseError`: determines the client-specific error based on the HTTP response from the client.
 2. `encodeInputAndQueryString`: determines the components to be used for the HTTP request based on the input to an invocation
 3. `decodeOutput` creates an instance of an output type based on the HTTP response from the client.
