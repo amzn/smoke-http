@@ -39,6 +39,10 @@ This library provides a numer of features on top of those provided by async-http
 
 To use SmokeHTTPClient, a user can instantiate an `HTTPOperationsClient` in the constructor of their specific client with instantiated delegates (`HTTPClientDelegate`, `HTTPClientInvocationDelegate`) that are used to define client-specific logic.
 
+## Support Policy
+
+SmokeHTTP follows the same support policy as followed by SmokeAWS [here](https://github.com/amzn/smoke-aws/blob/master/docs/Support_Policy.md).
+
 # Getting Started
 
 ## Step 1: Add the SmokeHTTP dependency
