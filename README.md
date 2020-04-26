@@ -55,9 +55,10 @@ dependencies: [
     .package(url: "https://github.com/amzn/smoke-http.git", from: "2.0.0")
 ]
 
-.target(
-    name: ...,
-    dependencies: [..., "SmokeHTTPClient"]),
+.target(name: ..., dependencies: [
+    ..., 
+    .product(name: "SmokeHTTPClient", package: "smoke-http"),
+]),
 ```
 
 ## Step 2: Construct a HTTPOperationsClient
