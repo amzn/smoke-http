@@ -62,7 +62,7 @@ For swift-tools version 5.1 and prior-
 
 ```swift
 dependencies: [
-    .package(url: "https://github.com/amzn/smoke-http.git", from: "1.0.0")
+    .package(url: "https://github.com/amzn/smoke-http.git", from: "2.0.0")
 ]
 
 .target(
