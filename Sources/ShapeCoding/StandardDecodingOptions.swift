@@ -63,6 +63,20 @@ public enum ShapeMapDecodingStrategy {
     case separateShapeEntriesWith(keyTag: String, valueTag: String)
 }
 
+
+/// The strategy to use when decoding lists.
+public enum ShapeListDecodingStrategy {
+    /// The index of the item in the list will be used as
+    /// the tag for each individual item. This is the default strategy.
+    /// ie. ["theList.1": "Value"] -> ShapeOutput(theList: ["Value"])
+    case collapseListWithIndex
+    
+    /// The item tag will used as as the tag in addition to the index of the item in the list.
+    /// ie. ["theList.ItemTag.1": "Value"] -> ShapeOutput(theList: ["Value"])
+    case collapseListWithIndexAndItemTag(itemTag: String)
+}
+
+
 /// The strategy to use for transforming shape keys.
 public enum ShapeKeyDecodeTransformStrategy {
     /// The shape keys will not be transformed.
@@ -80,13 +94,16 @@ public enum ShapeKeyDecodeTransformStrategy {
 public struct StandardDecodingOptions {
     public let shapeKeyDecodingStrategy: ShapeKeyDecodingStrategy
     public let shapeMapDecodingStrategy: ShapeMapDecodingStrategy
+    public let shapeListDecodingStrategy: ShapeListDecodingStrategy
     public let shapeKeyDecodeTransformStrategy: ShapeKeyDecodeTransformStrategy
     
     public init(shapeKeyDecodingStrategy: ShapeKeyDecodingStrategy,
                 shapeMapDecodingStrategy: ShapeMapDecodingStrategy,
+                shapeListDecodingStrategy: ShapeListDecodingStrategy,
                 shapeKeyDecodeTransformStrategy: ShapeKeyDecodeTransformStrategy) {
         self.shapeKeyDecodingStrategy = shapeKeyDecodingStrategy
         self.shapeMapDecodingStrategy = shapeMapDecodingStrategy
+        self.shapeListDecodingStrategy = shapeListDecodingStrategy
         self.shapeKeyDecodeTransformStrategy = shapeKeyDecodeTransformStrategy
     }
 }

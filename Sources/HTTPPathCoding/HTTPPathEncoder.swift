@@ -47,6 +47,7 @@ public class HTTPPathEncoder {
         self.options = StandardEncodingOptions(
             shapeKeyEncodingStrategy: keyEncodingStrategy,
             shapeMapEncodingStrategy: .singleShapeEntry,
+            shapeListEncodingStrategy: .expandListWithIndex,
             shapeKeyEncodeTransformStrategy: keyEncodeTransformStrategy)
     }
 

@@ -49,7 +49,14 @@ ShapeSingleValueEncodingContainerDelegate {
             if let key = key {
                 // for each of the values
                 try values.enumerated().forEach { (index, value) in
-                    let innerkey = "\(key)\(separatorString)\(index + 1)"
+                    let innerkey: String
+                    
+                    if !isRoot, case let .expandListWithIndexAndItemTag(itemTag: itemTag) = options.shapeListEncodingStrategy {
+                        innerkey = "\(key)\(separatorString)\(itemTag)\(separatorString)\(index + 1)"
+                    } else {
+                        innerkey = "\(key)\(separatorString)\(index + 1)"
+                    }
+                        
                     // get the serialized elements from this value
                     try value.getSerializedElements(innerkey, isRoot: false, elements: &elements)
                 }

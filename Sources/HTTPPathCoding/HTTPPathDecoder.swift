@@ -45,6 +45,7 @@ public struct HTTPPathDecoder {
         self.options = StandardDecodingOptions(
             shapeKeyDecodingStrategy: keyDecodingStrategy,
             shapeMapDecodingStrategy: .singleShapeEntry,
+            shapeListDecodingStrategy: .collapseListWithIndex,
             shapeKeyDecodeTransformStrategy: keyDecodeTransformStrategy)
         self.userInfo = userInfo
     }

@@ -117,18 +117,53 @@ public struct StandardShapeDecoderDelegate: ShapeDecoderDelegate {
         codingPath: [CodingKey]) throws -> [Shape] {
             var listContainer: [Shape] = []
             var entriesConsumed = 0
+            let containerToUse: [String: Shape]
+        
+            // when there is an item tag for the list and a shape separator, the list has
+            // already been broken down into a nested list
+            switch (options.shapeListDecodingStrategy, options.shapeKeyDecodingStrategy) {
+            case (.collapseListWithIndexAndItemTag(itemTag: let itemTag), .useAsShapeSeparator):
+                // get the nested shape for the itemTag
+                let (innerNestedValue, _) = try getNestedShape(
+                    parentContainer: container,
+                    containerKeyString: itemTag)
+                // if no nested shape was found
+                guard let value = innerNestedValue, case .dictionary(let innerContainer) = value else {
+                    let debugDescription = "No value associated with key '\(itemTag)' in list of size \(container.count)."
+                    let decodingContext = DecodingError.Context(codingPath: codingPath,
+                                                                debugDescription: debugDescription)
+                    throw DecodingError.keyNotFound(ShapeCodingKey(stringValue: itemTag, intValue: nil), decodingContext)
+                }
+                
+                containerToUse = innerContainer
+            default:
+                containerToUse = container
+            }
+        
             // look for entries labelled with their index
-            for index in 1...container.count {
-                let valueKey = String(index)
+            for index in 1...containerToUse.count {
+                let valueKey: String
+                
+                switch options.shapeListDecodingStrategy {
+                case .collapseListWithIndex:
+                    valueKey = String(index)
+                case let .collapseListWithIndexAndItemTag(itemTag: itemTag):
+                    switch options.shapeKeyDecodingStrategy {
+                    case .flatStructure, .useShapePrefix:
+                        valueKey = "\(itemTag)\(index)"
+                    case .useAsShapeSeparator:
+                        valueKey = String(index)
+                    }
+                }
                 
                 // if all entries have been consumed
-                guard entriesConsumed < container.count else {
+                guard entriesConsumed < containerToUse.count else {
                     break
                 }
                 
                 // get the nested shape which may consume multiple entries
                 let (nestedValue, nestedCount) = try getNestedShape(
-                    parentContainer: container,
+                    parentContainer: containerToUse,
                     containerKeyString: valueKey)
                 // if no nested shape was found
                 guard let value = nestedValue else {

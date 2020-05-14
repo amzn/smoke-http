@@ -91,6 +91,21 @@ class QueryEncoderTests: XCTestCase {
         XCTAssertEqual(decoded, input)
     }
     
+    func testEncodeTypeWithListAndItemTag() throws {
+        let input = TestTypeB(action: "myAction", ids: ["id1", "id2"])
+        
+        let customEncoder = QueryEncoder(listEncodingStrategy: .expandListWithIndexAndItemTag(itemTag: "item"))
+        let customDecoder = QueryDecoder(listDecodingStrategy: .collapseListWithIndexAndItemTag(itemTag: "item"))
+
+        let query = try customEncoder.encode(input)
+
+        XCTAssertEqual("action=myAction&ids.item.1=id1&ids.item.2=id2", query)
+        
+        let decoded = try customDecoder.decode(TestTypeB.self, from: query)
+        
+        XCTAssertEqual(decoded, input)
+    }
+    
     func testEncodeTypeWithListWithNoSeparator() throws {
         let input = TestTypeB(action: "myAction", ids: ["id1", "id2"])
 
@@ -100,6 +115,22 @@ class QueryEncoderTests: XCTestCase {
         XCTAssertEqual("action=myAction&ids1=id1&ids2=id2", query)
         
         let customDecoder = QueryDecoder(keyDecodingStrategy: .useShapePrefix)
+        let decoded = try customDecoder.decode(TestTypeB.self, from: query)
+        
+        XCTAssertEqual(decoded, input)
+    }
+    
+    func testEncodeTypeWithListWithNoSeparatorAndItemTag() throws {
+        let input = TestTypeB(action: "myAction", ids: ["id1", "id2"])
+
+        let customEncoder = QueryEncoder(keyEncodingStrategy: .noSeparator,
+                                         listEncodingStrategy: .expandListWithIndexAndItemTag(itemTag: "item"))
+        let query = try customEncoder.encode(input)
+
+        XCTAssertEqual("action=myAction&idsitem1=id1&idsitem2=id2", query)
+        
+        let customDecoder = QueryDecoder(keyDecodingStrategy: .useShapePrefix,
+                                         listDecodingStrategy: .collapseListWithIndexAndItemTag(itemTag: "item"))
         let decoded = try customDecoder.decode(TestTypeB.self, from: query)
         
         XCTAssertEqual(decoded, input)
@@ -191,6 +222,24 @@ class QueryEncoderTests: XCTestCase {
         XCTAssertEqual(decoded, input)
     }
     
+    func testEncodeTypeWithInnerTypeListWithItemTag() throws {
+        let innerInput1 = TestTypeA(firstly: "value1", secondly: "value2", thirdly: "value3")
+        let innerInput2 = TestTypeA(firstly: "value4", secondly: "value5", thirdly: "value6")
+        let input = TestTypeD1(action: "myAction", ids: [innerInput1, innerInput2])
+        
+        let customEncoder = QueryEncoder(listEncodingStrategy: .expandListWithIndexAndItemTag(itemTag: "item"))
+        let customDecoder = QueryDecoder(listDecodingStrategy: .collapseListWithIndexAndItemTag(itemTag: "item"))
+
+        let query = try customEncoder.encode(input)
+
+        XCTAssertEqual("action=myAction&ids.item.1.firstly=value1&ids.item.1.secondly=value2&ids.item.1.thirdly=value3"
+            + "&ids.item.2.firstly=value4&ids.item.2.secondly=value5&ids.item.2.thirdly=value6", query)
+        
+        let decoded = try customDecoder.decode(TestTypeD1.self, from: query)
+        
+        XCTAssertEqual(decoded, input)
+    }
+    
     func testEncodeTypeWithInnerType() throws {
         let innerInput1 = TestTypeA(firstly: "value1", secondly: "value2", thirdly: "value3")
         let input = TestTypeD2(action: "myAction", id: innerInput1)
@@ -216,6 +265,25 @@ class QueryEncoderTests: XCTestCase {
             + "&ids2firstly=value4&ids2secondly=value5&ids2thirdly=value6", query)
         
         let customDecoder = QueryDecoder(keyDecodingStrategy: .useShapePrefix)
+        let decoded = try! customDecoder.decode(TestTypeD1.self, from: query)
+        
+        XCTAssertEqual(decoded, input)
+    }
+    
+    func testEncodeTypeWithInnerTypeListWithNoSeparatorAndItemTag() throws {
+        let innerInput1 = TestTypeA(firstly: "value1", secondly: "value2", thirdly: "value3")
+        let innerInput2 = TestTypeA(firstly: "value4", secondly: "value5", thirdly: "value6")
+        let input = TestTypeD1(action: "myAction", ids: [innerInput1, innerInput2])
+
+        let customEncoder = QueryEncoder(keyEncodingStrategy: .noSeparator,
+                                         listEncodingStrategy: .expandListWithIndexAndItemTag(itemTag: "item"))
+        let query = try customEncoder.encode(input)
+
+        XCTAssertEqual("action=myAction&idsitem1firstly=value1&idsitem1secondly=value2&idsitem1thirdly=value3"
+            + "&idsitem2firstly=value4&idsitem2secondly=value5&idsitem2thirdly=value6", query)
+        
+        let customDecoder = QueryDecoder(keyDecodingStrategy: .useShapePrefix,
+                                         listDecodingStrategy: .collapseListWithIndexAndItemTag(itemTag: "item"))
         let decoded = try! customDecoder.decode(TestTypeD1.self, from: query)
         
         XCTAssertEqual(decoded, input)
@@ -253,6 +321,32 @@ class QueryEncoderTests: XCTestCase {
         let mapDecodingStrategy: QueryDecoder.MapDecodingStrategy =
             .separateQueryEntriesWith(keyTag: "Name", valueTag: "Value")
         let customDecoder = QueryDecoder(mapDecodingStrategy: mapDecodingStrategy)
+        
+        let decoded = try customDecoder.decode(TestTypeD1.self, from: query)
+        
+        XCTAssertEqual(decoded, input)
+    }
+    
+    func testEncodeTypeWithInnerTypeListWithMapEncodingStrategyAndItemTag() throws {
+        let innerInput1 = TestTypeA(firstly: "value1", secondly: "value2", thirdly: "value3")
+        let innerInput2 = TestTypeA(firstly: "value4", secondly: "value5", thirdly: "value6")
+        let input = TestTypeD1(action: "myAction", ids: [innerInput1, innerInput2])
+
+        let mapEncodingStrategy: QueryEncoder.MapEncodingStrategy =
+            .separateQueryEntriesWith(keyTag: "Name", valueTag: "Value")
+        let customEncoder = QueryEncoder(mapEncodingStrategy: mapEncodingStrategy,
+                                         listEncodingStrategy: .expandListWithIndexAndItemTag(itemTag: "item"))
+        let query = try customEncoder.encode(input)
+
+        XCTAssertEqual("action=myAction&ids.item.1.1.Name=firstly&ids.item.1.1.Value=value1&ids.item.1.2.Name=secondly"
+            + "&ids.item.1.2.Value=value2&ids.item.1.3.Name=thirdly&ids.item.1.3.Value=value3&ids.item.2.1.Name=firstly"
+            + "&ids.item.2.1.Value=value4&ids.item.2.2.Name=secondly&ids.item.2.2.Value=value5&ids.item.2.3.Name=thirdly"
+            + "&ids.item.2.3.Value=value6", query)
+        
+        let mapDecodingStrategy: QueryDecoder.MapDecodingStrategy =
+            .separateQueryEntriesWith(keyTag: "Name", valueTag: "Value")
+        let customDecoder = QueryDecoder(mapDecodingStrategy: mapDecodingStrategy,
+                                         listDecodingStrategy: .collapseListWithIndexAndItemTag(itemTag: "item"))
         
         let decoded = try customDecoder.decode(TestTypeD1.self, from: query)
         
@@ -347,15 +441,19 @@ class QueryEncoderTests: XCTestCase {
         ("testEncodeNotCompatibleType", testEncodeNotCompatibleType),
         ("testEncodeNotCompatibleListType", testEncodeNotCompatibleListType),
         ("testEncodeTypeWithList", testEncodeTypeWithList),
+        ("testEncodeTypeWithListAndItemTag", testEncodeTypeWithListAndItemTag),
         ("testEncodeTypeWithListWithNoSeparator", testEncodeTypeWithListWithNoSeparator),
+        ("testEncodeTypeWithListWithNoSeparatorAndItemTag", testEncodeTypeWithListWithNoSeparatorAndItemTag),
         ("testEncodeTypeWithListWithEncoding", testEncodeTypeWithListWithEncoding),
         ("testEncodeTypeWithMap", testEncodeTypeWithMap),
         ("testEncodeTypeWithMapWithNoSeparator", testEncodeTypeWithMapWithNoSeparator),
         ("testEncodeTypeWithMapWithMapEncodingStrategy", testEncodeTypeWithMapWithMapEncodingStrategy),
         ("testEncodeTypeWithMapWithEncoding", testEncodeTypeWithMapWithEncoding),
         ("testEncodeTypeWithInnerTypeList", testEncodeTypeWithInnerTypeList),
+        ("testEncodeTypeWithInnerTypeListWithItemTag", testEncodeTypeWithInnerTypeListWithItemTag),
         ("testEncodeTypeWithInnerType", testEncodeTypeWithInnerType),
         ("testEncodeTypeWithInnerTypeListWithNoSeparator", testEncodeTypeWithInnerTypeListWithNoSeparator),
+        ("testEncodeTypeWithInnerTypeListWithNoSeparatorAndItemTag", testEncodeTypeWithInnerTypeListWithNoSeparatorAndItemTag),
         ("testEncodeTypeWithInnerTypeWithNoSeparator", testEncodeTypeWithInnerTypeWithNoSeparator),
         ("testEncodeTypeWithInnerTypeListWithMapEncodingStrategy", testEncodeTypeWithInnerTypeListWithMapEncodingStrategy),
         ("testEncodeTypeWithInnerTypeWithMapEncodingStrategy", testEncodeTypeWithInnerTypeWithMapEncodingStrategy),
