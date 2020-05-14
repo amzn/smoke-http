@@ -85,8 +85,8 @@ extension HTTPPathToken: Equatable {
         switch (lhs, rhs) {
         case let (.string(leftString), .string(rightString)):
             return leftString == rightString
-        case let (.variable(leftValues), .variable(rightValues)):
-            return leftValues == rightValues
+        case let (.variable(leftName, leftMultiSegment), .variable(rightName, rightMultiSegment)):
+            return leftName == rightName && leftMultiSegment == rightMultiSegment
         default:
             return false
         }

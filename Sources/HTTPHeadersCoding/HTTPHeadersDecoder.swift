@@ -67,6 +67,7 @@ public struct HTTPHeadersDecoder {
         self.options = StandardDecodingOptions(
             shapeKeyDecodingStrategy: keyDecodingStrategy,
             shapeMapDecodingStrategy: mapDecodingStrategy.shapeMapDecodingStrategy,
+            shapeListDecodingStrategy: .collapseListWithIndex,
             shapeKeyDecodeTransformStrategy: keyDecodeTransformStrategy)
         self.userInfo = userInfo
     }

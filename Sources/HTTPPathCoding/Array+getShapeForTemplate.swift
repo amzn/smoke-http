@@ -24,6 +24,7 @@ public extension Array where Element == String {
             decoderOptions: StandardDecodingOptions = StandardDecodingOptions(
                 shapeKeyDecodingStrategy: .useAsShapeSeparator("."),
                 shapeMapDecodingStrategy: .singleShapeEntry,
+                shapeListDecodingStrategy: .collapseListWithIndex,
                 shapeKeyDecodeTransformStrategy: .none)) throws -> Shape {
         // reverse the arrays so we can use popLast to iterate in the forwards direction
         var remainingPathSegments = Array(self.reversed())

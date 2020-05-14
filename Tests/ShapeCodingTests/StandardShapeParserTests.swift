@@ -21,18 +21,22 @@ import XCTest
 fileprivate let useDotDecoderOptions = StandardDecodingOptions(
     shapeKeyDecodingStrategy: .useAsShapeSeparator("."),
     shapeMapDecodingStrategy: .singleShapeEntry,
+    shapeListDecodingStrategy: .collapseListWithIndex,
     shapeKeyDecodeTransformStrategy: .none)
 fileprivate let uncapitalizeDecoderOptions = StandardDecodingOptions(
     shapeKeyDecodingStrategy: .useAsShapeSeparator("."),
     shapeMapDecodingStrategy: .singleShapeEntry,
+    shapeListDecodingStrategy: .collapseListWithIndex,
     shapeKeyDecodeTransformStrategy: .uncapitalizeFirstCharacter)
 fileprivate let customTransformDecoderOptions = StandardDecodingOptions(
     shapeKeyDecodingStrategy: .useAsShapeSeparator("."),
     shapeMapDecodingStrategy: .singleShapeEntry,
+    shapeListDecodingStrategy: .collapseListWithIndex,
     shapeKeyDecodeTransformStrategy: .custom({ key in String(key.reversed()) }))
 fileprivate let flatStructureDecoderOptions = StandardDecodingOptions(
     shapeKeyDecodingStrategy: .flatStructure,
     shapeMapDecodingStrategy: .singleShapeEntry,
+    shapeListDecodingStrategy: .collapseListWithIndex,
     shapeKeyDecodeTransformStrategy: .none)
 
 class StandardShapeParserTests: XCTestCase {

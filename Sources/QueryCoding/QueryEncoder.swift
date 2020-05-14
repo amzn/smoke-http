@@ -57,6 +57,27 @@ public class QueryEncoder {
         }
     }
     
+    /// The strategy to use when encoding lists.
+    public enum ListEncodingStrategy {
+        /// The index of the item in the list will be used as
+        /// the tag for each individual item. This is the default strategy.
+        /// ie. ShapeOutput(theList: ["Value"]) --> ?theList.1=Value
+        case expandListWithIndex
+        
+        /// The item tag will used as as the tag in addition to the index of the item in the list.
+        /// ie. ShapeOutput(theList: ["Value"]) --> ?theList.ItemTag.1=Value
+        case expandListWithIndexAndItemTag(itemTag: String)
+        
+        var shapeListEncodingStrategy: ShapeListEncodingStrategy {
+            switch self {
+            case .expandListWithIndex:
+                return .expandListWithIndex
+            case let .expandListWithIndexAndItemTag(itemTag: itemTag):
+                return .expandListWithIndexAndItemTag(itemTag: itemTag)
+            }
+        }
+    }
+    
     /**
      Initializer.
      
@@ -70,10 +91,12 @@ public class QueryEncoder {
      */
     public init(keyEncodingStrategy: KeyEncodingStrategy = .useAsShapeSeparator("."),
                 mapEncodingStrategy: MapEncodingStrategy = .singleQueryEntry,
+                listEncodingStrategy: ListEncodingStrategy = .expandListWithIndex,
                 keyEncodeTransformStrategy: KeyEncodeTransformStrategy = .none) {
         self.options = StandardEncodingOptions(
             shapeKeyEncodingStrategy: keyEncodingStrategy,
             shapeMapEncodingStrategy: mapEncodingStrategy.shapeMapEncodingStrategy,
+            shapeListEncodingStrategy: listEncodingStrategy.shapeListEncodingStrategy,
             shapeKeyEncodeTransformStrategy: keyEncodeTransformStrategy)
     }
 

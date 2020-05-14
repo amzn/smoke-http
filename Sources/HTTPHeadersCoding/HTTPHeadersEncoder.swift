@@ -76,6 +76,7 @@ public class HTTPHeadersEncoder {
         self.options = StandardEncodingOptions(
             shapeKeyEncodingStrategy: keyEncodingStrategy,
             shapeMapEncodingStrategy: mapEncodingStrategy.shapeMapEncodingStrategy,
+            shapeListEncodingStrategy: .expandListWithIndex,
             shapeKeyEncodeTransformStrategy: keyEncodeTransformStrategy)
     }
 

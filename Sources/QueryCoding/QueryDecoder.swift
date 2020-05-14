@@ -52,6 +52,27 @@ public struct QueryDecoder {
         }
     }
     
+    /// The strategy to use when decoding lists.
+    public enum ListDecodingStrategy {
+        /// The index of the item in the list will be used as
+        /// the tag for each individual item. This is the default strategy.
+        /// ie. ?theList.1=Value -> ShapeOutput(theList: ["Value"])
+        case collapseListWithIndex
+        
+        /// The item tag will used as as the tag in addition to the index of the item in the list.
+        /// ie. ?theList.ItemTag.1=Value -> ShapeOutput(theList: ["Value"])
+        case collapseListWithIndexAndItemTag(itemTag: String)
+        
+        var shapeListDecodingStrategy: ShapeListDecodingStrategy {
+            switch self {
+            case .collapseListWithIndex:
+                return .collapseListWithIndex
+            case let .collapseListWithIndexAndItemTag(itemTag: itemTag):
+                return .collapseListWithIndexAndItemTag(itemTag: itemTag)
+            }
+        }
+    }
+    
     let queryPrefix: Character = "?"
     let valuesSeparator: Character = "&"
     let equalsSeparator: Character = "="
@@ -67,10 +88,12 @@ public struct QueryDecoder {
     public init(userInfo: [CodingUserInfoKey: Any] = [:],
                 keyDecodingStrategy: KeyDecodingStrategy = .useAsShapeSeparator("."),
                 mapDecodingStrategy: MapDecodingStrategy = .singleQueryEntry,
+                listDecodingStrategy: ListDecodingStrategy = .collapseListWithIndex,
                 keyDecodeTransformStrategy: KeyDecodeTransformStrategy = .none) {
         self.options = StandardDecodingOptions(
             shapeKeyDecodingStrategy: keyDecodingStrategy,
             shapeMapDecodingStrategy: mapDecodingStrategy.shapeMapDecodingStrategy,
+            shapeListDecodingStrategy: listDecodingStrategy.shapeListDecodingStrategy,
             shapeKeyDecodeTransformStrategy: keyDecodeTransformStrategy)
         self.userInfo = userInfo
     }

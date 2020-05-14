@@ -47,14 +47,17 @@ struct TestTypeD2: Codable, Equatable {
 fileprivate let useDotEncoderOptions = StandardEncodingOptions(
     shapeKeyEncodingStrategy: .useAsShapeSeparator("."),
     shapeMapEncodingStrategy: .singleShapeEntry,
+    shapeListEncodingStrategy: .expandListWithIndex,
     shapeKeyEncodeTransformStrategy: .none)
 fileprivate let capitalizeEncoderOptions = StandardEncodingOptions(
     shapeKeyEncodingStrategy: .useAsShapeSeparator("."),
     shapeMapEncodingStrategy: .singleShapeEntry,
+    shapeListEncodingStrategy: .expandListWithIndex,
     shapeKeyEncodeTransformStrategy: .capitalizeFirstCharacter)
 fileprivate let customTransformEncoderOptions = StandardEncodingOptions(
     shapeKeyEncodingStrategy: .useAsShapeSeparator("."),
     shapeMapEncodingStrategy: .singleShapeEntry,
+    shapeListEncodingStrategy: .expandListWithIndex,
     shapeKeyEncodeTransformStrategy: .custom({ key in String(key.reversed()) }))
 
 class ShapeSingleValueEncodingContainerTests: XCTestCase {

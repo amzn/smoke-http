@@ -49,6 +49,10 @@ public struct HTTPOperationsClient {
     /// The `HTTPClient` used for this instance
     private let wrappedHttpClient: HTTPClient
     
+    public var eventLoopGroup: EventLoopGroup {
+        return self.wrappedHttpClient.eventLoopGroup
+    }
+    
     /**
      Initializer.
 
