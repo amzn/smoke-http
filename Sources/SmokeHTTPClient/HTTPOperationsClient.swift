@@ -253,8 +253,17 @@ public struct HTTPOperationsClient {
             completion(.failure(responseError))
             
         case .failure(let error):
-            let cause = HTTPError.badResponse("Request failed")
-            let wrappingError = HTTPClientError(responseCode: 400, cause: cause)
+            let cause: HTTPError
+            let wrappingError: HTTPClientError
+            
+            switch error {
+            case ChannelError.connectTimeout:
+                cause = HTTPError.connectionError("Connection timed out")
+                wrappingError = HTTPClientError(responseCode: 500, cause: cause)
+            default:
+                cause = HTTPError.badResponse("Request failed")
+                wrappingError = HTTPClientError(responseCode: 400, cause: cause)
+            }
             
             invocationContext.reporting.traceContext.handleOutwardsRequestFailure(
                 outwardsRequestContext: outwardsRequestContext,
