@@ -33,6 +33,31 @@ public struct HTTPRequestParameters {
     public let bodyData: Data
     /// Any additional headers to add
     public let additionalHeaders: [(String, String)]
+    
+    /**
+     Initializer.
+     
+     - Parameters:
+        - contentType: The endpoint url to request a response from.
+        - endpointUrl: The endpoint url to request a response from.
+        - endpointPath: The path to request a response from.
+        - httpMethod: The http method to use for the request.
+        - bodyData: The request body data to use.
+        - additionalHeaders: Any additional headers to add
+     */
+    public init(contentType: String,
+                endpointUrl: URL,
+                endpointPath: String,
+                httpMethod: HTTPMethod,
+                bodyData: Data,
+                additionalHeaders: [(String, String)]) {
+        self.contentType = contentType
+        self.endpointUrl = endpointUrl
+        self.endpointPath = endpointPath
+        self.httpMethod = httpMethod
+        self.bodyData = bodyData
+        self.additionalHeaders = additionalHeaders
+    }
 }
 
 public protocol HTTPClientInvocationDelegate {
