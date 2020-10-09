@@ -3,9 +3,6 @@
 <img src="https://travis-ci.com/amzn/smoke-http.svg?branch=master" alt="Build - Master Branch">
 </a>
 <a href="http://swift.org">
-<img src="https://img.shields.io/badge/swift-5.0-orange.svg?style=flat" alt="Swift 5.0 Tested">
-</a>
-<a href="http://swift.org">
 <img src="https://img.shields.io/badge/swift-5.1-orange.svg?style=flat" alt="Swift 5.1 Tested">
 </a>
 <a href="http://swift.org">
