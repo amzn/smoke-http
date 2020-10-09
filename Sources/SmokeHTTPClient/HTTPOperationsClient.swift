@@ -260,6 +260,9 @@ public struct HTTPOperationsClient {
             case ChannelError.connectTimeout:
                 cause = HTTPError.connectionError("Connection timed out")
                 wrappingError = HTTPClientError(responseCode: 500, cause: cause)
+            case let clientError as AsyncHTTPClient.HTTPClientError where clientError == AsyncHTTPClient.HTTPClientError.readTimeout:
+                cause = HTTPError.connectionError("Read timed out")
+                wrappingError = HTTPClientError(responseCode: 500, cause: cause)
             default:
                 cause = HTTPError.badResponse("Request failed")
                 wrappingError = HTTPClientError(responseCode: 400, cause: cause)
