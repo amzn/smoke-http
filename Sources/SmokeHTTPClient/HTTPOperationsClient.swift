@@ -148,7 +148,7 @@ public struct HTTPOperationsClient {
             invocationContext: invocationContext)
                 
         let outwardsRequestContext = invocationContext.reporting.traceContext.handleOutwardsRequestStart(
-            method: httpMethod, uri: endpointPath,
+            method: httpMethod, uri: endpoint,
             logger: logger,
             internalRequestId: invocationContext.reporting.internalRequestId,
             headers: &requestHeaders, bodyData: sendBody)
