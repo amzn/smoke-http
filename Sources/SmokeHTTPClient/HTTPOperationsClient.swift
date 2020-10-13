@@ -148,7 +148,7 @@ public struct HTTPOperationsClient {
             invocationContext: invocationContext)
                 
         let outwardsRequestContext = invocationContext.reporting.traceContext.handleOutwardsRequestStart(
-            method: httpMethod, uri: endpointPath,
+            method: httpMethod, uri: endpoint,
             logger: logger,
             internalRequestId: invocationContext.reporting.internalRequestId,
             headers: &requestHeaders, bodyData: sendBody)
@@ -259,6 +259,9 @@ public struct HTTPOperationsClient {
             switch error {
             case ChannelError.connectTimeout:
                 cause = HTTPError.connectionError("Connection timed out")
+                wrappingError = HTTPClientError(responseCode: 500, cause: cause)
+            case let clientError as AsyncHTTPClient.HTTPClientError where clientError == AsyncHTTPClient.HTTPClientError.readTimeout:
+                cause = HTTPError.connectionError("Read timed out")
                 wrappingError = HTTPClientError(responseCode: 500, cause: cause)
             default:
                 cause = HTTPError.badResponse("Request failed")
