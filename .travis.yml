@@ -26,11 +26,6 @@ matrix:
       sudo: required
       services: docker
       env: DOCKER_IMAGE_TAG=swift:5.2.5-centos8 USE_SWIFT_LINT=no USE_APT_GET=no
-    - os: linux
-      dist: xenial
-      sudo: required
-      services: docker
-      env: DOCKER_IMAGE_TAG=swift:5.2.5-centos7 USE_SWIFT_LINT=no USE_APT_GET=no
 
     - os: linux
       dist: xenial

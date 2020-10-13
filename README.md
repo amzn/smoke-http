@@ -6,7 +6,7 @@
 <img src="https://img.shields.io/badge/swift-5.1|5.2-orange.svg?style=flat" alt="Swift 5.1, 5.2 Tested">
 </a>
 <img src="https://img.shields.io/badge/ubuntu-16.04|18.04|20.04-yellow.svg?style=flat" alt="Ubuntu 16.04, 18.04 and 20.04 Tested">
-<img src="https://img.shields.io/badge/CentOS-7|8-yellow.svg?style=flat" alt="CentOS 7 and 8 Tested">
+<img src="https://img.shields.io/badge/CentOS-8-yellow.svg?style=flat" alt="CentOS 8 Tested">
 <img src="https://img.shields.io/badge/AmazonLinux-2-yellow.svg?style=flat" alt="Amazon Linux 2 Tested">
 <a href="https://gitter.im/SmokeServerSide">
 <img src="https://img.shields.io/badge/chat-on%20gitter-ee115e.svg?style=flat" alt="Join the Smoke Server Side community on gitter">
