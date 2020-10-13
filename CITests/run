@@ -1,8 +1,6 @@
 #!/bin/bash
 set -e
 
-swiftLintVersion=0.36.0
-
 USE_SWIFT_LINT=$1
 USE_APT_GET=$2
 
