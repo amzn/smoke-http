@@ -45,7 +45,7 @@ public extension HTTPOperationsClient {
             HTTPClientInvocationContext<HTTPClientInnerRetryInvocationReporting<InvocationReportingType.TraceContextType>, HandlerDelegateType>
         let httpClient: HTTPOperationsClient
         let retryConfiguration: HTTPClientRetryConfiguration
-        let retryOnError: (Swift.Error) -> Bool
+        let retryOnError: (HTTPClientError) -> Bool
         let latencyMetricDetails: (Date, Metrics.Timer)?
         
         var retriesRemaining: Int
@@ -55,7 +55,7 @@ public extension HTTPOperationsClient {
              invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>,
              httpClient: HTTPOperationsClient,
              retryConfiguration: HTTPClientRetryConfiguration,
-             retryOnError: @escaping (Swift.Error) -> Bool) {
+             retryOnError: @escaping (HTTPClientError) -> Bool) {
             self.endpointOverride = endpointOverride
             self.endpointPath = endpointPath
             self.httpMethod = httpMethod
@@ -162,6 +162,29 @@ public extension HTTPOperationsClient {
         - retryConfiguration: the retry configuration for this request.
         - retryOnError: function that should return if the provided error is retryable.
      */
+    func executeSyncRetriableWithoutOutput<InputType,
+        InvocationReportingType: HTTPClientInvocationReporting, HandlerDelegateType: HTTPClientInvocationDelegate>(
+        endpointOverride: URL? = nil,
+        endpointPath: String,
+        httpMethod: HTTPMethod,
+        input: InputType,
+        invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>,
+        retryConfiguration: HTTPClientRetryConfiguration,
+        retryOnError: @escaping (HTTPClientError) -> Bool) throws
+        where InputType: HTTPRequestInputProtocol {
+            let wrappingInvocationContext = invocationContext.withOutgoingRequestIdLoggerMetadata()
+
+            let retriable = ExecuteSyncWithoutOutputRetriable(
+                endpointOverride: endpointOverride, endpointPath: endpointPath,
+                httpMethod: httpMethod, input: input,
+                invocationContext: wrappingInvocationContext, httpClient: self,
+                retryConfiguration: retryConfiguration,
+                retryOnError: retryOnError)
+            
+            return try retriable.executeSyncWithoutOutput()
+    }
+    
+    @available(swift, deprecated: 3.0, message: "Provide a `retryOnError` handler that accepts a HTTPClientError instance.")
     func executeSyncRetriableWithoutOutput<InputType,
         InvocationReportingType: HTTPClientInvocationReporting, HandlerDelegateType: HTTPClientInvocationDelegate>(
         endpointOverride: URL? = nil,
