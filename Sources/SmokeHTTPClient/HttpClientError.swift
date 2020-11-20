@@ -37,4 +37,16 @@ public struct HTTPClientError: Error {
             return .serverError
         }
     }
+    
+    public func isRetriable() -> Bool {
+        return self.isRetriableAccordingToCategory
+    }
+    
+    public var isRetriableAccordingToCategory: Bool {
+        if case self.category = Category.clientError {
+            return false
+        } else {
+            return true
+        }
+    }
 }
