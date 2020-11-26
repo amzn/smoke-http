@@ -55,8 +55,7 @@ public struct HTTPClientRetryConfiguration {
     }
     
     public func getRetryInterval(retriesRemaining: Int) -> RetryInterval {
-        let base = Double(baseRetryInterval) * Double(numRetries - retriesRemaining)
-        let msInterval = RetryInterval(pow(base, exponentialBackoff))
+        let msInterval = RetryInterval(Double(baseRetryInterval) * pow(exponentialBackoff, Double(numRetries - retriesRemaining)))
         let boundedMsInterval = min(maxRetryInterval, msInterval)
         
         if jitter {
