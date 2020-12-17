@@ -256,16 +256,20 @@ public struct HTTPOperationsClient {
             let cause: HTTPError
             let wrappingError: HTTPClientError
             
+            let errorDescription = String(describing: error)
+            
             switch error {
-            case ChannelError.connectTimeout:
-                cause = HTTPError.connectionError("Connection timed out")
-                wrappingError = HTTPClientError(responseCode: 500, cause: cause)
+            // special case a read timeout error to a 500 to allow for retries
             case let clientError as AsyncHTTPClient.HTTPClientError where clientError == AsyncHTTPClient.HTTPClientError.readTimeout:
-                cause = HTTPError.connectionError("Read timed out")
+                cause = HTTPError.connectionError(errorDescription)
                 wrappingError = HTTPClientError(responseCode: 500, cause: cause)
-            default:
-                cause = HTTPError.badResponse("Request failed")
+            case _ as AsyncHTTPClient.HTTPClientError:
+                cause = HTTPError.badResponse(errorDescription)
                 wrappingError = HTTPClientError(responseCode: 400, cause: cause)
+            // by default treat all other errors as 500 so they can be retried
+            default:
+                cause = HTTPError.connectionError(errorDescription)
+                wrappingError = HTTPClientError(responseCode: 500, cause: cause)
             }
             
             invocationContext.reporting.traceContext.handleOutwardsRequestFailure(
