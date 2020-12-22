@@ -259,10 +259,11 @@ public struct HTTPOperationsClient {
             let errorDescription = String(describing: error)
             
             switch error {
-            // special case a read timeout error to a 500 to allow for retries
-            case let clientError as AsyncHTTPClient.HTTPClientError where clientError == AsyncHTTPClient.HTTPClientError.readTimeout:
+            // for retriable HTTPClientErrors
+            case let clientError as AsyncHTTPClient.HTTPClientError where isRetriableHTTPClientError(clientError: clientError):
                 cause = HTTPError.connectionError(errorDescription)
                 wrappingError = HTTPClientError(responseCode: 500, cause: cause)
+            // for non-retriable HTTPClientErrors
             case _ as AsyncHTTPClient.HTTPClientError:
                 cause = HTTPError.badResponse(errorDescription)
                 wrappingError = HTTPClientError(responseCode: 400, cause: cause)
@@ -281,6 +282,16 @@ public struct HTTPOperationsClient {
             // complete with this error
             completion(.failure(wrappingError))
         }
+    }
+    
+    private func isRetriableHTTPClientError(clientError: AsyncHTTPClient.HTTPClientError) -> Bool {
+        // special case a read timeout and remote connection closed errors to a 500 to allow for retries
+        if clientError == AsyncHTTPClient.HTTPClientError.readTimeout
+                || clientError == AsyncHTTPClient.HTTPClientError.remoteConnectionClosed {
+            return true
+        }
+        
+        return false
     }
     
     private func getHeadersFromResponse(response: HTTPClient.Response) -> [(String, String)] {
