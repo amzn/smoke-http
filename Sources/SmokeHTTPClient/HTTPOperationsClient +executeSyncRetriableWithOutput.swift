@@ -50,6 +50,7 @@ public extension HTTPOperationsClient {
         init(endpointOverride: URL?, endpointPath: String, httpMethod: HTTPMethod,
              input: InputType,
              invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>,
+             eventLoopOverride eventLoop: EventLoop,
              httpClient: HTTPOperationsClient,
              retryConfiguration: HTTPClientRetryConfiguration,
              retryOnError: @escaping (HTTPClientError) -> Bool) {
@@ -71,7 +72,8 @@ public extension HTTPOperationsClient {
             // When using retry wrappers, the `HTTPClient` itself shouldn't record any metrics.
             let innerReporting = HTTPClientInnerRetryInvocationReporting(internalRequestId: invocationContext.reporting.internalRequestId,
                                                                          traceContext: invocationContext.reporting.traceContext,
-                                                                         logger: invocationContext.reporting.logger)
+                                                                         logger: invocationContext.reporting.logger,
+                                                                         eventLoop: eventLoop)
             self.innerInvocationContext = HTTPClientInvocationContext(reporting: innerReporting, handlerDelegate: invocationContext.handlerDelegate)
         }
         
@@ -173,12 +175,15 @@ public extension HTTPOperationsClient {
         where InputType: HTTPRequestInputProtocol,
         OutputType: HTTPResponseOutputProtocol {
             let wrappingInvocationContext = invocationContext.withOutgoingRequestIdLoggerMetadata()
+        
+            // use the specified event loop or pick one for the client to use for all retry attempts
+            let eventLoop = invocationContext.reporting.eventLoop ?? self.eventLoopGroup.next()
 
             let retriable = ExecuteSyncWithOutputRetriable<InputType, OutputType,
                     StandardHTTPClientInvocationReporting<InvocationReportingType.TraceContextType>, HandlerDelegateType>(
                 endpointOverride: endpointOverride, endpointPath: endpointPath,
                 httpMethod: httpMethod, input: input,
-                invocationContext: wrappingInvocationContext, httpClient: self,
+                invocationContext: wrappingInvocationContext, eventLoopOverride: eventLoop, httpClient: self,
                 retryConfiguration: retryConfiguration,
                 retryOnError: retryOnError)
             
@@ -198,12 +203,15 @@ public extension HTTPOperationsClient {
         where InputType: HTTPRequestInputProtocol,
         OutputType: HTTPResponseOutputProtocol {
             let wrappingInvocationContext = invocationContext.withOutgoingRequestIdLoggerMetadata()
+        
+            // use the specified event loop or pick one for the client to use for all retry attempts
+            let eventLoop = invocationContext.reporting.eventLoop ?? self.eventLoopGroup.next()
 
             let retriable = ExecuteSyncWithOutputRetriable<InputType, OutputType,
                     StandardHTTPClientInvocationReporting<InvocationReportingType.TraceContextType>, HandlerDelegateType>(
                 endpointOverride: endpointOverride, endpointPath: endpointPath,
                 httpMethod: httpMethod, input: input,
-                invocationContext: wrappingInvocationContext, httpClient: self,
+                invocationContext: wrappingInvocationContext, eventLoopOverride: eventLoop, httpClient: self,
                 retryConfiguration: retryConfiguration,
                 retryOnError: retryOnError)
             

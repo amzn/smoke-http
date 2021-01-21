@@ -40,7 +40,6 @@ public extension HTTPOperationsClient {
     func executeAsEventLoopFutureWithOutput<InputType, OutputType,
         InvocationReportingType: HTTPClientInvocationReporting, HandlerDelegateType: HTTPClientInvocationDelegate>(
             endpointOverride: URL? = nil,
-            eventLoopOverride: EventLoop? = nil,
             endpointPath: String,
             httpMethod: HTTPMethod,
             input: InputType,
@@ -50,7 +49,6 @@ public extension HTTPOperationsClient {
             
             return executeAsEventLoopFutureWithOutputWithWrappedInvocationContext(
                 endpointOverride: endpointOverride,
-                eventLoopOverride: eventLoopOverride,
                 endpointPath: endpointPath,
                 httpMethod: httpMethod,
                 input: input,
@@ -72,7 +70,6 @@ public extension HTTPOperationsClient {
     internal func executeAsEventLoopFutureWithOutputWithWrappedInvocationContext<InputType, OutputType,
         InvocationReportingType: HTTPClientInvocationReporting, HandlerDelegateType: HTTPClientInvocationDelegate>(
             endpointOverride: URL? = nil,
-            eventLoopOverride: EventLoop?,
             endpointPath: String,
             httpMethod: HTTPMethod,
             input: InputType,
@@ -90,7 +87,6 @@ public extension HTTPOperationsClient {
         // that will decode the returned body into the desired decodable type.
         
         let future = executeAsEventLoopFuture(endpointOverride: endpointOverride,
-                                              eventLoopOverride: eventLoopOverride,
                                               endpointPath: endpointPath, httpMethod: httpMethod,
                                               input: input, invocationContext: invocationContext)
             .flatMapThrowing { (response) -> OutputType in

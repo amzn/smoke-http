@@ -114,7 +114,6 @@ public struct HTTPOperationsClient {
             invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>) throws -> EventLoopFuture<HTTPClient.Response>
             where InputType: HTTPRequestInputProtocol {
         let (responseFuture, outwardsRequestContext) = try performExecuteAsync(endpointOverride: endpointOverride,
-                                                                               eventLoopOverride: nil,
                                                                                endpointPath: endpointPath,
                                                                                httpMethod: httpMethod,
                                                                                input: input,
@@ -140,7 +139,6 @@ public struct HTTPOperationsClient {
     
     func executeAsEventLoopFuture<InputType, InvocationReportingType: HTTPClientInvocationReporting, HandlerDelegateType: HTTPClientInvocationDelegate>(
             endpointOverride: URL? = nil,
-            eventLoopOverride: EventLoop? = nil,
             endpointPath: String,
             httpMethod: HTTPMethod,
             input: InputType,
@@ -148,7 +146,6 @@ public struct HTTPOperationsClient {
             where InputType: HTTPRequestInputProtocol {
         do {
             let (responseFuture, outwardsRequestContext) = try performExecuteAsync(endpointOverride: endpointOverride,
-                                                                                   eventLoopOverride: eventLoopOverride,
                                                                                    endpointPath: endpointPath,
                                                                                    httpMethod: httpMethod,
                                                                                    input: input,
@@ -166,7 +163,7 @@ public struct HTTPOperationsClient {
                 }
             }
         } catch {
-            let eventLoop = eventLoopOverride ?? self.eventLoopGroup.next()
+            let eventLoop = invocationContext.reporting.eventLoop ?? self.eventLoopGroup.next()
             
             let promise = eventLoop.makePromise(of: HTTPResponseComponents.self)
             
@@ -180,7 +177,6 @@ public struct HTTPOperationsClient {
     // the future otherwise.
     private func performExecuteAsync<InputType, InvocationReportingType: HTTPClientInvocationReporting, HandlerDelegateType: HTTPClientInvocationDelegate>(
             endpointOverride: URL? = nil,
-            eventLoopOverride: EventLoop?,
             endpointPath: String,
             httpMethod: HTTPMethod,
             input: InputType,
@@ -231,7 +227,7 @@ public struct HTTPOperationsClient {
                                              headers: requestHeaders, body: .data(sendBody))
                 
         let responseFuture: EventLoopFuture<HTTPClient.Response>
-        if let eventLoopOverride = eventLoopOverride {
+        if let eventLoopOverride = invocationContext.reporting.eventLoop {
             responseFuture = self.wrappedHttpClient.execute(request: request,
                                                             eventLoop: .delegateAndChannel(on: eventLoopOverride))
         } else {

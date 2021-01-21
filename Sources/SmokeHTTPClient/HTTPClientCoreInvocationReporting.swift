@@ -17,6 +17,7 @@
 
 import Foundation
 import Logging
+import NIO
 
 /**
  A context related to reporting on the invocation of the HTTPClient. This represents the
@@ -36,4 +37,13 @@ public protocol HTTPClientCoreInvocationReporting {
     
     /// The trace context associated with this invocation.
     var traceContext: TraceContextType { get }
+    
+    var eventLoop: EventLoop? { get }
+}
+
+public extension HTTPClientCoreInvocationReporting {
+    // The attribute is being added as a non-breaking change, so add a default implementation that replicates existing behaviour
+    var eventLoop: EventLoop? {
+        return nil
+    }
 }

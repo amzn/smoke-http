@@ -41,7 +41,6 @@ public extension HTTPOperationsClient {
     func executeAsEventLoopFutureWithoutOutput<InputType,
             InvocationReportingType: HTTPClientInvocationReporting, HandlerDelegateType: HTTPClientInvocationDelegate>(
         endpointOverride: URL? = nil,
-        eventLoopOverride: EventLoop? = nil,
         endpointPath: String,
         httpMethod: HTTPMethod,
         input: InputType,
@@ -51,7 +50,6 @@ public extension HTTPOperationsClient {
             
             return executeAsEventLoopFutureWithoutOutputWithWrappedInvocationContext(
                 endpointOverride: endpointOverride,
-                eventLoopOverride: eventLoopOverride,
                 endpointPath: endpointPath,
                 httpMethod: httpMethod,
                 input: input,
@@ -72,7 +70,6 @@ public extension HTTPOperationsClient {
     internal func executeAsEventLoopFutureWithoutOutputWithWrappedInvocationContext<InputType,
             InvocationReportingType: HTTPClientInvocationReporting, HandlerDelegateType: HTTPClientInvocationDelegate>(
         endpointOverride: URL? = nil,
-        eventLoopOverride: EventLoop?,
         endpointPath: String,
         httpMethod: HTTPMethod,
         input: InputType,
@@ -88,7 +85,6 @@ public extension HTTPOperationsClient {
         
             // submit the asynchronous request
             let future = executeAsEventLoopFuture(endpointOverride: endpointOverride,
-                                                  eventLoopOverride: eventLoopOverride,
                                                   endpointPath: endpointPath,
                                                   httpMethod: httpMethod,
                                                   input: input,
