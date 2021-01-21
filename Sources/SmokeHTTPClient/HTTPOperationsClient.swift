@@ -227,7 +227,9 @@ public struct HTTPOperationsClient {
                                              headers: requestHeaders, body: .data(sendBody))
                 
         let responseFuture: EventLoopFuture<HTTPClient.Response>
-        if let eventLoopOverride = invocationContext.reporting.eventLoop {
+        // if an event loop is provided that can be used with this client
+        if let eventLoopOverride = invocationContext.reporting.eventLoop,
+           self.eventLoopGroup.makeIterator().contains(where: { $0 === eventLoopOverride }) {
             responseFuture = self.wrappedHttpClient.execute(request: request,
                                                             eventLoop: .delegateAndChannel(on: eventLoopOverride))
         } else {
