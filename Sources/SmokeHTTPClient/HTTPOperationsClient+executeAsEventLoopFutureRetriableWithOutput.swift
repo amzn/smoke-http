@@ -73,7 +73,7 @@ public extension HTTPOperationsClient {
         }
         
         func executeAsEventLoopFutureWithOutput(eventLoopOverride: EventLoop?) -> EventLoopFuture<OutputType> {
-            // use the specified event loop for pick one for the client to use for all retry attempts
+            // use the specified event loop or pick one for the client to use for all retry attempts
             let eventLoop = eventLoopOverride ?? self.httpClient.eventLoopGroup.next()
             
             // submit the asynchronous request
