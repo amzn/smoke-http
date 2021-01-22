@@ -25,7 +25,7 @@ import Logging
 import Metrics
 
 public extension EventLoopFuture where Value == Void {
-    func completeWithoutResult<ErrorType: Error>(on completion: @escaping (Swift.Error?) -> (),
+    func completeWithoutResult<ErrorType: Error>(on completion: @escaping (ErrorType?) -> (),
                                                  typedErrorProvider: @escaping (Swift.Error) -> ErrorType){
         self.whenComplete { result in
             switch result {
