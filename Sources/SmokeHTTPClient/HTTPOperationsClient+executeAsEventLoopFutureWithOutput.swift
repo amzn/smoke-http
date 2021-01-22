@@ -24,6 +24,20 @@ import NIOTLS
 import Logging
 import Metrics
 
+public extension EventLoopFuture {
+    func complete<ErrorType: Error>(on completion: @escaping (Result<Value, ErrorType>) -> (),
+                                    typedErrorProvider: @escaping (Swift.Error) -> ErrorType){
+        self.whenComplete { result in
+            switch result {
+            case .success(let output):
+                completion(.success(output))
+            case .failure(let error):
+                completion(.failure(typedErrorProvider(error)))
+            }
+        }
+    }
+}
+
 public extension HTTPOperationsClient {
     
     /**
