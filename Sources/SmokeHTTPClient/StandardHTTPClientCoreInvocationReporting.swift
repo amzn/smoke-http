@@ -16,6 +16,7 @@
 //
 import Foundation
 import Logging
+import NIO
 
 /**
   A type conforming to the `HTTPClientCoreInvocationReporting` protocol..
@@ -24,12 +25,15 @@ public struct StandardHTTPClientCoreInvocationReporting<TraceContextType: Invoca
     public let logger: Logger
     public var internalRequestId: String
     public var traceContext: TraceContextType
+    public var eventLoop: EventLoop?
     
     public init(logger: Logger,
                 internalRequestId: String,
-                traceContext: TraceContextType) {
+                traceContext: TraceContextType,
+                eventLoop: EventLoop? = nil) {
         self.logger = logger
         self.internalRequestId = internalRequestId
         self.traceContext = traceContext
+        self.eventLoop = eventLoop
     }
 }
