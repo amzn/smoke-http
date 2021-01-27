@@ -15,27 +15,46 @@ import NIO
 import Logging
 
 /**
-  Provides a single-threaded `EventLoopGroup` and its `EventLoop`, primarily for testing purposes.
-  Automatically shuts down the group in the deinitializer so the lifetime of the provided eventloop is tied to
-  the lifetime of this instance.
+  Provides eventLoop primarily for testing purposes, either provided or
+  a single-threaded event loop group owned by the provider.
  */
-public class TestEventLoopProvider {
-    public let eventLoopGroup: EventLoopGroup
-    public let eventLoop: EventLoop
+public enum TestEventLoopProvider {
+    case provided(EventLoop)
+    case owned(OwnedTestEventLoopProvider)
     
-    public init() {
-        self.eventLoopGroup = MultiThreadedEventLoopGroup(numberOfThreads: 1)
-        
-        self.eventLoop = eventLoopGroup.next()
-    }
-    
-    deinit {
-        do {
-            try self.eventLoopGroup.syncShutdownGracefully()
-        } catch {
-            let logger = Logger(label: "com.amazon.smoke-http.TestEventLoopProvider")
-            
-            logger.error("Unable to shutdown test event loop group.")
+    public var eventLoop: EventLoop {
+        switch self {
+        case .provided(let eventLoop):
+            return eventLoop
+        case .owned(let ownedProvider):
+            return ownedProvider.eventLoop
         }
     }
+    
+    /**
+      Provides a single-threaded `EventLoopGroup` and its `EventLoop`, primarily for testing purposes.
+      Automatically shuts down the group in the deinitializer so the lifetime of the provided eventloop is tied to
+      the lifetime of this instance.
+     */
+    public class OwnedTestEventLoopProvider {
+        public let eventLoopGroup: EventLoopGroup
+        public let eventLoop: EventLoop
+        
+        public init() {
+            self.eventLoopGroup = MultiThreadedEventLoopGroup(numberOfThreads: 1)
+            
+            self.eventLoop = eventLoopGroup.next()
+        }
+        
+        deinit {
+            do {
+                try self.eventLoopGroup.syncShutdownGracefully()
+            } catch {
+                let logger = Logger(label: "com.amazon.smoke-http.TestEventLoopProvider")
+                
+                logger.error("Unable to shutdown test event loop group.")
+            }
+        }
+    }
+    
 }
