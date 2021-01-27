@@ -31,6 +31,14 @@ public enum TestEventLoopProvider {
         }
     }
     
+    public static func withProvidedEventLoop(_ eventLoop: EventLoop) -> Self {
+        return .provided(eventLoop)
+    }
+    
+    public static func withOwnedEventLoop() -> Self {
+        return .owned(OwnedTestEventLoopProvider())
+    }
+    
     /**
       Provides a single-threaded `EventLoopGroup` and its `EventLoop`, primarily for testing purposes.
       Automatically shuts down the group in the deinitializer so the lifetime of the provided eventloop is tied to
