@@ -19,6 +19,32 @@ import Foundation
 import Logging
 import NIO
 
+public protocol OutputRequestRecord {
+    var requestLatency: TimeInterval { get }
+}
+
+public protocol RetriableOutputRequestRecord {
+    var outputRequests: [OutputRequestRecord] { get }
+}
+
+public protocol RetryAttemptRecord {
+    var retryWait: TimeInterval { get }
+}
+
+/**
+  Provide the ability to record the info about the outward requests for a particular invocation reporting instance.
+ 
+  This is really a stop-gap measure until distributed tracing comes along and we can do this in a more standardised way.
+ */
+public protocol OutwardsRequestAggregator {
+    
+    func recordOutwardsRequest(outputRequestRecord: OutputRequestRecord)
+    
+    func recordRetryAttempt(retryAttemptRecord: RetryAttemptRecord)
+    
+    func recordRetriableOutwardsRequest(retriableOutwardsRequest: RetriableOutputRequestRecord)
+}
+
 /**
  A context related to reporting on the invocation of the HTTPClient. This represents the
  core requirements for invocation reporting.
@@ -39,11 +65,18 @@ public protocol HTTPClientCoreInvocationReporting {
     var traceContext: TraceContextType { get }
     
     var eventLoop: EventLoop? { get }
+    
+    var outwardsRequestAggregator: OutwardsRequestAggregator? { get }
 }
 
 public extension HTTPClientCoreInvocationReporting {
     // The attribute is being added as a non-breaking change, so add a default implementation that replicates existing behaviour
     var eventLoop: EventLoop? {
+        return nil
+    }
+    
+    // The attribute is being added as a non-breaking change, so add a default implementation that replicates existing behaviour
+    var outwardsRequestAggregator: OutwardsRequestAggregator? {
         return nil
     }
 }

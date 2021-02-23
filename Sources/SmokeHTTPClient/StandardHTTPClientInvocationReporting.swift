@@ -25,6 +25,7 @@ public struct StandardHTTPClientInvocationReporting<TraceContextType: Invocation
     public let traceContext: TraceContextType
     public let logger: Logging.Logger
     public var eventLoop: EventLoop?
+    public var outwardsRequestAggregator: OutwardsRequestAggregator?
     public let successCounter: Metrics.Counter?
     public let failure5XXCounter: Metrics.Counter?
     public let failure4XXCounter: Metrics.Counter?
@@ -35,6 +36,7 @@ public struct StandardHTTPClientInvocationReporting<TraceContextType: Invocation
                 traceContext: TraceContextType,
                 logger: Logging.Logger = Logger(label: "com.amazon.SmokeHTTP.SmokeHTTPClient.StandardHTTPClientInvocationReporting"),
                 eventLoop: EventLoop? = nil,
+                outwardsRequestAggregator: OutwardsRequestAggregator? = nil,
                 successCounter: Metrics.Counter? = nil,
                 failure5XXCounter: Metrics.Counter? = nil,
                 failure4XXCounter: Metrics.Counter? = nil,
@@ -42,6 +44,7 @@ public struct StandardHTTPClientInvocationReporting<TraceContextType: Invocation
                 latencyTimer: Metrics.Timer? = nil) {
         self.logger = logger
         self.eventLoop = eventLoop
+        self.outwardsRequestAggregator = outwardsRequestAggregator
         self.internalRequestId = internalRequestId
         self.traceContext = traceContext
         self.successCounter = successCounter

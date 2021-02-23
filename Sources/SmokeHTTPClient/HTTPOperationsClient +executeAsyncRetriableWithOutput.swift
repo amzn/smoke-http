@@ -47,6 +47,7 @@ public extension HTTPOperationsClient {
         let retryOnError: (HTTPClientError) -> Bool
         let queue = DispatchQueue.global()
         let latencyMetricDetails: (Date, Metrics.Timer)?
+        let outwardsRequestAggregators: (OutwardsRequestAggregator, RetriableOutwardsRequestAggregator)?
         
         var retriesRemaining: Int
         
@@ -71,6 +72,13 @@ public extension HTTPOperationsClient {
             self.retriesRemaining = retryConfiguration.numRetries
             self.retryOnError = retryOnError
             
+            // if the request latencies need to be aggregated
+            if let outwardsRequestAggregator = invocationContext.reporting.outwardsRequestAggregator {
+                outwardsRequestAggregators = (outwardsRequestAggregator, RetriableOutwardsRequestAggregator())
+            } else {
+                outwardsRequestAggregators = nil
+            }
+            
             if let latencyTimer = invocationContext.reporting.latencyTimer {
                 self.latencyMetricDetails = (Date(), latencyTimer)
             } else {
@@ -80,7 +88,8 @@ public extension HTTPOperationsClient {
             let innerReporting = HTTPClientInnerRetryInvocationReporting(internalRequestId: invocationContext.reporting.internalRequestId,
                                                                          traceContext: invocationContext.reporting.traceContext,
                                                                          logger: invocationContext.reporting.logger,
-                                                                         eventLoop: eventLoop)
+                                                                         eventLoop: eventLoop,
+                                                                         outwardsRequestAggregator: outwardsRequestAggregators?.1)
             self.innerInvocationContext = HTTPClientInvocationContext(reporting: innerReporting, handlerDelegate: invocationContext.handlerDelegate)
         }
         
@@ -109,6 +118,11 @@ public extension HTTPOperationsClient {
                     
                     let currentRetriesRemaining = retriesRemaining
                     retriesRemaining -= 1
+                    
+                    if let outwardsRequestAggregators = self.outwardsRequestAggregators {
+                        outwardsRequestAggregators.0.recordRetryAttempt(
+                            retryAttemptRecord: StandardRetryAttemptRecord(retryWait: retryInterval.millisecondsToTimeInterval))
+                    }
                     
                     logger.warning(
                         "Request failed with error: \(error). Remaining retries: \(currentRetriesRemaining). Retrying in \(retryInterval) ms.")
@@ -156,8 +170,15 @@ public extension HTTPOperationsClient {
             let retryCount = retryConfiguration.numRetries - retriesRemaining
             invocationContext.reporting.retryCountRecorder?.record(retryCount)
             
-            if let durationMetricDetails = latencyMetricDetails {
-                durationMetricDetails.1.recordMicroseconds(Date().timeIntervalSince(durationMetricDetails.0))
+            if let durationMetricDetails = self.latencyMetricDetails {
+                durationMetricDetails.1.recordMilliseconds(Date().timeIntervalSince(durationMetricDetails.0).milliseconds)
+            }
+            
+            // submit all the request latencies captured by the RetriableOutwardsRequestAggregator
+            // to the provided outwardsRequestAggregator if it was provided
+            if let outwardsRequestAggregators = self.outwardsRequestAggregators {
+                outwardsRequestAggregators.0.recordRetriableOutwardsRequest(
+                    retriableOutwardsRequest: StandardRetriableOutputRequestRecord(outputRequests: outwardsRequestAggregators.1.outputRequestRecords))
             }
 
             outerCompletion(result)
