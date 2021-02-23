@@ -152,6 +152,11 @@ public extension HTTPOperationsClient {
                 let currentRetriesRemaining = retriesRemaining
                 retriesRemaining -= 1
                 
+                if let outwardsRequestAggregators = self.outwardsRequestAggregators {
+                    outwardsRequestAggregators.0.recordRetryAttempt(
+                        retryAttemptRecord: StandardRetryAttemptRecord(retryWait: retryInterval.millisecondsToTimeInterval))
+                }
+                
                 logger.debug("Request failed with error: \(error). Remaining retries: \(currentRetriesRemaining). Retrying in \(retryInterval) ms.")
                 usleep(useconds_t(retryInterval * milliToMicroSeconds))
                 logger.debug("Reattempting request due to remaining retries: \(currentRetriesRemaining)")

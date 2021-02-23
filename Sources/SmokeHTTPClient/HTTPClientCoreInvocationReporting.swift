@@ -27,6 +27,10 @@ public protocol RetriableOutputRequestRecord {
     var outputRequests: [OutputRequestRecord] { get }
 }
 
+public protocol RetryAttemptRecord {
+    var retryWait: TimeInterval { get }
+}
+
 /**
   Provide the ability to record the info about the outward requests for a particular invocation reporting instance.
  
@@ -35,6 +39,8 @@ public protocol RetriableOutputRequestRecord {
 public protocol OutwardsRequestAggregator {
     
     func recordOutwardsRequest(outputRequestRecord: OutputRequestRecord)
+    
+    func recordRetryAttempt(retryAttemptRecord: RetryAttemptRecord)
     
     func recordRetriableOutwardsRequest(retriableOutwardsRequest: RetriableOutputRequestRecord)
 }

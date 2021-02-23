@@ -48,3 +48,9 @@ internal extension TimeInterval {
         return Int(self * timeIntervalToMilliseconds)
     }
 }
+
+internal extension Int {
+    var millisecondsToTimeInterval: TimeInterval {
+        return TimeInterval(self) / timeIntervalToMilliseconds
+    }
+}
