@@ -28,6 +28,7 @@ internal struct HTTPClientInnerRetryInvocationReporting<TraceContextType: Invoca
     let traceContext: TraceContextType
     let logger: Logging.Logger
     let eventLoop: EventLoop?
+    let outwardsRequestAggregator: OutwardsRequestAggregator?
     let successCounter: Metrics.Counter? = nil
     let failure5XXCounter: Metrics.Counter? = nil
     let failure4XXCounter: Metrics.Counter? = nil

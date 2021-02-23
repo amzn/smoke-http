@@ -112,11 +112,13 @@ public extension HTTPOperationsClient {
         where InputType: HTTPRequestInputProtocol, InvocationStrategyType: AsyncResponseInvocationStrategy,
         InvocationStrategyType.OutputType == HTTPClientError? {
             
-            let latencyMetricDetails: (Date, Metrics.Timer)?
-            if let latencyTimer = invocationContext.reporting.latencyTimer {
-                latencyMetricDetails = (Date(), latencyTimer)
+            let durationMetricDetails: (Date, Metrics.Timer?, OutwardsRequestAggregator?)?
+            
+            if invocationContext.reporting.outwardsRequestAggregator != nil ||
+                    invocationContext.reporting.latencyTimer != nil {
+                durationMetricDetails = (Date(), invocationContext.reporting.latencyTimer, invocationContext.reporting.outwardsRequestAggregator)
             } else {
-                latencyMetricDetails = nil
+                durationMetricDetails = nil
             }
             
             // create a wrapping completion handler to pass to the ChannelInboundHandler
@@ -143,8 +145,17 @@ public extension HTTPOperationsClient {
                     invocationContext.reporting.successCounter?.increment()
                 }
                 
-                if let durationMetricDetails = latencyMetricDetails {
-                    durationMetricDetails.1.recordMicroseconds(Date().timeIntervalSince(durationMetricDetails.0))
+                if let durationMetricDetails = durationMetricDetails {
+                    let timeInterval = Date().timeIntervalSince(durationMetricDetails.0)
+                    
+                    if let latencyTimer = durationMetricDetails.1 {
+                        latencyTimer.recordMilliseconds(timeInterval.milliseconds)
+                    }
+                    
+                    if let outwardsRequestAggregator = durationMetricDetails.2 {
+                        outwardsRequestAggregator.recordOutwardsRequest(
+                            outputRequestRecord: StandardOutputRequestRecord(requestLatency: timeInterval))
+                    }
                 }
                 
                 asyncResponseInvocationStrategy.invokeResponse(response: result, completion: completion)

@@ -19,6 +19,8 @@ import Foundation
 import Logging
 import Metrics
 
+private let timeIntervalToMilliseconds: Double = 1000
+
 /**
  A context related to reporting on the invocation of the HTTPClient. This interface extends the
  HTTPClientCoreInvocationReporting protocol by adding metrics emitted by the 
@@ -39,4 +41,10 @@ public protocol HTTPClientInvocationReporting: HTTPClientCoreInvocationReporting
     
     /// The `Metrics.Recorder` to record the duration of this invocation.
     var latencyTimer: Metrics.Timer? { get }
+}
+
+internal extension TimeInterval {
+    var milliseconds: Int {
+        return Int(self * timeIntervalToMilliseconds)
+    }
 }

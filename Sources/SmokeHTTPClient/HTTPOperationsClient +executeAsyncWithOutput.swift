@@ -115,9 +115,11 @@ public extension HTTPOperationsClient {
         InvocationStrategyType.OutputType == Result<OutputType, HTTPClientError>,
         OutputType: HTTPResponseOutputProtocol {
             
-        let durationMetricDetails: (Date, Metrics.Timer)?
-        if let durationTimer = invocationContext.reporting.latencyTimer {
-            durationMetricDetails = (Date(), durationTimer)
+        let durationMetricDetails: (Date, Metrics.Timer?, OutwardsRequestAggregator?)?
+        
+        if invocationContext.reporting.outwardsRequestAggregator != nil ||
+                invocationContext.reporting.latencyTimer != nil {
+            durationMetricDetails = (Date(), invocationContext.reporting.latencyTimer, invocationContext.reporting.outwardsRequestAggregator)
         } else {
             durationMetricDetails = nil
         }
@@ -163,7 +165,16 @@ public extension HTTPOperationsClient {
             }
             
             if let durationMetricDetails = durationMetricDetails {
-                durationMetricDetails.1.recordMicroseconds(Date().timeIntervalSince(durationMetricDetails.0))
+                let timeInterval = Date().timeIntervalSince(durationMetricDetails.0)
+                
+                if let latencyTimer = durationMetricDetails.1 {
+                    latencyTimer.recordMilliseconds(timeInterval.milliseconds)
+                }
+                
+                if let outwardsRequestAggregator = durationMetricDetails.2 {
+                    outwardsRequestAggregator.recordOutwardsRequest(
+                        outputRequestRecord: StandardOutputRequestRecord(requestLatency: timeInterval))
+                }
             }
 
             asyncResponseInvocationStrategy.invokeResponse(response: result, completion: completion)

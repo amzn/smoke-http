@@ -26,14 +26,17 @@ public struct StandardHTTPClientCoreInvocationReporting<TraceContextType: Invoca
     public var internalRequestId: String
     public var traceContext: TraceContextType
     public var eventLoop: EventLoop?
+    public var outwardsRequestAggregator: OutwardsRequestAggregator?
     
     public init(logger: Logger,
                 internalRequestId: String,
                 traceContext: TraceContextType,
-                eventLoop: EventLoop? = nil) {
+                eventLoop: EventLoop? = nil,
+                outwardsRequestAggregator: OutwardsRequestAggregator? = nil) {
         self.logger = logger
         self.internalRequestId = internalRequestId
         self.traceContext = traceContext
         self.eventLoop = eventLoop
+        self.outwardsRequestAggregator = outwardsRequestAggregator
     }
 }

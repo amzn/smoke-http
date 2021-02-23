@@ -45,6 +45,8 @@ extension HTTPClientInvocationContext {
             internalRequestId: reporting.internalRequestId,
             traceContext: reporting.traceContext,
             logger: outwardInvocationLogger,
+            eventLoop: reporting.eventLoop,
+            outwardsRequestAggregator: reporting.outwardsRequestAggregator,
             successCounter: reporting.successCounter,
             failure5XXCounter: reporting.failure5XXCounter,
             failure4XXCounter: reporting.failure4XXCounter,
