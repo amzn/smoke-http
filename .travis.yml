@@ -39,6 +39,13 @@ matrix:
       services: docker
       env: DOCKER_IMAGE_TAG=swift:5.1-bionic ONLY_RUN_SWIFT_LINT=no USE_APT_GET=yes
 
+    # Verify against nightly of upcoming Swift 5.4
+    - os: linux
+      dist: xenial
+      sudo: required
+      services: docker
+      env: DOCKER_IMAGE_TAG=swiftlang/swift:nightly-5.4-amazonlinux2 ONLY_RUN_SWIFT_LINT=no USE_APT_GET=yes
+
     # Use a docker image that contains the SwiftLint executable the verify the code against the linter.
     - os: linux
       dist: xenial
