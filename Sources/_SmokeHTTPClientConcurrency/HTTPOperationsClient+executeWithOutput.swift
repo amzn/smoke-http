@@ -11,7 +11,7 @@
 // express or implied. See the License for the specific language governing
 // permissions and limitations under the License.
 //
-//  HTTPOperationsClient+executeAsEventLoopFutureWithOutput.swift
+//  HTTPOperationsClient+executeWithOutput.swift
 //  _SmokeHTTPClientConcurrency
 //
 
@@ -36,7 +36,7 @@ public extension HTTPOperationsClient {
      - Returns: the response body.
      - Throws: If an error occurred during the request.
      */
-    func executeAsEventLoopFutureWithOutput<InputType, OutputType,
+    func executeWithOutput<InputType, OutputType,
             InvocationReportingType: HTTPClientInvocationReporting, HandlerDelegateType: HTTPClientInvocationDelegate>(
         endpointOverride: URL? = nil,
         endpointPath: String,
