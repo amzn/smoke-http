@@ -22,6 +22,9 @@ let package = Package(
             name: "SmokeHTTPClient",
             targets: ["SmokeHTTPClient"]),
         .library(
+            name: "_SmokeHTTPClientConcurrency",
+            targets: ["_SmokeHTTPClientConcurrency"]),
+        .library(
             name: "QueryCoding",
             targets: ["QueryCoding"]),
         .library(
@@ -51,6 +54,10 @@ let package = Package(
                 .product(name: "NIOFoundationCompat", package: "swift-nio"),
                 .product(name: "NIOSSL", package: "swift-nio-ssl"),
                 .product(name: "AsyncHTTPClient", package: "async-http-client"),
+            ]),
+        .target(
+            name: "_SmokeHTTPClientConcurrency", dependencies: [
+                .target(name: "SmokeHTTPClient"),
             ]),
         .target(
             name: "QueryCoding", dependencies: [
