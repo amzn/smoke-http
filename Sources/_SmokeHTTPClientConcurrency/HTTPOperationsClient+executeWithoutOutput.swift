@@ -15,7 +15,7 @@
 //  _SmokeHTTPClientConcurrency
 //
 
-#if compiler(>=5.4) && $AsyncAwait
+#if compiler(>=5.5) && $AsyncAwait
 
 import Foundation
 import NIO
