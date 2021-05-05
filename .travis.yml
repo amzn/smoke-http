@@ -10,11 +10,6 @@ matrix:
       dist: xenial
       sudo: required
       services: docker
-      env: DOCKER_IMAGE_TAG=swift:5.4.0-xenial ONLY_RUN_SWIFT_LINT=no USE_APT_GET=yes
-    - os: linux
-      dist: xenial
-      sudo: required
-      services: docker
       env: DOCKER_IMAGE_TAG=swift:5.4.0-focal ONLY_RUN_SWIFT_LINT=no USE_APT_GET=yes
     - os: linux
       dist: xenial
