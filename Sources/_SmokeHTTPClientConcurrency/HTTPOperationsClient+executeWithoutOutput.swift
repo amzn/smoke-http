@@ -21,27 +21,7 @@ import Foundation
 import NIO
 import NIOHTTP1
 import SmokeHTTPClient
-import _Concurrency
-
-// TODO: Remove this when provided by swift-nio itself
-extension EventLoopFuture {
-    /// Get the value/error from an `EventLoopFuture` in an `async` context.
-    ///
-    /// This function can be used to bridge an `EventLoopFuture` into the `async` world. Ie. if you're in an `async`
-    /// function and want to get the result of this future.
-    public func get() async throws -> Value {
-        return try await withUnsafeThrowingContinuation { cont in
-            self.whenComplete { result in
-                switch result {
-                case .success(let value):
-                    cont.resume(returning: value)
-                case .failure(let error):
-                    cont.resume(throwing: error)
-                }
-            }
-        }
-    }
-}
+import _NIOConcurrency
 
 public extension HTTPOperationsClient {
     
