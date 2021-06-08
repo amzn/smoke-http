@@ -37,6 +37,7 @@ public extension HTTPOperationsClient {
         - retryOnError: function that should return if the provided error is retryable.
      - Throws: If an error occurred during the request.
      */
+    @available(macOS 9999, iOS 9999, watchOS 9999, tvOS 9999, *)
     func executeRetriableWithoutOutput<InputType,
             InvocationReportingType: HTTPClientInvocationReporting, HandlerDelegateType: HTTPClientInvocationDelegate>(
         endpointOverride: URL? = nil,
