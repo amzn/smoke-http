@@ -38,6 +38,7 @@ public extension HTTPOperationsClient {
      - Returns: the response body.
      - Throws: If an error occurred during the request.
      */
+    @available(macOS 9999, iOS 9999, watchOS 9999, tvOS 9999, *)
     func executeRetriableWithOutput<InputType, OutputType,
             InvocationReportingType: HTTPClientInvocationReporting, HandlerDelegateType: HTTPClientInvocationDelegate>(
         endpointOverride: URL? = nil,
