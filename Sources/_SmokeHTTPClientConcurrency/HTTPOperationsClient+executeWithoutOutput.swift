@@ -15,7 +15,7 @@
 //  _SmokeHTTPClientConcurrency
 //
 
-#if compiler(>=5.5) && $AsyncAwait
+#if compiler(>=5.5)
 
 import Foundation
 import NIO
@@ -37,7 +37,7 @@ public extension HTTPOperationsClient {
         - invocationContext: context to use for this invocation.
      - Throws: If an error occurred during the request.
      */
-    @available(macOS 9999, iOS 9999, watchOS 9999, tvOS 9999, *)
+    @available(macOS 12, iOS 15, tvOS 15, watchOS 8, *)
     func executeWithoutOutput<InputType,
             InvocationReportingType: HTTPClientInvocationReporting, HandlerDelegateType: HTTPClientInvocationDelegate>(
         endpointOverride: URL? = nil,
