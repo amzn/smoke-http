@@ -73,7 +73,10 @@ public extension HTTPClientDelegate {
         #else
         let certificateVerification = CertificateVerification.fullVerification
         #endif
+        
+        var tlsConfiguration = TLSConfiguration.makeClientConfiguration()
+        tlsConfiguration.certificateVerification = certificateVerification
 
-        return TLSConfiguration.forClient(certificateVerification: certificateVerification)
+        return tlsConfiguration
     }
 }
