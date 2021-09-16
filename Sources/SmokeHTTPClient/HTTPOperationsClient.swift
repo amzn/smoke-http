@@ -150,17 +150,19 @@ public struct HTTPOperationsClient {
                                                                                    httpMethod: httpMethod,
                                                                                    input: input,
                                                                                    invocationContext: invocationContext)
-            return responseFuture.flatMapThrowing { result in
-                return try self.handleCompleteResponse(invocationContext: invocationContext,
-                                                       outwardsRequestContext: outwardsRequestContext,
-                                                       result: .success(result))
+            return responseFuture.flatMapThrowing { successResult in
+                // a response has been successfully received; this reponse may be a successful response
+                // and generate a `HTTPResponseComponents` instance or be a failure response and cause
+                // a SmokeHTTPClient.HTTPClientError error to be thrown
+                return try self.handleCompleteResponseThrowingClientError(invocationContext: invocationContext,
+                                                                          outwardsRequestContext: outwardsRequestContext,
+                                                                          result: .success(successResult))
             } .flatMapErrorThrowing { error in
-                if error is HTTPClientError {
-                    throw error
-                } else {
-                    // if a non-HTTPClientError is thrown, wrap it
-                    throw HTTPClientError(responseCode: 400, cause: error)
-                }
+                // a response wasn't even able to be generated (for example due to a connection error)
+                // make sure this error is thrown correctly as a SmokeHTTPClient.HTTPClientError
+                return try self.handleCompleteResponseThrowingClientError(invocationContext: invocationContext,
+                                                                          outwardsRequestContext: outwardsRequestContext,
+                                                                          result: .failure(error))
             }
         } catch {
             let eventLoop = invocationContext.reporting.eventLoop ?? self.eventLoopGroup.next()
@@ -237,6 +239,25 @@ public struct HTTPOperationsClient {
         }
         
         return (responseFuture, outwardsRequestContext)
+    }
+    
+    private func handleCompleteResponseThrowingClientError<InvocationReportingType: HTTPClientInvocationReporting,
+                HandlerDelegateType: HTTPClientInvocationDelegate>(
+            invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>,
+            outwardsRequestContext: InvocationReportingType.TraceContextType.OutwardsRequestContext,
+            result: Result<HTTPClient.Response, Error>) throws -> HTTPResponseComponents {
+        do {
+            return try handleCompleteResponse(invocationContext: invocationContext,
+                                              outwardsRequestContext: outwardsRequestContext,
+                                              result: result)
+        } catch {
+            if error is SmokeHTTPClient.HTTPClientError {
+                throw error
+            } else {
+                // if a non-HTTPClientError is thrown, wrap it
+                throw SmokeHTTPClient.HTTPClientError(responseCode: 400, cause: error)
+            }
+        }
     }
     
     /*
