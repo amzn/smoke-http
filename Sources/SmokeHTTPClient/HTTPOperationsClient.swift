@@ -158,6 +158,12 @@ public struct HTTPOperationsClient {
                                                                           outwardsRequestContext: outwardsRequestContext,
                                                                           result: .success(successResult))
             } .flatMapErrorThrowing { error in
+                // if this error has been thrown from just above
+                if let typedError = error as? SmokeHTTPClient.HTTPClientError {
+                    // just rethrow the error
+                    throw typedError
+                }
+                
                 // a response wasn't even able to be generated (for example due to a connection error)
                 // make sure this error is thrown correctly as a SmokeHTTPClient.HTTPClientError
                 return try self.handleCompleteResponseThrowingClientError(invocationContext: invocationContext,
