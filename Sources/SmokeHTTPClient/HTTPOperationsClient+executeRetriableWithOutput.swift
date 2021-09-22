@@ -11,11 +11,11 @@
 // express or implied. See the License for the specific language governing
 // permissions and limitations under the License.
 //
-//  HTTPOperationsClient+executeRetriableWithoutOutput.swift
-//  _SmokeHTTPClientConcurrency
+//  HTTPOperationsClient+executeRetriableWithOutput.swift
+//  SmokeHTTPClient
 //
 
-#if compiler(>=5.5)
+#if compiler(>=5.5) && canImport(_Concurrency)
 
 import Foundation
 import NIO
@@ -26,7 +26,7 @@ import _NIOConcurrency
 public extension HTTPOperationsClient {
     
     /**
-     Submits a request that will not return a response body to this client asynchronously.
+     Submits a request that will return a response body to this client asynchronously.
 
      - Parameters:
         - endpointPath: The endpoint path for this request.
@@ -35,10 +35,11 @@ public extension HTTPOperationsClient {
         - invocationContext: context to use for this invocation.
         - retryConfiguration: the retry configuration for this request.
         - retryOnError: function that should return if the provided error is retryable.
+     - Returns: the response body.
      - Throws: If an error occurred during the request.
      */
     @available(macOS 12, iOS 15, tvOS 15, watchOS 8, *)
-    func executeRetriableWithoutOutput<InputType,
+    func executeRetriableWithOutput<InputType, OutputType,
             InvocationReportingType: HTTPClientInvocationReporting, HandlerDelegateType: HTTPClientInvocationDelegate>(
         endpointOverride: URL? = nil,
         endpointPath: String,
@@ -46,9 +47,9 @@ public extension HTTPOperationsClient {
         input: InputType,
         invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>,
         retryConfiguration: HTTPClientRetryConfiguration,
-        retryOnError: @escaping (HTTPClientError) -> Bool) async throws
-    where InputType: HTTPRequestInputProtocol {
-        return try await executeAsEventLoopFutureRetriableWithoutOutput(
+        retryOnError: @escaping (HTTPClientError) -> Bool) async throws -> OutputType
+    where InputType: HTTPRequestInputProtocol, OutputType: HTTPResponseOutputProtocol {
+        return try await executeAsEventLoopFutureRetriableWithOutput(
             endpointOverride: endpointOverride,
             endpointPath: endpointPath,
             httpMethod: httpMethod,

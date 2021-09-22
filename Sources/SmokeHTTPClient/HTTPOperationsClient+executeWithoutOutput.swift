@@ -12,10 +12,10 @@
 // permissions and limitations under the License.
 //
 //  HTTPOperationsClient+executeWithoutOutput.swift
-//  _SmokeHTTPClientConcurrency
+//  SmokeHTTPClient
 //
 
-#if compiler(>=5.5)
+#if compiler(>=5.5) && canImport(_Concurrency)
 
 import Foundation
 import NIO
