@@ -20,7 +20,6 @@
 import Foundation
 import NIO
 import NIOHTTP1
-import SmokeHTTPClient
 import _NIOConcurrency
 
 public extension HTTPOperationsClient {
