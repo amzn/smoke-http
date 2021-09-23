@@ -15,21 +15,6 @@
 
 import PackageDescription
 
-var smokeHttpClientDependencies: [Target.Dependency] = [
-    .product(name: "Logging", package: "swift-log"),
-    .product(name: "Metrics", package: "swift-metrics"),
-    .product(name: "NIO", package: "swift-nio"),
-    .product(name: "NIOHTTP1", package: "swift-nio"),
-    .product(name: "NIOFoundationCompat", package: "swift-nio"),
-    .product(name: "NIOSSL", package: "swift-nio-ssl"),
-    .product(name: "AsyncHTTPClient", package: "async-http-client"),
-]
-
-#if compiler(>=5.5) && canImport(_Concurrency)
-// required for concurrency, import only when needed as its not considered a stable package
-smokeHttpClientDependencies.append(.product(name: "_NIOConcurrency", package: "swift-nio"))
-#endif
-
 let package = Package(
     name: "smoke-http",
     products: [
@@ -53,15 +38,23 @@ let package = Package(
             targets: ["ShapeCoding"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/apple/swift-nio.git", from: "2.30.0"),
-        .package(url: "https://github.com/apple/swift-nio-ssl.git", from: "2.0.0"),
+        .package(url: "https://github.com/apple/swift-nio.git", from: "2.33.0"),
+        .package(url: "https://github.com/apple/swift-nio-ssl.git", from: "2.14.0"),
         .package(url: "https://github.com/apple/swift-log.git", from: "1.0.0"),
         .package(url: "https://github.com/apple/swift-metrics.git", "1.0.0"..<"3.0.0"),
-        .package(url: "https://github.com/swift-server/async-http-client.git", from: "1.0.0")
+        .package(url: "https://github.com/swift-server/async-http-client.git", from: "1.5.1")
     ],
     targets: [
         .target(
-            name: "SmokeHTTPClient", dependencies: smokeHttpClientDependencies),
+            name: "SmokeHTTPClient", dependencies: [
+                .product(name: "Logging", package: "swift-log"),
+                .product(name: "Metrics", package: "swift-metrics"),
+                .product(name: "NIO", package: "swift-nio"),
+                .product(name: "NIOHTTP1", package: "swift-nio"),
+                .product(name: "NIOFoundationCompat", package: "swift-nio"),
+                .product(name: "NIOSSL", package: "swift-nio-ssl"),
+                .product(name: "AsyncHTTPClient", package: "async-http-client"),
+            ]),
         .target(
             name: "_SmokeHTTPClientConcurrency", dependencies: [
                 .target(name: "SmokeHTTPClient"),
