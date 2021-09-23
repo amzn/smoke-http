@@ -11,52 +11,45 @@
 // express or implied. See the License for the specific language governing
 // permissions and limitations under the License.
 //
-//  HTTPOperationsClient+executeRetriableWithOutput.swift
-//  _SmokeHTTPClientConcurrency
+//  HTTPOperationsClient+executeWithoutOutput.swift
+//  SmokeHTTPClient
 //
 
-#if compiler(>=5.5)
+#if compiler(>=5.5) && canImport(_Concurrency)
 
 import Foundation
 import NIO
 import NIOHTTP1
-import SmokeHTTPClient
-import _NIOConcurrency
 
 public extension HTTPOperationsClient {
     
     /**
-     Submits a request that will return a response body to this client asynchronously.
-
+     Submits a request that will not return a response body to this client asynchronously.
+     
      - Parameters:
         - endpointPath: The endpoint path for this request.
         - httpMethod: The http method to use for this request.
         - input: the input body data to send with this request.
+        - completion: Completion handler called with an error if one occurs or nil otherwise.
+        - asyncResponseInvocationStrategy: The invocation strategy for the response from this request.
         - invocationContext: context to use for this invocation.
-        - retryConfiguration: the retry configuration for this request.
-        - retryOnError: function that should return if the provided error is retryable.
-     - Returns: the response body.
      - Throws: If an error occurred during the request.
      */
     @available(macOS 12, iOS 15, tvOS 15, watchOS 8, *)
-    func executeRetriableWithOutput<InputType, OutputType,
+    func executeWithoutOutput<InputType,
             InvocationReportingType: HTTPClientInvocationReporting, HandlerDelegateType: HTTPClientInvocationDelegate>(
         endpointOverride: URL? = nil,
         endpointPath: String,
         httpMethod: HTTPMethod,
         input: InputType,
-        invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>,
-        retryConfiguration: HTTPClientRetryConfiguration,
-        retryOnError: @escaping (HTTPClientError) -> Bool) async throws -> OutputType
-    where InputType: HTTPRequestInputProtocol, OutputType: HTTPResponseOutputProtocol {
-        return try await executeAsEventLoopFutureRetriableWithOutput(
+        invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>) async throws
+    where InputType: HTTPRequestInputProtocol {
+        return try await executeAsEventLoopFutureWithoutOutput(
             endpointOverride: endpointOverride,
             endpointPath: endpointPath,
             httpMethod: httpMethod,
             input: input,
-            invocationContext: invocationContext,
-            retryConfiguration: retryConfiguration,
-            retryOnError: retryOnError).get()
+            invocationContext: invocationContext).get()
     }
 }
 
