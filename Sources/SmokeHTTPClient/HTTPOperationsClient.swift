@@ -21,6 +21,7 @@ import NIOHTTP1
 import NIOSSL
 import NIOTLS
 import AsyncHTTPClient
+import NIOFoundationCompat
 import Logging
 
 internal struct HttpHeaderNames {
