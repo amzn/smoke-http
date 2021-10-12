@@ -15,7 +15,7 @@ jobs:
         swift: ["5.5"]
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: tachyonics/setup-swift@b552daf5c55f7ea11c53ede55a74334aa20c0aff
+      - uses: marcprux/setup-swift@8d5e65bb2c007c360e1c89a1bb51856ffa8a1962
         with:
           swift-version: ${{ matrix.swift }}
       - uses: actions/checkout@v2
@@ -31,7 +31,7 @@ jobs:
         swift: ["5.4.3", "5.3.3", "5.2.5"]
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: tachyonics/setup-swift@b552daf5c55f7ea11c53ede55a74334aa20c0aff
+      - uses: marcprux/setup-swift@8d5e65bb2c007c360e1c89a1bb51856ffa8a1962
         with:
           swift-version: ${{ matrix.swift }}
       - uses: actions/checkout@v2
