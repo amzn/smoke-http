@@ -1,5 +1,7 @@
 <p align="center">
-<img src="https://github.com/amzn/smoke-http/actions/workflows/swift.yml/badge.svg" alt="Build - Main Branch">
+<a href="https://github.com/amzn/smoke-http/actions">
+<img src="https://github.com/amzn/smoke-http/actions/workflows/swift.yml/badge.svg?branch=main" alt="Build - Main Branch">
+</a>
 <a href="http://swift.org">
 <img src="https://img.shields.io/badge/swift-5.2|5.3|5.4|5.5-orange.svg?style=flat" alt="Swift 5.2, 5.3, 5.4 and 5.5 Tested">
 </a>
