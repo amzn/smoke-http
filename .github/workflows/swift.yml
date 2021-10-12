@@ -40,6 +40,7 @@ jobs:
       - name: Run tests
         run: swift test
   SwiftLint:
+    name: SwiftLint 3.2.1
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v1
