@@ -12,7 +12,7 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-20.04, ubuntu-18.04]
-        swift: ["5.5.0"]
+        swift: ["5.5"]
     runs-on: ${{ matrix.os }}
     steps:
       - uses: tachyonics/setup-swift@6fda489d6be9eda5dc0fae9895da5cc515964521
