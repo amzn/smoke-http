@@ -15,7 +15,7 @@
 //  SmokeHTTPClient
 //
 
-#if compiler(>=5.5) && canImport(_Concurrency)
+#if (os(Linux) && compiler(>=5.5)) || (!os(Linux) && compiler(>=5.5.2)) && canImport(_Concurrency)
 
 import Foundation
 import NIO
@@ -35,7 +35,6 @@ public extension HTTPOperationsClient {
         - retryOnError: function that should return if the provided error is retryable.
      - Throws: If an error occurred during the request.
      */
-    @available(macOS 12, iOS 15, tvOS 15, watchOS 8, *)
     func executeRetriableWithoutOutput<InputType,
             InvocationReportingType: HTTPClientInvocationReporting, HandlerDelegateType: HTTPClientInvocationDelegate>(
         endpointOverride: URL? = nil,
