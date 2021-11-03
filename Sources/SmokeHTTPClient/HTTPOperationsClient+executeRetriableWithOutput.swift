@@ -15,11 +15,32 @@
 //  SmokeHTTPClient
 //
 
-#if compiler(>=5.5) && canImport(_Concurrency)
+#if (os(Linux) && compiler(>=5.5)) || (!os(Linux) && compiler(>=5.5.2)) && canImport(_Concurrency)
 
 import Foundation
 import NIO
 import NIOHTTP1
+
+// Copy of extension from SwiftNIO; can be removed when the version in SwiftNIO removes its @available attribute
+internal extension EventLoopFuture {
+    /// Get the value/error from an `EventLoopFuture` in an `async` context.
+    ///
+    /// This function can be used to bridge an `EventLoopFuture` into the `async` world. Ie. if you're in an `async`
+    /// function and want to get the result of this future.
+    @inlinable
+    func get() async throws -> Value {
+        return try await withUnsafeThrowingContinuation { cont in
+            self.whenComplete { result in
+                switch result {
+                case .success(let value):
+                    cont.resume(returning: value)
+                case .failure(let error):
+                    cont.resume(throwing: error)
+                }
+            }
+        }
+    }
+}
 
 public extension HTTPOperationsClient {
     
@@ -36,7 +57,6 @@ public extension HTTPOperationsClient {
      - Returns: the response body.
      - Throws: If an error occurred during the request.
      */
-    @available(macOS 12, iOS 15, tvOS 15, watchOS 8, *)
     func executeRetriableWithOutput<InputType, OutputType,
             InvocationReportingType: HTTPClientInvocationReporting, HandlerDelegateType: HTTPClientInvocationDelegate>(
         endpointOverride: URL? = nil,
