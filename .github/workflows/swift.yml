@@ -20,7 +20,7 @@ jobs:
           swift-version: ${{ matrix.swift }}
       - uses: actions/checkout@v2
       - name: Build
-        run: swift build
+        run: swift build -c release
       - name: Run tests
         run: swift test
   OlderVersionBuild:
@@ -36,7 +36,7 @@ jobs:
           swift-version: ${{ matrix.swift }}
       - uses: actions/checkout@v2
       - name: Build
-        run: swift build
+        run: swift build -c release
       - name: Run tests
         run: swift test
   SwiftLint:
