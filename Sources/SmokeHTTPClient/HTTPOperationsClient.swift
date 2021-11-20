@@ -62,19 +62,19 @@ public struct HTTPOperationsClient {
          - endpointPort: The server port to connect to.
          - contentType: The content type of the payload being sent by this client.
          - clientDelegate: Delegate for the HTTP client that provides client-specific logic for handling HTTP requests.
-         - channelInboundHandlerDelegate: Delegate for the HTTP channel inbound handler that provides client-specific logic
-         -                                around HTTP request/response settings.
          - connectionTimeoutSeconds: The time in second the client should wait for a response. The default is 10 seconds.
          - eventLoopProvider: Provides the event loop to be used by the client.
                               If not specified, the client will create a new multi-threaded event loop
                               with the number of threads specified by `System.coreCount`.
+         - optional configuration for the connection pool. If not provided, the default configuration is used.
      */
     public init(endpointHostName: String,
                 endpointPort: Int,
                 contentType: String,
                 clientDelegate: HTTPClientDelegate,
                 connectionTimeoutSeconds: Int64 = 10,
-                eventLoopProvider: HTTPClient.EventLoopGroupProvider = .createNew) {
+                eventLoopProvider: HTTPClient.EventLoopGroupProvider = .createNew,
+                connectionPoolConfiguration connectionPoolConfigurationOptional: HTTPClient.Configuration.ConnectionPool? = nil) {
         self.endpointHostName = endpointHostName
         self.endpointPort = endpointPort
         self.contentType = contentType
@@ -89,9 +89,12 @@ public struct HTTPOperationsClient {
         
         let timeoutValue = TimeAmount.seconds(connectionTimeoutSeconds)
         let timeout = HTTPClient.Configuration.Timeout(read: timeoutValue)
+        let connectionPool = connectionPoolConfigurationOptional ?? HTTPClient.Configuration.ConnectionPool()
+        
         let clientConfiguration = HTTPClient.Configuration(
             tlsConfiguration: tlsConfiguration,
             timeout: timeout,
+            connectionPool: connectionPool,
             ignoreUncleanSSLShutdown: true)
         self.wrappedHttpClient = HTTPClient(eventLoopGroupProvider: eventLoopProvider,
                                             configuration: clientConfiguration)
