@@ -383,12 +383,13 @@ public struct HTTPOperationsClient {
     }
     
     private func isRetriableHTTPClientError(clientError: AsyncHTTPClient.HTTPClientError) -> Bool {
-        // special case read, connect or tls handshake timeouts and remote connection closed errors
+        // special case read, connect, connection pool or tls handshake timeouts and remote connection closed errors
         // to a 500 error to allow for retries
         if clientError == AsyncHTTPClient.HTTPClientError.readTimeout
                 || clientError == AsyncHTTPClient.HTTPClientError.connectTimeout
                 || clientError == AsyncHTTPClient.HTTPClientError.tlsHandshakeTimeout
-                || clientError == AsyncHTTPClient.HTTPClientError.remoteConnectionClosed {
+                || clientError == AsyncHTTPClient.HTTPClientError.remoteConnectionClosed
+                || clientError == AsyncHTTPClient.HTTPClientError.getConnectionFromPoolTimeout {
             return true
         }
         
