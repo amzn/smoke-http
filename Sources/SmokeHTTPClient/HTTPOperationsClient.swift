@@ -103,11 +103,36 @@ public struct HTTPOperationsClient {
     /**
      Gracefully shuts down the eventloop if owned by this client.
      This function is idempotent and will handle being called multiple
-     times.
+     times. Will block until shutdown is complete.
      */
+    public func syncShutdown() throws {
+        try wrappedHttpClient.syncShutdown()
+    }
+    
+    // renamed `syncShutdown` to make it clearer this version of shutdown will block.
+    @available(*, deprecated, renamed: "syncShutdown")
     public func close() throws {
         try wrappedHttpClient.syncShutdown()
     }
+    
+    /**
+     Gracefully shuts down the eventloop if owned by this client.
+     This function is idempotent and will handle being called multiple
+     times. Will return when shutdown is complete.
+     */
+#if (os(Linux) && compiler(>=5.5)) || (!os(Linux) && compiler(>=5.5.2)) && canImport(_Concurrency)
+    public func shutdown() async throws {
+        return try await withUnsafeThrowingContinuation { cont in
+            self.wrappedHttpClient.shutdown { error in
+                if let error = error {
+                    cont.resume(throwing: error)
+                } else {
+                    cont.resume(returning: ())
+                }
+            }
+        }
+    }
+#endif
     
     func executeAsync<InputType, InvocationReportingType: HTTPClientInvocationReporting, HandlerDelegateType: HTTPClientInvocationDelegate>(
             endpointOverride: URL? = nil,
