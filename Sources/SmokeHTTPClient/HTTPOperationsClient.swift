@@ -88,7 +88,7 @@ public struct HTTPOperationsClient {
         }
         
         let timeoutValue = TimeAmount.seconds(connectionTimeoutSeconds)
-        let timeout = HTTPClient.Configuration.Timeout(read: timeoutValue)
+        let timeout = HTTPClient.Configuration.Timeout(connect: timeoutValue, read: timeoutValue)
         let connectionPool = connectionPoolConfigurationOptional ?? HTTPClient.Configuration.ConnectionPool()
         
         let clientConfiguration = HTTPClient.Configuration(
