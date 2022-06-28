@@ -75,6 +75,39 @@ public struct HTTPOperationsClient {
                 connectionTimeoutSeconds: Int64 = 10,
                 eventLoopProvider: HTTPClient.EventLoopGroupProvider = .createNew,
                 connectionPoolConfiguration connectionPoolConfigurationOptional: HTTPClient.Configuration.ConnectionPool? = nil) {
+        let timeoutValue = TimeAmount.seconds(connectionTimeoutSeconds)
+        let timeoutConfiguration = HTTPClient.Configuration.Timeout(connect: timeoutValue, read: timeoutValue)
+        
+        self.init(endpointHostName: endpointHostName,
+                  endpointPort: endpointPort,
+                  contentType: contentType,
+                  clientDelegate: clientDelegate,
+                  timeoutConfiguration: timeoutConfiguration,
+                  eventLoopProvider: eventLoopProvider,
+                  connectionPoolConfiguration: connectionPoolConfigurationOptional)
+    }
+    
+    /**
+     Initializer.
+
+     - Parameters:
+         - endpointHostName: The server hostname to contact for requests from this client.
+         - endpointPort: The server port to connect to.
+         - contentType: The content type of the payload being sent by this client.
+         - clientDelegate: Delegate for the HTTP client that provides client-specific logic for handling HTTP requests.
+         - timeoutConfiguration: The timeout configuration to use
+         - eventLoopProvider: Provides the event loop to be used by the client.
+                              If not specified, the client will create a new multi-threaded event loop
+                              with the number of threads specified by `System.coreCount`.
+         - optional configuration for the connection pool. If not provided, the default configuration is used.
+     */
+    public init(endpointHostName: String,
+                endpointPort: Int,
+                contentType: String,
+                clientDelegate: HTTPClientDelegate,
+                timeoutConfiguration: HTTPClient.Configuration.Timeout,
+                eventLoopProvider: HTTPClient.EventLoopGroupProvider = .createNew,
+                connectionPoolConfiguration connectionPoolConfigurationOptional: HTTPClient.Configuration.ConnectionPool? = nil) {
         self.endpointHostName = endpointHostName
         self.endpointPort = endpointPort
         self.contentType = contentType
@@ -87,13 +120,11 @@ public struct HTTPOperationsClient {
             self.endpointScheme = "http"
         }
         
-        let timeoutValue = TimeAmount.seconds(connectionTimeoutSeconds)
-        let timeout = HTTPClient.Configuration.Timeout(connect: timeoutValue, read: timeoutValue)
         let connectionPool = connectionPoolConfigurationOptional ?? HTTPClient.Configuration.ConnectionPool()
         
         let clientConfiguration = HTTPClient.Configuration(
             tlsConfiguration: tlsConfiguration,
-            timeout: timeout,
+            timeout: timeoutConfiguration,
             connectionPool: connectionPool,
             ignoreUncleanSSLShutdown: true)
         self.wrappedHttpClient = HTTPClient(eventLoopGroupProvider: eventLoopProvider,
