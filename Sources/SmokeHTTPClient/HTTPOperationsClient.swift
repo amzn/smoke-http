@@ -75,29 +75,16 @@ public struct HTTPOperationsClient {
                 connectionTimeoutSeconds: Int64 = 10,
                 eventLoopProvider: HTTPClient.EventLoopGroupProvider = .createNew,
                 connectionPoolConfiguration connectionPoolConfigurationOptional: HTTPClient.Configuration.ConnectionPool? = nil) {
-        self.endpointHostName = endpointHostName
-        self.endpointPort = endpointPort
-        self.contentType = contentType
-        self.clientDelegate = clientDelegate
-        
-        let tlsConfiguration = clientDelegate.getTLSConfiguration()
-        if tlsConfiguration != nil {
-            self.endpointScheme = "https"
-        } else {
-            self.endpointScheme = "http"
-        }
-        
         let timeoutValue = TimeAmount.seconds(connectionTimeoutSeconds)
-        let timeout = HTTPClient.Configuration.Timeout(connect: timeoutValue, read: timeoutValue)
-        let connectionPool = connectionPoolConfigurationOptional ?? HTTPClient.Configuration.ConnectionPool()
+        let timeoutConfiguration = HTTPClient.Configuration.Timeout(connect: timeoutValue, read: timeoutValue)
         
-        let clientConfiguration = HTTPClient.Configuration(
-            tlsConfiguration: tlsConfiguration,
-            timeout: timeout,
-            connectionPool: connectionPool,
-            ignoreUncleanSSLShutdown: true)
-        self.wrappedHttpClient = HTTPClient(eventLoopGroupProvider: eventLoopProvider,
-                                            configuration: clientConfiguration)
+        self.init(endpointHostName: endpointHostName,
+                  endpointPort: endpointPort,
+                  contentType: contentType,
+                  clientDelegate: clientDelegate,
+                  timeoutConfiguration: timeoutConfiguration,
+                  eventLoopProvider: eventLoopProvider,
+                  connectionPoolConfiguration: connectionPoolConfigurationOptional)
     }
     
     /**
