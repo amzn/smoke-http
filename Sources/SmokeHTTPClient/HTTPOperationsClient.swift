@@ -101,6 +101,50 @@ public struct HTTPOperationsClient {
     }
     
     /**
+     Initializer.
+
+     - Parameters:
+         - endpointHostName: The server hostname to contact for requests from this client.
+         - endpointPort: The server port to connect to.
+         - contentType: The content type of the payload being sent by this client.
+         - clientDelegate: Delegate for the HTTP client that provides client-specific logic for handling HTTP requests.
+         - timeoutConfiguration: The timeout configuration to use
+         - eventLoopProvider: Provides the event loop to be used by the client.
+                              If not specified, the client will create a new multi-threaded event loop
+                              with the number of threads specified by `System.coreCount`.
+         - optional configuration for the connection pool. If not provided, the default configuration is used.
+     */
+    public init(endpointHostName: String,
+                endpointPort: Int,
+                contentType: String,
+                clientDelegate: HTTPClientDelegate,
+                timeoutConfiguration: HTTPClient.Configuration.Timeout,
+                eventLoopProvider: HTTPClient.EventLoopGroupProvider = .createNew,
+                connectionPoolConfiguration connectionPoolConfigurationOptional: HTTPClient.Configuration.ConnectionPool? = nil) {
+        self.endpointHostName = endpointHostName
+        self.endpointPort = endpointPort
+        self.contentType = contentType
+        self.clientDelegate = clientDelegate
+        
+        let tlsConfiguration = clientDelegate.getTLSConfiguration()
+        if tlsConfiguration != nil {
+            self.endpointScheme = "https"
+        } else {
+            self.endpointScheme = "http"
+        }
+        
+        let connectionPool = connectionPoolConfigurationOptional ?? HTTPClient.Configuration.ConnectionPool()
+        
+        let clientConfiguration = HTTPClient.Configuration(
+            tlsConfiguration: tlsConfiguration,
+            timeout: timeoutConfiguration,
+            connectionPool: connectionPool,
+            ignoreUncleanSSLShutdown: true)
+        self.wrappedHttpClient = HTTPClient(eventLoopGroupProvider: eventLoopProvider,
+                                            configuration: clientConfiguration)
+    }
+    
+    /**
      Gracefully shuts down the eventloop if owned by this client.
      This function is idempotent and will handle being called multiple
      times. Will block until shutdown is complete.
