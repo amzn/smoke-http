@@ -11,13 +11,25 @@
 // express or implied. See the License for the specific language governing
 // permissions and limitations under the License.
 //
-//  HTTPRequestInputProtocol.swift
-//  SmokeHTTPClient
+//  Data+debugString.swift
+//  SmokeHTTPClientMiddleware
 //
 
-import SmokeHTTPTypes
+import Foundation
 
-/**
- A protocol that represents input to a HTTP request.
- */
-public typealias HTTPRequestInputProtocol = SmokeHTTPTypes.HTTPRequestInputProtocol
+extension Data {
+    var debugString: String {
+        return String(data: self, encoding: .utf8) ?? ""
+    }
+}
+
+extension Optional where Wrapped == Data {
+    var debugString: String {
+        switch self {
+        case .some(let wrapped):
+            return wrapped.debugString
+        case .none:
+            return ""
+        }
+    }
+}

@@ -18,7 +18,7 @@ import PackageDescription
 let package = Package(
     name: "smoke-http",
     platforms: [
-        .macOS(.v10_15), .iOS(.v13), .tvOS(.v13)
+        .macOS(.v10_15), .iOS(.v13), .tvOS(.v13), .watchOS(.v6)
         ],
     products: [
         .library(
@@ -39,13 +39,21 @@ let package = Package(
         .library(
             name: "ShapeCoding",
             targets: ["ShapeCoding"]),
+        .library(
+            name: "SmokeHTTPClientMiddleware",
+            targets: ["SmokeHTTPClientMiddleware"]),
+        .library(
+            name: "SmokeHTTPTypes",
+            targets: ["SmokeHTTPTypes"]),
     ],
     dependencies: [
         .package(url: "https://github.com/apple/swift-nio.git", from: "2.33.0"),
         .package(url: "https://github.com/apple/swift-nio-ssl.git", from: "2.14.0"),
         .package(url: "https://github.com/apple/swift-log.git", from: "1.0.0"),
         .package(url: "https://github.com/apple/swift-metrics.git", "1.0.0"..<"3.0.0"),
-        .package(url: "https://github.com/swift-server/async-http-client.git", from: "1.6.4")
+        .package(url: "https://github.com/tachyonics/async-http-client.git", .branch("request_body_known_length")),
+        .package(url: "https://github.com/tachyonics/swift-http-client-middleware", .branch("poc")),
+        .package(url: "https://github.com/tachyonics/async-http-middleware-client", .branch("poc"))
     ],
     targets: [
         .target(
@@ -57,6 +65,7 @@ let package = Package(
                 .product(name: "NIOFoundationCompat", package: "swift-nio"),
                 .product(name: "NIOSSL", package: "swift-nio-ssl"),
                 .product(name: "AsyncHTTPClient", package: "async-http-client"),
+                .target(name: "SmokeHTTPTypes"),
             ]),
         .target(
             name: "_SmokeHTTPClientConcurrency", dependencies: [
@@ -77,6 +86,25 @@ let package = Package(
         .target(
             name: "ShapeCoding", dependencies: [
                 .product(name: "Logging", package: "swift-log"),
+            ]),
+        .target(
+            name: "SmokeHTTPClientMiddleware", dependencies: [
+                .product(name: "HttpClientMiddleware", package: "swift-http-client-middleware"),
+                .product(name: "StandardHttpClientMiddleware", package: "swift-http-client-middleware"),
+                .product(name: "AsyncHttpMiddlewareClient", package: "async-http-middleware-client"),
+                .product(name: "NIOHTTP1", package: "swift-nio"),
+                .product(name: "NIO", package: "swift-nio"),
+                .product(name: "NIOFoundationCompat", package: "swift-nio"),
+                .product(name: "AsyncHTTPClient", package: "async-http-client"),
+                .product(name: "Logging", package: "swift-log"),
+                .product(name: "Metrics", package: "swift-metrics"),
+                .target(name: "SmokeHTTPTypes"),
+                .target(name: "HTTPHeadersCoding"),
+                .target(name: "HTTPPathCoding"),
+                .target(name: "QueryCoding")
+            ]),
+        .target(
+            name: "SmokeHTTPTypes", dependencies: [
             ]),
         .testTarget(
             name: "SmokeHTTPClientTests", dependencies: [

@@ -12,12 +12,26 @@
 // permissions and limitations under the License.
 //
 //  HTTPResponseInputProtocol.swift
-//  SmokeHTTPClient
+//  SmokeHTTPTypes
 //
 
-import SmokeHTTPTypes
+import Foundation
 
 /**
  A protocol that represents output from a HTTP response.
  */
-public typealias HTTPResponseOutputProtocol = SmokeHTTPTypes.HTTPResponseOutputProtocol
+public protocol HTTPResponseOutputProtocol {
+    associatedtype BodyType: Decodable
+    associatedtype HeadersType: Decodable
+    
+    /**
+     Composes an instance from its constituent Decodable parts.
+     May return one of its constituent parts if of a compatible type.
+ 
+     - Parameters:
+        - bodyDecodableProvider: provider for the decoded body for this instance.
+        - headersDecodableProvider: provider for the decoded headers for this instance.
+     */
+    static func compose(bodyDecodableProvider: () throws -> BodyType,
+                        headersDecodableProvider: () throws -> HeadersType) throws -> Self
+}
