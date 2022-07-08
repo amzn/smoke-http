@@ -15,38 +15,6 @@
 //  SmokeHTTPClient
 //
 
-public struct HTTPClientError: Error {
-    public let responseCode: Int
-    public let cause: Swift.Error
-    
-    public enum Category {
-        case clientError
-        case serverError
-    }
-    
-    public init(responseCode: Int, cause: Swift.Error) {
-        self.responseCode = responseCode
-        self.cause = cause
-    }
-    
-    public var category: Category {
-        switch responseCode {
-        case 400...499:
-            return .clientError
-        default:
-            return .serverError
-        }
-    }
-    
-    public func isRetriable() -> Bool {
-        return self.isRetriableAccordingToCategory
-    }
-    
-    public var isRetriableAccordingToCategory: Bool {
-        if case self.category = Category.clientError {
-            return false
-        } else {
-            return true
-        }
-    }
-}
+import SmokeHTTPTypes
+
+public typealias HTTPClientError = SmokeHTTPTypes.HTTPClientError
