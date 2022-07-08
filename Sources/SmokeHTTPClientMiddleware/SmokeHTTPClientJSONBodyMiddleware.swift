@@ -27,9 +27,12 @@ public struct SmokeHTTPClientJSONBodyMiddleware<OperationInputType: HTTPRequestI
     public typealias OutputType = HTTPClientResponse
     
     private let encoder: JSONEncoder
+    private let bodyContext: SmokeHTTPBodyContext?
     
-    public init(encoder: JSONEncoder = .init()) {
+    public init(encoder: JSONEncoder = .init(),
+                bodyContext: SmokeHTTPBodyContext? = nil) {
         self.encoder = encoder
+        self.bodyContext = bodyContext
     }
     
     public func handle<HandlerType>(input phaseInput: InputType, next: HandlerType) async throws
@@ -39,6 +42,7 @@ public struct SmokeHTTPClientJSONBodyMiddleware<OperationInputType: HTTPRequestI
             let body = try self.encoder.encode(bodyEncodable)
             
             phaseInput.builder.withBody(.bytes(ByteBuffer(data: body)))
+            await self.bodyContext?.withBody(body)
         }
         
         return try await next.handle(input: phaseInput)
