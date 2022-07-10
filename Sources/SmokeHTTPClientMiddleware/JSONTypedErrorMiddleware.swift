@@ -23,8 +23,8 @@ import SmokeHTTPTypes
 import AsyncHTTPClient
 import AsyncHttpMiddlewareClient
 
-public enum TypeErrorDecodingError: Error {
-    case decodingFailed(bodyString: String)
+public enum TypedErrorDecodingError: Error {
+    case decodingFailed(cause: Swift.Error, bodyString: String)
 }
 
 public struct JSONTypedErrorMiddleware<ErrorType: Decodable & Error>: MiddlewareProtocol {
@@ -73,7 +73,8 @@ public struct JSONTypedErrorMiddleware<ErrorType: Decodable & Error>: Middleware
         } catch {
             let bodyString = String(data: bodyData, encoding: .utf8) ?? ""
             throw SmokeHTTPTypes.HTTPClientError(responseCode: Int(response.status.code),
-                                                 cause: TypeErrorDecodingError.decodingFailed(bodyString: bodyString))
+                                                 cause: TypedErrorDecodingError.decodingFailed(cause: error,
+                                                                                               bodyString: bodyString))
         }
         
         throw SmokeHTTPTypes.HTTPClientError(responseCode: Int(response.status.code), cause: cause)
