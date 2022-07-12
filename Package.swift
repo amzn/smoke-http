@@ -65,6 +65,7 @@ let package = Package(
                 .product(name: "NIOFoundationCompat", package: "swift-nio"),
                 .product(name: "NIOSSL", package: "swift-nio-ssl"),
                 .product(name: "AsyncHTTPClient", package: "async-http-client"),
+                .product(name: "StandardHttpClientMiddleware", package: "swift-http-client-middleware"),
                 .target(name: "SmokeHTTPTypes"),
             ]),
         .target(
