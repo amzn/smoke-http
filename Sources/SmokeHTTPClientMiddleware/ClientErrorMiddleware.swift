@@ -15,7 +15,7 @@
 //  SmokeHTTPClientMiddleware
 //
 
-import Foundation
+import HttpMiddleware
 import HttpClientMiddleware
 import NIOHTTP1
 import NIOFoundationCompat

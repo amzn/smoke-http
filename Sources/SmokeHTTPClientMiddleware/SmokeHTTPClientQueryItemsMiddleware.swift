@@ -16,13 +16,14 @@
 //
 
 import Foundation
+import HttpMiddleware
 import HttpClientMiddleware
 import AsyncHTTPClient
 import SmokeHTTPTypes
 import QueryCoding
 
 public struct SmokeHTTPClientQueryItemsMiddleware<OperationInputType: HTTPRequestInputProtocol>: QueryItemMiddlewareProtocol {
-    public typealias InputType = SerializeInputMiddlewarePhaseInput<OperationInputType, HTTPClientRequest>
+    public typealias InputType = SerializeClientRequestMiddlewarePhaseInput<OperationInputType, HTTPClientRequest>
     public typealias OutputType = HTTPClientResponse
     
     private let encoder: QueryEncoder

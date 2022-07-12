@@ -15,13 +15,14 @@
 //  SmokeHTTPClientMiddleware
 //
 
+import HttpMiddleware
 import HttpClientMiddleware
 import AsyncHTTPClient
 import SmokeHTTPTypes
 import HTTPPathCoding
 
 public struct SmokeHTTPClientURLPathMiddleware<OperationInputType: HTTPRequestInputProtocol>: RequestURLPathMiddlewareProtocol {
-    public typealias InputType = SerializeInputMiddlewarePhaseInput<OperationInputType, HTTPClientRequest>
+    public typealias InputType = SerializeClientRequestMiddlewarePhaseInput<OperationInputType, HTTPClientRequest>
     public typealias OutputType = HTTPClientResponse
     
     private let encoder: HTTPPathEncoder

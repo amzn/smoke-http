@@ -15,6 +15,7 @@
 //  SmokeHTTPClientMiddleware
 //
 
+import HttpMiddleware
 import HttpClientMiddleware
 import AsyncHTTPClient
 import NIOHTTP1
@@ -24,7 +25,7 @@ import HTTPHeadersCoding
 public struct SmokeHTTPClientAdditionalHeadersMiddleware<OperationInputType: HTTPRequestInputProtocol>: MiddlewareProtocol {
     public var id: String = "SmokeAdditionalHeaders"
     
-    public typealias InputType = SerializeInputMiddlewarePhaseInput<OperationInputType, HTTPClientRequest>
+    public typealias InputType = SerializeClientRequestMiddlewarePhaseInput<OperationInputType, HTTPClientRequest>
     public typealias OutputType = HTTPClientResponse
     
     private let encoder: HTTPHeadersEncoder

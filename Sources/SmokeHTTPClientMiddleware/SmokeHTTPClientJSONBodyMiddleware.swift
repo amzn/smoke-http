@@ -16,6 +16,7 @@
 //
 
 import Foundation
+import HttpMiddleware
 import HttpClientMiddleware
 import AsyncHTTPClient
 import NIO
@@ -23,7 +24,7 @@ import NIOFoundationCompat
 import SmokeHTTPTypes
 
 public struct SmokeHTTPClientJSONBodyMiddleware<OperationInputType: HTTPRequestInputProtocol>: RequestBodyMiddlewareProtocol {
-    public typealias InputType = SerializeInputMiddlewarePhaseInput<OperationInputType, HTTPClientRequest>
+    public typealias InputType = SerializeClientRequestMiddlewarePhaseInput<OperationInputType, HTTPClientRequest>
     public typealias OutputType = HTTPClientResponse
     
     private let encoder: JSONEncoder
