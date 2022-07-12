@@ -44,6 +44,8 @@ private struct OutputRequestRecordStatus {
     }
 }
 
+public typealias HTTPClientRetryConfiguration = StandardHttpClientMiddleware.HTTPClientRetryConfiguration
+
 public struct SmokeRequestRetryerMiddleware<HTTPRequestType: HttpRequestProtocol,
                                             HTTPResponseType: HttpResponseProtocol>: RequestRetryerMiddlewareProtocol {
     public typealias InputType = HTTPRequestType
