@@ -105,6 +105,7 @@ let package = Package(
             ]),
         .target(
             name: "SmokeHTTPTypes", dependencies: [
+                .product(name: "Metrics", package: "swift-metrics"),
             ]),
         .testTarget(
             name: "SmokeHTTPClientTests", dependencies: [

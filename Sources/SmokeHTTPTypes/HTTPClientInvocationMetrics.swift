@@ -11,22 +11,16 @@
 // express or implied. See the License for the specific language governing
 // permissions and limitations under the License.
 //
-//  HTTPClientInvocationReporting.swift
-//  SmokeHTTPClient
+//  HTTPClientInvocationMetrics.swift
+//  SmokeHTTPTypes
 //
 
-import Foundation
-import Logging
 import Metrics
-import SmokeHTTPTypes
-
-private let timeIntervalToMilliseconds: Double = 1000
 
 /**
- A context related to reporting on the invocation of the HTTPClient. This interface extends the
- HTTPClientCoreInvocationReporting protocol by adding metrics emitted by the 
+ A context related to metrics on the invocation of the HTTPClient.
  */
-public protocol HTTPClientInvocationReporting: HTTPClientCoreInvocationReporting, HTTPClientInvocationMetrics {
+public protocol HTTPClientInvocationMetrics {
     
     /// The `Metrics.Counter` to record the success of this invocation.
     var successCounter: Metrics.Counter? { get }
@@ -42,16 +36,4 @@ public protocol HTTPClientInvocationReporting: HTTPClientCoreInvocationReporting
     
     /// The `Metrics.Recorder` to record the duration of this invocation.
     var latencyTimer: Metrics.Timer? { get }
-}
-
-internal extension TimeInterval {
-    var milliseconds: Int {
-        return Int(self * timeIntervalToMilliseconds)
-    }
-}
-
-internal extension Int {
-    var millisecondsToTimeInterval: TimeInterval {
-        return TimeInterval(self) / timeIntervalToMilliseconds
-    }
 }

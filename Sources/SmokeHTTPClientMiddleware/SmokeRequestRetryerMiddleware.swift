@@ -51,28 +51,16 @@ public struct SmokeRequestRetryerMiddleware<HTTPRequestType: HttpRequestProtocol
     
     private let retryConfiguration: HTTPClientRetryConfiguration
     private let errorStatusFunction: (Swift.Error) -> (isRetriable: Bool, code: UInt)
-    private let successCounter: Metrics.Counter?
-    private let failure5XXCounter: Metrics.Counter?
-    private let failure4XXCounter: Metrics.Counter?
-    private let retryCountRecorder: Metrics.Recorder?
-    private let latencyTimer: Metrics.Timer?
+    private let invocationMetrics: HTTPClientInvocationMetrics?
     private let requestTags: [String]
     
     public init(retryConfiguration: HTTPClientRetryConfiguration,
                 errorStatusFunction: @escaping (Swift.Error) -> (isRetriable: Bool, code: UInt),
-                successCounter: Metrics.Counter?,
-                failure5XXCounter: Metrics.Counter?,
-                failure4XXCounter: Metrics.Counter?,
-                retryCountRecorder: Metrics.Recorder?,
-                latencyTimer: Metrics.Timer?,
+                invocationMetrics: HTTPClientInvocationMetrics?,
                 requestTags: [String]) {
         self.retryConfiguration = retryConfiguration
         self.errorStatusFunction = errorStatusFunction
-        self.successCounter = successCounter
-        self.failure5XXCounter = failure5XXCounter
-        self.failure4XXCounter = failure4XXCounter
-        self.retryCountRecorder = retryCountRecorder
-        self.latencyTimer = latencyTimer
+        self.invocationMetrics = invocationMetrics
         self.requestTags = requestTags
     }
     
@@ -81,7 +69,7 @@ public struct SmokeRequestRetryerMiddleware<HTTPRequestType: HttpRequestProtocol
     where HandlerType : HandlerProtocol, HTTPRequestType == HandlerType.InputType,
     HTTPResponseType == HandlerType.OutputType {
         let latencyMetricDetails: (Date, Metrics.Timer)?
-        if let latencyTimer = self.latencyTimer {
+        if let latencyTimer = self.invocationMetrics?.latencyTimer {
             latencyMetricDetails = (Date(), latencyTimer)
         } else {
             latencyMetricDetails = nil
@@ -201,7 +189,7 @@ public struct SmokeRequestRetryerMiddleware<HTTPRequestType: HttpRequestProtocol
         
         // report the retryCount metric
         let retryCount = self.retryConfiguration.numRetries - retriesRemaining
-        self.retryCountRecorder?.record(retryCount)
+        self.invocationMetrics?.retryCountRecorder?.record(retryCount)
         
         if let overallLatencyMetricDetails = overallLatencyMetricDetails {
             overallLatencyMetricDetails.1.recordMilliseconds(Date().timeIntervalSince(overallLatencyMetricDetails.0).milliseconds)
@@ -218,11 +206,11 @@ public struct SmokeRequestRetryerMiddleware<HTTPRequestType: HttpRequestProtocol
     private func handleCompletion(statusCode: UInt) {
         switch statusCode {
         case 200...299:
-            self.successCounter?.increment()
+            self.invocationMetrics?.successCounter?.increment()
         case 400...499:
-            self.failure4XXCounter?.increment()
+            self.invocationMetrics?.failure4XXCounter?.increment()
         case 500...599:
-            self.failure5XXCounter?.increment()
+            self.invocationMetrics?.failure5XXCounter?.increment()
         default:
             // nothing to do
             break
