@@ -35,24 +35,22 @@ public struct HTTPClientResponseJSONBodyDeserializationTransform<OutputType: HTT
     
     private let jsonDecoder: JSONDecoder
     private let headersDecoder: HTTPHeadersDecoder
-    private let logger: Logger
     private let maxBytes: Int
     
-    public init(maxBytes: Int, logger: Logger,
+    public init(maxBytes: Int,
                 jsonDecoder: JSONDecoder,
                 headersDecoder: HTTPHeadersDecoder) {
         self.maxBytes = maxBytes
-        self.logger = logger
         self.jsonDecoder = jsonDecoder
         self.headersDecoder = headersDecoder
     }
     
-    public func transform(input: HTTPClientResponse) async throws -> OutputType {
+    public func transform(input: HTTPClientResponse, context: MiddlewareContext) async throws -> OutputType {
         var bodyBuffer = try await input.body.collect(upTo: self.maxBytes)
         
         // Convert output to a debug string only if debug logging is enabled
-        self.logger.trace("Attempting to decode from HTTPClientResponse.",
-                          metadata: ["inputFormat": "JSON",
+        context.logger?.trace("Attempting to decode from HTTPClientResponse.",
+                              metadata: ["inputFormat": "JSON",
                                      "outputType": "\(OutputType.self)"])
         
         func bodyDecodableProvider() throws -> OutputType.BodyType {
@@ -61,20 +59,20 @@ public struct HTTPClientResponseJSONBodyDeserializationTransform<OutputType: HTT
                 throw DeserializationError.missingBody(input)
             }
             
-            self.logger.trace("Attempting to decode body.",
-                              metadata: ["inputFormat": "JSON",
-                                         "outputType": "\(OutputType.BodyType.self)",
-                                         "bodyData": "\(bodyData.debugString)"])
+            context.logger?.trace("Attempting to decode body.",
+                                  metadata: ["inputFormat": "JSON",
+                                             "outputType": "\(OutputType.BodyType.self)",
+                                             "bodyData": "\(bodyData.debugString)"])
             
             return try self.jsonDecoder.decode(OutputType.BodyType.self, from: bodyData)
         }
         
         let mappedHeaders: [(String, String?)] = input.headers.map { ($0.0, $0.1) }
         func headersDecodableProvider() throws -> OutputType.HeadersType {
-            self.logger.trace("Attempting to decode headers.",
-                              metadata: ["inputFormat": "HTTPHeaders",
-                                         "outputType": "\(OutputType.HeadersType.self)",
-                                         "bodyData": "\(mappedHeaders)"])
+            context.logger?.trace("Attempting to decode headers.",
+                                  metadata: ["inputFormat": "HTTPHeaders",
+                                             "outputType": "\(OutputType.HeadersType.self)",
+                                             "bodyData": "\(mappedHeaders)"])
             
             return try self.headersDecoder.decode(OutputType.HeadersType.self,
                                                   from: mappedHeaders)
@@ -83,9 +81,9 @@ public struct HTTPClientResponseJSONBodyDeserializationTransform<OutputType: HTT
         let result = try OutputType.compose(bodyDecodableProvider: bodyDecodableProvider,
                                             headersDecodableProvider: headersDecodableProvider)
                 
-        self.logger.trace("Output type composed.",
-                          metadata: ["inputFormat": "JSON",
-                                     "outputType": "\(OutputType.self)"])
+        context.logger?.trace("Output type composed.",
+                              metadata: ["inputFormat": "JSON",
+                                         "outputType": "\(OutputType.self)"])
                 
         return result
     }
