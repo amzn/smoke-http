@@ -34,9 +34,10 @@ public struct SmokeHTTPClientAdditionalHeadersMiddleware<OperationInputType: HTT
         self.encoder = encoder
     }
     
-    public func handle<HandlerType>(input phaseInput: InputType, next: HandlerType) async throws
+    public func handle<HandlerType>(input phaseInput: InputType,
+                                    context: MiddlewareContext, next: HandlerType) async throws
     -> HTTPClientResponse
-    where HandlerType : HandlerProtocol, InputType == HandlerType.InputType, HTTPClientResponse == HandlerType.OutputType {
+    where HandlerType : MiddlewareHandlerProtocol, InputType == HandlerType.InputType, HTTPClientResponse == HandlerType.OutputType {
         if let additionalHeadersEncodable = phaseInput.input.additionalHeadersEncodable {
             let headers = try self.encoder.encode(additionalHeadersEncodable)
             
@@ -52,6 +53,6 @@ public struct SmokeHTTPClientAdditionalHeadersMiddleware<OperationInputType: HTT
             phaseInput.builder.withHeaders(additionalHeaders)
         }
         
-        return try await next.handle(input: phaseInput)
+        return try await next.handle(input: phaseInput, context: context)
     }
 }

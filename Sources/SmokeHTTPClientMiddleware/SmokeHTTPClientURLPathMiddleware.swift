@@ -34,9 +34,10 @@ public struct SmokeHTTPClientURLPathMiddleware<OperationInputType: HTTPRequestIn
         self.httpPath = httpPath
     }
     
-    public func handle<HandlerType>(input phaseInput: InputType, next: HandlerType) async throws
+    public func handle<HandlerType>(input phaseInput: InputType,
+                                    context: MiddlewareContext, next: HandlerType) async throws
     -> HTTPClientResponse
-    where HandlerType : HandlerProtocol, InputType == HandlerType.InputType, HTTPClientResponse == HandlerType.OutputType {
+    where HandlerType : MiddlewareHandlerProtocol, InputType == HandlerType.InputType, HTTPClientResponse == HandlerType.OutputType {
         let pathPostfix = phaseInput.input.pathPostfix ?? ""
         
         let pathTemplate = "\(self.httpPath)\(pathPostfix)"
@@ -49,6 +50,6 @@ public struct SmokeHTTPClientURLPathMiddleware<OperationInputType: HTTPRequestIn
         }
         phaseInput.builder.withPath(path)
         
-        return try await next.handle(input: phaseInput)
+        return try await next.handle(input: phaseInput, context: context)
     }
 }

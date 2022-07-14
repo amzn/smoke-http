@@ -42,11 +42,12 @@ public struct JSONTypedErrorMiddleware<ErrorType: Decodable & Error>: Middleware
         self.decoder = decoder
     }
     
-    public func handle<HandlerType>(input: HTTPClientRequest, next: HandlerType) async throws
+    public func handle<HandlerType>(input: HTTPClientRequest,
+                                    context: MiddlewareContext, next: HandlerType) async throws
     -> HTTPClientResponse
-    where HandlerType : HandlerProtocol, HTTPClientRequest == HandlerType.InputType,
+    where HandlerType : MiddlewareHandlerProtocol, HTTPClientRequest == HandlerType.InputType,
     HTTPClientResponse == HandlerType.OutputType {
-        let response = try await next.handle(input: input)
+        let response = try await next.handle(input: input, context: context)
         
         let isSuccess: Bool
         switch response.status {

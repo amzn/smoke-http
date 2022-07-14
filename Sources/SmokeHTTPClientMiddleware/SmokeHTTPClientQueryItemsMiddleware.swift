@@ -35,9 +35,10 @@ public struct SmokeHTTPClientQueryItemsMiddleware<OperationInputType: HTTPReques
         self.allowedCharacterSet = allowedCharacterSet
     }
     
-    public func handle<HandlerType>(input phaseInput: InputType, next: HandlerType) async throws
+    public func handle<HandlerType>(input phaseInput: InputType,
+                                    context: MiddlewareContext, next: HandlerType) async throws
     -> HTTPClientResponse
-    where HandlerType : HandlerProtocol, InputType == HandlerType.InputType, HTTPClientResponse == HandlerType.OutputType {
+    where HandlerType : MiddlewareHandlerProtocol, InputType == HandlerType.InputType, HTTPClientResponse == HandlerType.OutputType {
         if let queryEncodable = phaseInput.input.queryEncodable {
             let urlQueryItems = try self.encoder.asURLQueryItems(queryEncodable,
                                                                       allowedCharacterSet: self.allowedCharacterSet)
@@ -45,6 +46,6 @@ public struct SmokeHTTPClientQueryItemsMiddleware<OperationInputType: HTTPReques
             phaseInput.builder.withQueryItems(urlQueryItems)
         }
         
-        return try await next.handle(input: phaseInput)
+        return try await next.handle(input: phaseInput, context: context)
     }
 }

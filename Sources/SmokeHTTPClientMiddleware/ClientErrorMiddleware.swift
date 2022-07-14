@@ -32,12 +32,13 @@ public struct ClientErrorMiddleware: MiddlewareProtocol {
     public init() {
     }
     
-    public func handle<HandlerType>(input: HTTPClientRequest, next: HandlerType) async throws
+    public func handle<HandlerType>(input: HTTPClientRequest,
+                                    context: MiddlewareContext, next: HandlerType) async throws
     -> HTTPClientResponse
-    where HandlerType : HandlerProtocol, HTTPClientRequest == HandlerType.InputType,
+    where HandlerType : MiddlewareHandlerProtocol, HTTPClientRequest == HandlerType.InputType,
     HTTPClientResponse == HandlerType.OutputType {
         do {
-            return try await next.handle(input: input)
+            return try await next.handle(input: input, context: context)
         } catch {
             let wrappingError: SmokeHTTPTypes.HTTPClientError
                         

@@ -67,9 +67,10 @@ public struct SmokeRequestRetryerMiddleware<HTTPRequestType: HttpClientRequestPr
         self.requestTags = requestTags
     }
     
-    public func handle<HandlerType>(input: HTTPRequestType, next: HandlerType) async throws
+    public func handle<HandlerType>(input: HTTPRequestType,
+                                    context: MiddlewareContext, next: HandlerType) async throws
     -> HTTPResponseType
-    where HandlerType : HandlerProtocol, HTTPRequestType == HandlerType.InputType,
+    where HandlerType : MiddlewareHandlerProtocol, HTTPRequestType == HandlerType.InputType,
     HTTPResponseType == HandlerType.OutputType {
         let latencyMetricDetails: (Date, Metrics.Timer)?
         if let latencyTimer = self.invocationMetrics?.latencyTimer {
@@ -86,20 +87,20 @@ public struct SmokeRequestRetryerMiddleware<HTTPRequestType: HttpClientRequestPr
             outputRequestRecordStatus = nil
         }
         
-        return try await handle(input: input, next: next,
+        return try await handle(input: input, context: context, next: next,
                                 retriesRemaining: self.retryConfiguration.numRetries,
                                 mostRecent: nil,
                                 overallLatencyMetricDetails: latencyMetricDetails,
                                 outputRequestRecordStatus: outputRequestRecordStatus)
     }
     
-    private func handle<HandlerType>(input: HTTPRequestType, next: HandlerType,
+    private func handle<HandlerType>(input: HTTPRequestType, context: MiddlewareContext, next: HandlerType,
                                      retriesRemaining: Int,
                                      mostRecent: (result: RequestRetryerResult<HTTPResponseType>, wait: RetryInterval)?,
                                      overallLatencyMetricDetails: (Date, Metrics.Timer)?,
                                      outputRequestRecordStatus: OutputRequestRecordStatus?) async throws
     -> HTTPResponseType
-    where HandlerType : HandlerProtocol, HTTPRequestType == HandlerType.InputType,
+    where HandlerType : MiddlewareHandlerProtocol, HTTPRequestType == HandlerType.InputType,
     HTTPResponseType == HandlerType.OutputType {
         if let mostRecent = mostRecent {
             guard retriesRemaining > 0 else {
@@ -120,7 +121,7 @@ public struct SmokeRequestRetryerMiddleware<HTTPRequestType: HttpClientRequestPr
         }
         
         do {
-            let response = try await next.handle(input: input)
+            let response = try await next.handle(input: input, context: context)
             let result: RequestRetryerResult<HTTPResponseType> = .response(response)
             
             let updatedOutputRequestRecordStatus: OutputRequestRecordStatus?
@@ -137,7 +138,7 @@ public struct SmokeRequestRetryerMiddleware<HTTPRequestType: HttpClientRequestPr
                 let retryInterval = try await self.retryConfiguration.waitForNextRetry(retriesRemaining: retriesRemaining)
                 
                 // server error, retry
-                return try await handle(input: input, next: next, retriesRemaining: retriesRemaining - 1,
+                return try await handle(input: input, context: context, next: next, retriesRemaining: retriesRemaining - 1,
                                         mostRecent: (result, retryInterval),
                                         overallLatencyMetricDetails: overallLatencyMetricDetails,
                                         outputRequestRecordStatus: updatedOutputRequestRecordStatus)
@@ -164,7 +165,7 @@ public struct SmokeRequestRetryerMiddleware<HTTPRequestType: HttpClientRequestPr
             if status.isRetriable {
                 let retryInterval = try await self.retryConfiguration.waitForNextRetry(retriesRemaining: retriesRemaining)
                 
-                return try await handle(input: input, next: next, retriesRemaining: retriesRemaining - 1,
+                return try await handle(input: input, context: context, next: next, retriesRemaining: retriesRemaining - 1,
                                         mostRecent: (result, retryInterval),
                                         overallLatencyMetricDetails: overallLatencyMetricDetails,
                                         outputRequestRecordStatus: updatedOutputRequestRecordStatus)
