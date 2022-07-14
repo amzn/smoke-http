@@ -23,7 +23,7 @@ import NIO
 import NIOFoundationCompat
 import SmokeHTTPTypes
 
-public struct SmokeHTTPClientJSONBodyMiddleware<OperationInputType: HTTPRequestInputProtocol>: RequestBodyMiddlewareProtocol {
+public struct SmokeHTTPClientJSONBodyMiddleware<OperationInputType: HTTPRequestInputProtocol>: BodyMiddlewareProtocol {
     public typealias InputType = SerializeClientRequestMiddlewarePhaseInput<OperationInputType, HTTPClientRequest>
     public typealias OutputType = HTTPClientResponse
     
