@@ -15,7 +15,7 @@
         "repositoryURL": "https://github.com/tachyonics/async-http-middleware-client",
         "state": {
           "branch": "poc",
-          "revision": "f8e12c57c63313288e712d016dc8a6c11be79fc0",
+          "revision": "f59ea717b1fed9a54682d1e9a283f9daacf7e206",
           "version": null
         }
       },
@@ -24,7 +24,7 @@
         "repositoryURL": "https://github.com/tachyonics/swift-http-client-middleware",
         "state": {
           "branch": "poc",
-          "revision": "b081a10edc1f6c4ae33d5f147019aed0d13e7198",
+          "revision": "1e12c87dd544a590d4f9c34b110c268ec6bf4c5d",
           "version": null
         }
       },
