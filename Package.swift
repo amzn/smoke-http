@@ -15,6 +15,13 @@
 
 import PackageDescription
 
+let swiftSettings: [SwiftSetting]
+#if compiler(<5.6)
+swiftSettings = []
+#else
+swiftSettings = [.unsafeFlags(["-warn-concurrency"])]
+#endif
+
 let package = Package(
     name: "smoke-http",
     platforms: [
@@ -75,19 +82,27 @@ let package = Package(
         .target(
             name: "QueryCoding", dependencies: [
                 .target(name: "ShapeCoding"),
-            ]),
+            ],
+            swiftSettings: swiftSettings
+        ),
         .target(
             name: "HTTPHeadersCoding", dependencies: [
                 .target(name: "ShapeCoding"),
-            ]),
+            ],
+            swiftSettings: swiftSettings
+        ),
         .target(
             name: "HTTPPathCoding", dependencies: [
                 .target(name: "ShapeCoding"),
-            ]),
+            ],
+            swiftSettings: swiftSettings
+        ),
         .target(
             name: "ShapeCoding", dependencies: [
                 .product(name: "Logging", package: "swift-log"),
-            ]),
+            ],
+            swiftSettings: swiftSettings
+        ),
         .target(
             name: "SmokeHTTPClientMiddleware", dependencies: [
                 .product(name: "HttpClientMiddleware", package: "swift-http-client-middleware"),
@@ -103,11 +118,15 @@ let package = Package(
                 .target(name: "HTTPHeadersCoding"),
                 .target(name: "HTTPPathCoding"),
                 .target(name: "QueryCoding")
-            ]),
+            ],
+            swiftSettings: swiftSettings
+        ),
         .target(
             name: "SmokeHTTPTypes", dependencies: [
                 .product(name: "Metrics", package: "swift-metrics"),
-            ]),
+            ],
+            swiftSettings: swiftSettings
+        ),
         .testTarget(
             name: "SmokeHTTPClientTests", dependencies: [
                 .target(name: "SmokeHTTPClient"),

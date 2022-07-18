@@ -17,6 +17,7 @@
 
 #if (os(Linux) && compiler(>=5.5)) || (!os(Linux) && compiler(>=5.5.2)) && canImport(_Concurrency)
 import Foundation
+import HttpMiddleware
 import StandardHttpClientMiddleware
 
 public actor RetriableOutwardsRequestAggregator {
@@ -34,7 +35,7 @@ public actor RetriableOutwardsRequestAggregator {
     }
 }
 
-public struct OutputRequestRecord {
+public struct OutputRequestRecord: _MiddlewareSendable {
     public let requestLatency: Int
     
     public init(requestLatency: Int) {
@@ -42,7 +43,7 @@ public struct OutputRequestRecord {
     }
 }
 
-public struct RetryAttemptRecord {
+public struct RetryAttemptRecord: _MiddlewareSendable {
     public let retryWait: RetryInterval
     
     public init(retryWait: RetryInterval) {
@@ -50,7 +51,7 @@ public struct RetryAttemptRecord {
     }
 }
 
-public struct RetriableOutputRequestRecord {
+public struct RetriableOutputRequestRecord: _MiddlewareSendable {
     public let requestTags: [String]
     public let outputRequests: [(RetryAttemptRecord?, OutputRequestRecord)]
     

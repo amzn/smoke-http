@@ -15,7 +15,12 @@
 //  SmokeHTTPClientMiddleware
 //
 
+#if compiler(>=5.6)
+@preconcurrency import Foundation
+#else
 import Foundation
+#endif
+
 import HttpMiddleware
 import HttpClientMiddleware
 import AsyncHTTPClient
