@@ -92,14 +92,14 @@ public extension HTTPOperationsClient {
                 invocationContext: invocationContext)
             
             let logger = invocationContext.reporting.logger
-            logger.debug("Waiting for response from \(endpointOverride?.host ?? endpointHostName) ...")
+            logger.trace("Waiting for response from \(endpointOverride?.host ?? endpointHostName) ...")
             completedSemaphore.wait()
             
             guard let result = responseResult else {
                 throw HTTPError.connectionError("Http request was closed without returning a response.")
             }
             
-            logger.debug("Got response from \(endpointOverride?.host ?? endpointHostName) - response received: \(result)")
+            logger.trace("Got response from \(endpointOverride?.host ?? endpointHostName) - response received: \(result)")
             
             switch result {
             case .failure(let error):

@@ -128,7 +128,7 @@ public extension HTTPOperationsClient {
                         "Request failed with error: \(error). Remaining retries: \(currentRetriesRemaining). Retrying in \(retryInterval) ms.")
                     let deadline = DispatchTime.now() + .milliseconds(retryInterval)
                     queue.asyncAfter(deadline: deadline) {
-                        logger.debug("Reattempting request due to remaining retries: \(currentRetriesRemaining)")
+                        logger.trace("Reattempting request due to remaining retries: \(currentRetriesRemaining)")
                         do {
                             // execute again
                             try self.executeAsyncWithOutput()
@@ -144,9 +144,9 @@ public extension HTTPOperationsClient {
                 }
                 
                 if !shouldRetryOnError {
-                    logger.debug("Request not retried due to error returned: \(error)")
+                    logger.trace("Request not retried due to error returned: \(error)")
                 } else {
-                    logger.debug("Request not retried due to maximum retries: \(retryConfiguration.numRetries)")
+                    logger.trace("Request not retried due to maximum retries: \(retryConfiguration.numRetries)")
                 }
                 
                 // its an error; complete with the provided error
