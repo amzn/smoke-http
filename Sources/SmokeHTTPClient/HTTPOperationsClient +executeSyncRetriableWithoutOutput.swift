@@ -158,15 +158,15 @@ public extension HTTPOperationsClient {
                         retryAttemptRecord: StandardRetryAttemptRecord(retryWait: retryInterval.millisecondsToTimeInterval))
                 }
                 
-                logger.debug("Request failed with error: \(error). Remaining retries: \(currentRetriesRemaining). Retrying in \(retryInterval) ms.")
+                logger.trace("Request failed with error: \(error). Remaining retries: \(currentRetriesRemaining). Retrying in \(retryInterval) ms.")
                 usleep(useconds_t(retryInterval.milliFromMicroSeconds))
-                logger.debug("Reattempting request due to remaining retries: \(currentRetriesRemaining)")
+                logger.trace("Reattempting request due to remaining retries: \(currentRetriesRemaining)")
                 return try executeSyncWithoutOutput()
             } else {
                 if !shouldRetryOnError {
-                    logger.debug("Request not retried due to error returned: \(error)")
+                    logger.trace("Request not retried due to error returned: \(error)")
                 } else {
-                    logger.debug("Request not retried due to maximum retries: \(retryConfiguration.numRetries)")
+                    logger.trace("Request not retried due to maximum retries: \(retryConfiguration.numRetries)")
                 }
                 
                 throw error

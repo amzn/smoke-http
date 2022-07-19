@@ -268,7 +268,7 @@ public struct HTTPOperationsClient {
         let additionalHeaders = requestComponents.additionalHeaders
 
         let logger = invocationContext.reporting.logger
-        logger.debug("Sending \(httpMethod) request to endpoint: \(endpoint) at path: \(sendPath).")
+        logger.trace("Sending \(httpMethod) request to endpoint: \(endpoint) at path: \(sendPath).")
                 
         guard let url = URL(string: endpoint) else {
             throw HTTPError.invalidRequest("Request endpoint '\(endpoint)' not valid URL.")
