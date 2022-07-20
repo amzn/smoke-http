@@ -102,8 +102,8 @@ public extension HTTPOperationsClient {
                 return self.getNextFuture(error: httpClientError)
             }
             
-            return self.onSuccess().flatMap {
-                return future
+            return future.flatMap {
+                return self.onSuccess()
             }
         }
         
