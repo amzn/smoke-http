@@ -34,6 +34,7 @@ public extension HTTPOperationsClient {
         let endpointOverride: URL?
         let endpointPath: String
         let httpMethod: HTTPMethod
+        let eventLoop: EventLoop
         let input: InputType
         let invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>
         let innerInvocationContext:
@@ -58,6 +59,7 @@ public extension HTTPOperationsClient {
             self.endpointOverride = endpointOverride
             self.endpointPath = endpointPath
             self.httpMethod = httpMethod
+            self.eventLoop = eventLoop
             self.input = input
             self.invocationContext = invocationContext
             self.httpClient = httpClient
@@ -99,8 +101,16 @@ public extension HTTPOperationsClient {
                 // submit all the request latencies captured by the RetriableOutwardsRequestAggregator
                 // to the provided outwardsRequestAggregator if it was provided
                 if let outwardsRequestAggregators = self.outwardsRequestAggregators {
-                    outwardsRequestAggregators.0.recordRetriableOutwardsRequest(
-                        retriableOutwardsRequest: StandardRetriableOutputRequestRecord(outputRequests: outwardsRequestAggregators.1.outputRequestRecords))
+                    let promise = self.eventLoop.makePromise(of: Void.self)
+                    
+                    outwardsRequestAggregators.1.withRecords { outputRequestRecords in
+                        outwardsRequestAggregators.0.recordRetriableOutwardsRequest(
+                            retriableOutwardsRequest: StandardRetriableOutputRequestRecord(outputRequests: outputRequestRecords)) {
+                                promise.succeed(())
+                            }
+                    }
+                    
+                    try? promise.futureResult.wait()
                 }
             }
             
@@ -153,8 +163,14 @@ public extension HTTPOperationsClient {
                 retriesRemaining -= 1
                 
                 if let outwardsRequestAggregators = self.outwardsRequestAggregators {
+                    let promise = self.eventLoop.makePromise(of: Void.self)
+                    
                     outwardsRequestAggregators.0.recordRetryAttempt(
-                        retryAttemptRecord: StandardRetryAttemptRecord(retryWait: retryInterval.millisecondsToTimeInterval))
+                        retryAttemptRecord: StandardRetryAttemptRecord(retryWait: retryInterval.millisecondsToTimeInterval)) {
+                            promise.succeed(())
+                        }
+                    
+                    try promise.futureResult.wait()
                 }
                 
                 logger.trace("Request failed with error: \(error). Remaining retries: \(currentRetriesRemaining). Retrying in \(retryInterval) ms.")

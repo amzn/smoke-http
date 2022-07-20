@@ -154,7 +154,9 @@ public extension HTTPOperationsClient {
                     
                     if let outwardsRequestAggregator = durationMetricDetails.2 {
                         outwardsRequestAggregator.recordOutwardsRequest(
-                            outputRequestRecord: StandardOutputRequestRecord(requestLatency: timeInterval))
+                            outputRequestRecord: StandardOutputRequestRecord(requestLatency: timeInterval),
+                            onCompletion: { asyncResponseInvocationStrategy.invokeResponse(response: result, completion: completion) } )
+                        return 
                     }
                 }
                 

@@ -102,18 +102,16 @@ public extension HTTPOperationsClient {
                 return self.getNextFuture(error: httpClientError)
             }
             
-            future.whenSuccess { _ in
-                self.onSuccess()
+            return future.flatMap { result in
+                return self.onSuccess().map { result }
             }
-            
-            return future
         }
         
-        func onSuccess() {
+        func onSuccess() -> EventLoopFuture<Void> {
             // report success metric
             invocationContext.reporting.successCounter?.increment()
             
-            onComplete()
+            return onComplete()
         }
         
         func getNextFuture(error: HTTPClientError) -> EventLoopFuture<OutputType> {
@@ -130,9 +128,17 @@ public extension HTTPOperationsClient {
                 let currentRetriesRemaining = retriesRemaining
                 retriesRemaining -= 1
                 
+                let recordFuture: EventLoopFuture<Void>
                 if let outwardsRequestAggregators = self.outwardsRequestAggregators {
+                    let promise = self.eventLoop.makePromise(of: Void.self)
                     outwardsRequestAggregators.0.recordRetryAttempt(
-                        retryAttemptRecord: StandardRetryAttemptRecord(retryWait: retryInterval.millisecondsToTimeInterval))
+                        retryAttemptRecord: StandardRetryAttemptRecord(retryWait: retryInterval.millisecondsToTimeInterval)) {
+                            promise.succeed(())
+                        }
+                    
+                    recordFuture = promise.futureResult
+                } else {
+                    recordFuture = self.eventLoop.makeSucceededVoidFuture()
                 }
                 
                 logger.warning(
@@ -147,7 +153,7 @@ public extension HTTPOperationsClient {
                 }
                 
                 // return the future that will be completed with the future retry.
-                return promise.futureResult
+                return recordFuture.flatMap { promise.futureResult }
             }
             
             if !shouldRetryOnError {
@@ -167,12 +173,12 @@ public extension HTTPOperationsClient {
                 invocationContext.reporting.failure5XXCounter?.increment()
             }
             
-            onComplete()
+            let reportFuture = onComplete()
 
-            return promise.futureResult
+            return reportFuture.flatMap { promise.futureResult }
         }
         
-        func onComplete() {
+        func onComplete() -> EventLoopFuture<Void> {
             // report the retryCount metric
             let retryCount = retryConfiguration.numRetries - retriesRemaining
             invocationContext.reporting.retryCountRecorder?.record(retryCount)
@@ -184,9 +190,20 @@ public extension HTTPOperationsClient {
             // submit all the request latencies captured by the RetriableOutwardsRequestAggregator
             // to the provided outwardsRequestAggregator if it was provided
             if let outwardsRequestAggregators = self.outwardsRequestAggregators {
-                outwardsRequestAggregators.0.recordRetriableOutwardsRequest(
-                    retriableOutwardsRequest: StandardRetriableOutputRequestRecord(outputRequests: outwardsRequestAggregators.1.outputRequestRecords))
+                let promise = self.eventLoop.makePromise(of: Void.self)
+                
+                outwardsRequestAggregators.1.withRecords { outputRequestRecords in
+                    outwardsRequestAggregators.0.recordRetriableOutwardsRequest(
+                        retriableOutwardsRequest: StandardRetriableOutputRequestRecord(outputRequests: outputRequestRecords)) {
+                            promise.succeed(())
+                        }
+                }
+                
+                
+                return promise.futureResult
             }
+            
+            return self.eventLoop.makeSucceededVoidFuture()
         }
     }
     
