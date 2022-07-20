@@ -9,10 +9,20 @@ import Foundation
   the outputRequest records for the same output request that is optentially retried.
  */
 internal class RetriableOutwardsRequestAggregator:  OutwardsRequestAggregator {
-    private(set) var outputRequestRecords: [OutputRequestRecord]
+    private var outputRequestRecords: [OutputRequestRecord]
+    
+    internal let accessQueue = DispatchQueue(
+                label: "com.amazon.SmokeHTTP.RetriableOutwardsRequestAggregator.accessQueue",
+                target: DispatchQueue.global())
     
     init() {
         self.outputRequestRecords = []
+    }
+    
+    func withRecords(completion: @escaping ([OutputRequestRecord]) -> ()) {
+        self.accessQueue.async {
+            completion(self.outputRequestRecords)
+        }
     }
     
     func recordOutwardsRequest(outputRequestRecord: OutputRequestRecord) {
@@ -25,6 +35,26 @@ internal class RetriableOutwardsRequestAggregator:  OutwardsRequestAggregator {
     
     func recordRetriableOutwardsRequest(retriableOutwardsRequest: RetriableOutputRequestRecord) {
         self.outputRequestRecords.append(contentsOf: retriableOutwardsRequest.outputRequests)
+    }
+    
+    func appendOutwardsRequest(outputRequestRecord: OutputRequestRecord, onCompletion: @escaping () -> ()) {
+        self.accessQueue.async {
+            self.outputRequestRecords.append(outputRequestRecord)
+            
+            onCompletion()
+        }
+    }
+    
+    func appendRetryAttempt(retryAttemptRecord: RetryAttemptRecord, onCompletion: @escaping () -> ()) {
+        onCompletion()
+    }
+    
+    func appendRetriableOutwardsRequest(retriableOutwardsRequest: RetriableOutputRequestRecord, onCompletion: @escaping () -> ()) {
+        self.accessQueue.async {
+            self.outputRequestRecords.append(contentsOf: retriableOutwardsRequest.outputRequests)
+            
+            onCompletion()
+        }
     }
 }
 

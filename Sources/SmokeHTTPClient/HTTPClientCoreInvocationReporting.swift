@@ -38,11 +38,43 @@ public protocol RetryAttemptRecord {
  */
 public protocol OutwardsRequestAggregator {
     
+    func recordOutwardsRequest(outputRequestRecord: OutputRequestRecord, onCompletion: @escaping () -> ())
+        
+    func recordRetryAttempt(retryAttemptRecord: RetryAttemptRecord, onCompletion: @escaping () -> ())
+        
+    func recordRetriableOutwardsRequest(retriableOutwardsRequest: RetriableOutputRequestRecord, onCompletion: @escaping () -> ())
+    
+    @available(swift, deprecated: 2.0, message: "Not thread-safe")
     func recordOutwardsRequest(outputRequestRecord: OutputRequestRecord)
-    
+        
+    @available(swift, deprecated: 2.0, message: "Not thread-safe")
     func recordRetryAttempt(retryAttemptRecord: RetryAttemptRecord)
-    
+        
+    @available(swift, deprecated: 2.0, message: "Not thread-safe")
     func recordRetriableOutwardsRequest(retriableOutwardsRequest: RetriableOutputRequestRecord)
+}
+
+public extension OutwardsRequestAggregator {
+    @available(swift, deprecated: 2.0, message: "Not thread-safe")
+    func recordOutwardsRequest(outputRequestRecord: OutputRequestRecord, onCompletion: @escaping () -> ()) {
+        recordOutwardsRequest(outputRequestRecord: outputRequestRecord)
+        
+        onCompletion()
+    }
+        
+    @available(swift, deprecated: 2.0, message: "Not thread-safe")
+    func recordRetryAttempt(retryAttemptRecord: RetryAttemptRecord, onCompletion: @escaping () -> ()) {
+        recordRetryAttempt(retryAttemptRecord: retryAttemptRecord)
+        
+        onCompletion()
+    }
+       
+    @available(swift, deprecated: 2.0, message: "Not thread-safe")
+    func recordRetriableOutwardsRequest(retriableOutwardsRequest: RetriableOutputRequestRecord, onCompletion: @escaping () -> ()) {
+        recordRetriableOutwardsRequest(retriableOutwardsRequest: retriableOutwardsRequest)
+        
+        onCompletion()
+    }
 }
 
 /**
