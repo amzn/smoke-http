@@ -53,7 +53,7 @@ public protocol OutwardsRequestAggregator {
     @available(swift, deprecated: 2.0, message: "Not thread-safe")
     func recordRetriableOutwardsRequest(retriableOutwardsRequest: RetriableOutputRequestRecord)
 }
-/*
+
 public extension OutwardsRequestAggregator {
     @available(swift, deprecated: 2.0, message: "Not thread-safe")
     func recordOutwardsRequest(outputRequestRecord: OutputRequestRecord, onCompletion: @escaping () -> ()) {
@@ -76,7 +76,7 @@ public extension OutwardsRequestAggregator {
         onCompletion()
     }
 }
-*/
+
 /**
  A context related to reporting on the invocation of the HTTPClient. This represents the
  core requirements for invocation reporting.
