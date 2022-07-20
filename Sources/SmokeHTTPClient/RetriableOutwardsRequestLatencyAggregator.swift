@@ -37,7 +37,7 @@ internal class RetriableOutwardsRequestAggregator:  OutwardsRequestAggregator {
         self.outputRequestRecords.append(contentsOf: retriableOutwardsRequest.outputRequests)
     }
     
-    func appendOutwardsRequest(outputRequestRecord: OutputRequestRecord, onCompletion: @escaping () -> ()) {
+    func recordOutwardsRequest(outputRequestRecord: OutputRequestRecord, onCompletion: @escaping () -> ()) {
         self.accessQueue.async {
             self.outputRequestRecords.append(outputRequestRecord)
             
@@ -45,11 +45,11 @@ internal class RetriableOutwardsRequestAggregator:  OutwardsRequestAggregator {
         }
     }
     
-    func appendRetryAttempt(retryAttemptRecord: RetryAttemptRecord, onCompletion: @escaping () -> ()) {
+    func recordRetryAttempt(retryAttemptRecord: RetryAttemptRecord, onCompletion: @escaping () -> ()) {
         onCompletion()
     }
     
-    func appendRetriableOutwardsRequest(retriableOutwardsRequest: RetriableOutputRequestRecord, onCompletion: @escaping () -> ()) {
+    func recordRetriableOutwardsRequest(retriableOutwardsRequest: RetriableOutputRequestRecord, onCompletion: @escaping () -> ()) {
         self.accessQueue.async {
             self.outputRequestRecords.append(contentsOf: retriableOutwardsRequest.outputRequests)
             
