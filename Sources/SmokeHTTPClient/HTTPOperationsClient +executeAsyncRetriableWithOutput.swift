@@ -119,24 +119,29 @@ public extension HTTPOperationsClient {
                     let currentRetriesRemaining = retriesRemaining
                     retriesRemaining -= 1
                     
-                    if let outwardsRequestAggregators = self.outwardsRequestAggregators {
-                        outwardsRequestAggregators.0.recordRetryAttempt(
-                            retryAttemptRecord: StandardRetryAttemptRecord(retryWait: retryInterval.millisecondsToTimeInterval))
+                    func afterRecordCompletion() {
+                        logger.warning(
+                            "Request failed with error: \(error). Remaining retries: \(currentRetriesRemaining). Retrying in \(retryInterval) ms.")
+                        let deadline = DispatchTime.now() + .milliseconds(retryInterval)
+                        queue.asyncAfter(deadline: deadline) {
+                            logger.trace("Reattempting request due to remaining retries: \(currentRetriesRemaining)")
+                            do {
+                                // execute again
+                                try self.executeAsyncWithOutput()
+                                return
+                            } catch {
+                                // if attempting to retry causes an error; complete with the provided error
+                                self.outerCompletion(.failure(HTTPClientError(responseCode: 400, cause: error)))
+                            }
+                        }
                     }
                     
-                    logger.warning(
-                        "Request failed with error: \(error). Remaining retries: \(currentRetriesRemaining). Retrying in \(retryInterval) ms.")
-                    let deadline = DispatchTime.now() + .milliseconds(retryInterval)
-                    queue.asyncAfter(deadline: deadline) {
-                        logger.debug("Reattempting request due to remaining retries: \(currentRetriesRemaining)")
-                        do {
-                            // execute again
-                            try self.executeAsyncWithOutput()
-                            return
-                        } catch {
-                            // if attempting to retry causes an error; complete with the provided error
-                            self.outerCompletion(.failure(HTTPClientError(responseCode: 400, cause: error)))
-                        }
+                    if let outwardsRequestAggregators = self.outwardsRequestAggregators {
+                        outwardsRequestAggregators.0.recordRetryAttempt(
+                            retryAttemptRecord: StandardRetryAttemptRecord(retryWait: retryInterval.millisecondsToTimeInterval),
+                            onCompletion: afterRecordCompletion)
+                    } else {
+                        afterRecordCompletion()
                     }
                     
                     // request will be retried; don't complete yet
@@ -144,9 +149,9 @@ public extension HTTPOperationsClient {
                 }
                 
                 if !shouldRetryOnError {
-                    logger.debug("Request not retried due to error returned: \(error)")
+                    logger.trace("Request not retried due to error returned: \(error)")
                 } else {
-                    logger.debug("Request not retried due to maximum retries: \(retryConfiguration.numRetries)")
+                    logger.trace("Request not retried due to maximum retries: \(retryConfiguration.numRetries)")
                 }
                 
                 // its an error; complete with the provided error
@@ -174,14 +179,21 @@ public extension HTTPOperationsClient {
                 durationMetricDetails.1.recordMilliseconds(Date().timeIntervalSince(durationMetricDetails.0).milliseconds)
             }
             
+            func afterRecordCompletion() {
+                outerCompletion(result)
+            }
+            
             // submit all the request latencies captured by the RetriableOutwardsRequestAggregator
             // to the provided outwardsRequestAggregator if it was provided
             if let outwardsRequestAggregators = self.outwardsRequestAggregators {
-                outwardsRequestAggregators.0.recordRetriableOutwardsRequest(
-                    retriableOutwardsRequest: StandardRetriableOutputRequestRecord(outputRequests: outwardsRequestAggregators.1.outputRequestRecords))
+                outwardsRequestAggregators.1.withRecords { outputRequestRecords in
+                    outwardsRequestAggregators.0.recordRetriableOutwardsRequest(
+                        retriableOutwardsRequest: StandardRetriableOutputRequestRecord(outputRequests: outputRequestRecords),
+                        onCompletion: afterRecordCompletion)
+                }
+            } else {
+                afterRecordCompletion()
             }
-
-            outerCompletion(result)
         }
     }
     

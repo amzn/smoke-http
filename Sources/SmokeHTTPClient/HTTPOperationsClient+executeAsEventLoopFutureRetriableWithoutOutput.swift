@@ -102,18 +102,16 @@ public extension HTTPOperationsClient {
                 return self.getNextFuture(error: httpClientError)
             }
             
-            future.whenSuccess { _ in
-                self.onSuccess()
+            return future.flatMap {
+                return self.onSuccess()
             }
-            
-            return future
         }
         
-        func onSuccess() {
+        func onSuccess() -> EventLoopFuture<Void> {
             // report success metric
             invocationContext.reporting.successCounter?.increment()
             
-            onComplete()
+            return onComplete()
         }
         
         func getNextFuture(error: HTTPClientError) -> EventLoopFuture<Void> {
@@ -130,16 +128,25 @@ public extension HTTPOperationsClient {
                 let currentRetriesRemaining = retriesRemaining
                 retriesRemaining -= 1
                 
+                let recordFuture: EventLoopFuture<Void>
                 if let outwardsRequestAggregators = self.outwardsRequestAggregators {
+                    let promise = self.eventLoop.makePromise(of: Void.self)
+                    
                     outwardsRequestAggregators.0.recordRetryAttempt(
-                        retryAttemptRecord: StandardRetryAttemptRecord(retryWait: retryInterval.millisecondsToTimeInterval))
+                        retryAttemptRecord: StandardRetryAttemptRecord(retryWait: retryInterval.millisecondsToTimeInterval)) {
+                            promise.succeed(())
+                        }
+                    
+                    recordFuture = promise.futureResult
+                } else {
+                    recordFuture = self.eventLoop.makeSucceededVoidFuture()
                 }
                 
                 logger.warning(
                     "Request failed with error: \(error). Remaining retries: \(currentRetriesRemaining). Retrying in \(retryInterval) ms.")
                 let deadline = DispatchTime.now() + .milliseconds(retryInterval)
                 queue.asyncAfter(deadline: deadline) {
-                    logger.debug("Reattempting request due to remaining retries: \(currentRetriesRemaining)")
+                    logger.trace("Reattempting request due to remaining retries: \(currentRetriesRemaining)")
                     
                     let nextFuture = self.executeAsEventLoopFutureWithoutOutput()
                     
@@ -147,13 +154,13 @@ public extension HTTPOperationsClient {
                 }
                 
                 // return the future that will be completed with the future retry.
-                return promise.futureResult
+                return recordFuture.flatMap { promise.futureResult }
             }
             
             if !shouldRetryOnError {
-                logger.debug("Request not retried due to error returned: \(error)")
+                logger.trace("Request not retried due to error returned: \(error)")
             } else {
-                logger.debug("Request not retried due to maximum retries: \(retryConfiguration.numRetries)")
+                logger.trace("Request not retried due to maximum retries: \(retryConfiguration.numRetries)")
             }
             
             // its an error; complete with the provided error
@@ -167,12 +174,12 @@ public extension HTTPOperationsClient {
                 invocationContext.reporting.failure5XXCounter?.increment()
             }
             
-            onComplete()
+            let reportFuture = onComplete()
 
-            return promise.futureResult
+            return reportFuture.flatMap { promise.futureResult }
         }
         
-        func onComplete() {
+        func onComplete() -> EventLoopFuture<Void> {
             // report the retryCount metric
             let retryCount = retryConfiguration.numRetries - retriesRemaining
             invocationContext.reporting.retryCountRecorder?.record(retryCount)
@@ -184,9 +191,19 @@ public extension HTTPOperationsClient {
             // submit all the request latencies captured by the RetriableOutwardsRequestAggregator
             // to the provided outwardsRequestAggregator if it was provided
             if let outwardsRequestAggregators = self.outwardsRequestAggregators {
-                outwardsRequestAggregators.0.recordRetriableOutwardsRequest(
-                    retriableOutwardsRequest: StandardRetriableOutputRequestRecord(outputRequests: outwardsRequestAggregators.1.outputRequestRecords))
+                let promise = self.eventLoop.makePromise(of: Void.self)
+                
+                outwardsRequestAggregators.1.withRecords { outputRequestRecords in
+                    outwardsRequestAggregators.0.recordRetriableOutwardsRequest(
+                        retriableOutwardsRequest: StandardRetriableOutputRequestRecord(outputRequests: outputRequestRecords)) {
+                            promise.succeed(())
+                        }
+                }
+                
+                return promise.futureResult
             }
+            
+            return self.eventLoop.makeSucceededVoidFuture()
         }
     }
     

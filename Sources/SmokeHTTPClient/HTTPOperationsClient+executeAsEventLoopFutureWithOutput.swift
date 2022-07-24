@@ -137,7 +137,7 @@ public extension HTTPOperationsClient {
                 throw error
             }
         
-        future.whenComplete { _ in
+        return future.flatMap { output in
             if let durationMetricDetails = durationMetricDetails {
                 let timeInterval = Date().timeIntervalSince(durationMetricDetails.0)
                 
@@ -146,12 +146,20 @@ public extension HTTPOperationsClient {
                 }
                 
                 if let outwardsRequestAggregator = durationMetricDetails.2 {
+                    let promise = future.eventLoop.makePromise(of: Void.self)
+                    
                     outwardsRequestAggregator.recordOutwardsRequest(
-                        outputRequestRecord: StandardOutputRequestRecord(requestLatency: timeInterval))
+                        outputRequestRecord: StandardOutputRequestRecord(requestLatency: timeInterval)) {
+                            promise.succeed(())
+                        }
+                    
+                    return promise.futureResult.map {
+                        return output
+                    }
                 }
             }
+            
+            return future.eventLoop.makeSucceededFuture(output)
         }
-        
-        return future
     }
 }
