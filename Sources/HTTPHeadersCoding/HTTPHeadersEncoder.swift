@@ -29,7 +29,7 @@ import ShapeCoding
 /// ie. HeadersInput(theMap: [foo: "Value1", bar: "Value2"]) --> ["theMapfoo": "Value1", "theMapbar": "Value2"]
 /// Nested type attributes are indicated by the attribute keys
 /// ie. HeadersInput(theType: TheType(foo: "Value1", bar: "Value2")) --> ["theArrayfoo": "Value1", "theArraybar": "Value2"]
-public class HTTPHeadersEncoder {
+public final class HTTPHeadersEncoder: Sendable {
     public typealias KeyEncodingStrategy = ShapeKeyEncodingStrategy
     public typealias KeyEncodeTransformStrategy = ShapeKeyEncodeTransformStrategy
 

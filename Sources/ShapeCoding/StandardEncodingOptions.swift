@@ -18,7 +18,7 @@
 import Foundation
 
 /// The strategy to use for encoding shape keys.
-public enum ShapeKeyEncodingStrategy {
+public enum ShapeKeyEncodingStrategy: Sendable {
     /// The encoder will concatinate attribute keys specified character to indicate a
     /// nested structure that could include nested types, dictionaries and arrays. This is the default.
     ///
@@ -46,7 +46,7 @@ public enum ShapeKeyEncodingStrategy {
 }
 
 /// The strategy to use for encoding maps.
-public enum ShapeMapEncodingStrategy {
+public enum ShapeMapEncodingStrategy: Sendable {
     /// The output will contain a single shape entry for
     /// each entry of the map. This is the default.
     /// ie. ShapeOutput(theMap: ["Key": "Value"]) --> ["theMap.Key": "Value"]
@@ -59,7 +59,7 @@ public enum ShapeMapEncodingStrategy {
 }
 
 /// The strategy to use when encoding lists.
-public enum ShapeListEncodingStrategy {
+public enum ShapeListEncodingStrategy: Sendable {
     /// The index of the item in the list will be used as
     /// the tag for each individual item. This is the default strategy.
     /// ie. ShapeOutput(theList: ["Value"]) --> ["theList.1": "Value"]
@@ -71,7 +71,7 @@ public enum ShapeListEncodingStrategy {
 }
 
 /// The strategy to use for transforming shape keys.
-public enum ShapeKeyEncodeTransformStrategy {
+public enum ShapeKeyEncodeTransformStrategy: Sendable {
     /// The shape keys will not be transformed.
     case none
     
@@ -79,12 +79,12 @@ public enum ShapeKeyEncodeTransformStrategy {
     case capitalizeFirstCharacter
     
     /// The shape key will be transformed using the provided function.
-    case custom((String) -> String)
+    case custom(@Sendable (String) -> String)
 }
 
 /// The standard encoding options to use in conjunction with
 /// StandardShapeSingleValueEncodingContainerDelegate.
-public struct StandardEncodingOptions {
+public struct StandardEncodingOptions: Sendable {
     public let shapeKeyEncodingStrategy: ShapeKeyEncodingStrategy
     public let shapeMapEncodingStrategy: ShapeMapEncodingStrategy
     public let shapeListEncodingStrategy: ShapeListEncodingStrategy

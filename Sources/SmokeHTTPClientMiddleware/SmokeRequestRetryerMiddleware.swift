@@ -53,13 +53,13 @@ public struct SmokeRequestRetryerMiddleware<HTTPRequestType: HttpClientRequestPr
     public typealias OutputType = HTTPResponseType
     
     private let retryConfiguration: HTTPClientRetryConfiguration
-    private let errorStatusFunction: (Swift.Error) -> (isRetriable: Bool, code: UInt)
-    private let invocationMetrics: HTTPClientInvocationMetrics?
+    private let errorStatusFunction: @Sendable (Swift.Error) -> (isRetriable: Bool, code: UInt)
+    private let invocationMetrics: (HTTPClientInvocationMetrics & Sendable)?
     private let requestTags: [String]
     
     public init(retryConfiguration: HTTPClientRetryConfiguration,
-                errorStatusFunction: @escaping (Swift.Error) -> (isRetriable: Bool, code: UInt),
-                invocationMetrics: HTTPClientInvocationMetrics?,
+                errorStatusFunction: @escaping @Sendable (Swift.Error) -> (isRetriable: Bool, code: UInt),
+                invocationMetrics: (HTTPClientInvocationMetrics & Sendable)?,
                 requestTags: [String]) {
         self.retryConfiguration = retryConfiguration
         self.errorStatusFunction = errorStatusFunction

@@ -27,7 +27,7 @@ import ShapeCoding
 /// Nested type attributes are indicated by the attribute keys
 /// ie. PathInput(theType: TheType(foo: "Value1", bar: "Value2")) --> \base\{theType.1}\{theType.2}--> \base\Value1\Value2
 /// Dictionary entries are indicated based on the provided `MapEncodingStrategy`
-public class HTTPPathEncoder {
+public final class HTTPPathEncoder: Sendable {
     internal let options: StandardEncodingOptions
     
     public typealias KeyEncodingStrategy = ShapeKeyEncodingStrategy

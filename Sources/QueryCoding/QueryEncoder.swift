@@ -27,7 +27,7 @@ import ShapeCoding
 /// Nested type attributes are indicated by the attribute keys
 /// ie. QueryInput(theType: TheType(foo: "Value1", bar: "Value2")) --> ?theType.foo=Value1&theType.bar=Value2
 /// Dictionary entries are indicated based on the provided `MapEncodingStrategy`
-public class QueryEncoder {
+public final class QueryEncoder: Sendable {
     public typealias KeyEncodingStrategy = ShapeKeyEncodingStrategy
     public typealias KeyEncodeTransformStrategy = ShapeKeyEncodeTransformStrategy
 
