@@ -15,24 +15,24 @@
 //  SmokeHTTPClient
 //
 import Foundation
-import Logging
-import NIO
+@preconcurrency import Logging
+@preconcurrency import NIO
 
 /**
   A type conforming to the `HTTPClientCoreInvocationReporting` protocol..
  */
-public struct StandardHTTPClientCoreInvocationReporting<TraceContextType: InvocationTraceContext>: HTTPClientCoreInvocationReporting {
+public struct StandardHTTPClientCoreInvocationReporting<TraceContextType: InvocationTraceContext & Sendable>: HTTPClientCoreInvocationReporting, Sendable {
     public let logger: Logger
     public var internalRequestId: String
     public var traceContext: TraceContextType
     public var eventLoop: EventLoop?
-    public var outwardsRequestAggregator: OutwardsRequestAggregator?
+    public var outwardsRequestAggregator: (OutwardsRequestAggregator & Sendable)?
     
     public init(logger: Logger,
                 internalRequestId: String,
                 traceContext: TraceContextType,
                 eventLoop: EventLoop? = nil,
-                outwardsRequestAggregator: OutwardsRequestAggregator? = nil) {
+                outwardsRequestAggregator: (OutwardsRequestAggregator & Sendable)? = nil) {
         self.logger = logger
         self.internalRequestId = internalRequestId
         self.traceContext = traceContext

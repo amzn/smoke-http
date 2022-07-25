@@ -20,7 +20,7 @@ import Logging
 import NIOHTTP1
 import AsyncHTTPClient
 
-public struct MockInvocationTraceContext: InvocationTraceContext {
+public struct MockInvocationTraceContext: InvocationTraceContext, Sendable {
     public typealias OutwardsRequestContext = String
     
     public let outwardsRequestContext = "OutwardsRequestContext"
