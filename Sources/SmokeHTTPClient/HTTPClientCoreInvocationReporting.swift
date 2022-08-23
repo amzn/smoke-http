@@ -77,6 +77,18 @@ public extension OutwardsRequestAggregator {
     }
 }
 
+public protocol HTTPClientInvocationAttributes {
+    /// The `Logging.Logger` to use for logging for this invocation.
+    var logger: Logging.Logger { get }
+
+    /// The internal Request Id associated with this invocation.
+    var internalRequestId: String { get }
+
+    var eventLoop: EventLoop? { get }
+
+    var outwardsRequestAggregator: OutwardsRequestAggregator? { get }
+}
+
 /**
  A context related to reporting on the invocation of the HTTPClient. This represents the
  core requirements for invocation reporting.
@@ -84,21 +96,11 @@ public extension OutwardsRequestAggregator {
  The HTTPClientCoreInvocationReporting protocol can exposed by higher level clients that manage the
  metrics requirements of the HTTPClientInvocationReporting protocol.
  */
-public protocol HTTPClientCoreInvocationReporting {
+public protocol HTTPClientCoreInvocationReporting: HTTPClientInvocationAttributes {
     associatedtype TraceContextType: InvocationTraceContext
-    
-    /// The `Logging.Logger` to use for logging for this invocation.
-    var logger: Logging.Logger { get }
-    
-    /// The internal Request Id associated with this invocation.
-    var internalRequestId: String { get }
     
     /// The trace context associated with this invocation.
     var traceContext: TraceContextType { get }
-    
-    var eventLoop: EventLoop? { get }
-    
-    var outwardsRequestAggregator: OutwardsRequestAggregator? { get }
 }
 
 public extension HTTPClientCoreInvocationReporting {
