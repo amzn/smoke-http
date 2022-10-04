@@ -25,7 +25,7 @@ public struct HTTPClientReportingConfiguration<OperationIdentifer: Hashable> {
         case whitelist(Set<OperationIdentifer>)
         case allowlist(Set<OperationIdentifer>)
         case blacklist(Set<OperationIdentifer>)
-        case restrictlist(Set<OperationIdentifer>)
+        case blocklist(Set<OperationIdentifer>)
         case none
     }
         
@@ -97,8 +97,8 @@ public struct HTTPClientReportingConfiguration<OperationIdentifer: Hashable> {
             return true
         case .whitelist(let allowlist), .allowlist(let allowlist):
             return allowlist.contains(operation)
-        case .blacklist(let restrictlist), .restrictlist(let restrictlist):
-            return !restrictlist.contains(operation)
+        case .blacklist(let blocklist), .blocklist(let blocklist):
+            return !blocklist.contains(operation)
         case .none:
             return false
         }
