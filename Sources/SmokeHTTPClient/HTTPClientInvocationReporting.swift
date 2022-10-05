@@ -22,10 +22,9 @@ import Metrics
 private let timeIntervalToMilliseconds: Double = 1000
 
 /**
- A context related to reporting on the invocation of the HTTPClient. This interface extends the
- HTTPClientCoreInvocationReporting protocol by adding metrics emitted by the 
+ A context related to the metrics on the invocation of a SmokeAWS operation.
  */
-public protocol HTTPClientInvocationReporting: HTTPClientCoreInvocationReporting {
+public protocol HTTPClientInvocationMetrics {
     
     /// The `Metrics.Counter` to record the success of this invocation.
     var successCounter: Metrics.Counter? { get }
@@ -42,6 +41,12 @@ public protocol HTTPClientInvocationReporting: HTTPClientCoreInvocationReporting
     /// The `Metrics.Recorder` to record the duration of this invocation.
     var latencyTimer: Metrics.Timer? { get }
 }
+
+/**
+ A context related to reporting on the invocation of the HTTPClient. This interface extends the
+ `HTTPClientCoreInvocationReporting` protocol by adding metrics defined by the `HTTPClientInvocationMetrics` protocol.
+ */
+public typealias HTTPClientInvocationReporting = HTTPClientInvocationMetrics & HTTPClientCoreInvocationReporting
 
 internal extension TimeInterval {
     var milliseconds: Int {
