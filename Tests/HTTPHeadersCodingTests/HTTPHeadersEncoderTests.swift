@@ -322,21 +322,4 @@ class HTTPHeadersEncoderTests: XCTestCase {
         XCTAssertEqual(decoded.int, intValue)
         XCTAssertEqual(String(decoded.double!), String(doubleValue))
     }
-
-    static var allTests = [
-        ("testEncodeBasicType", testEncodeBasicType),
-        ("testEncodeBasicTypeWithEncoding", testEncodeBasicTypeWithEncoding),
-        ("testEncodeNotCompatibleType", testEncodeNotCompatibleType),
-        ("testEncodeNotCompatibleListType", testEncodeNotCompatibleListType),
-        ("testEncodeTypeWithList", testEncodeTypeWithList),
-        ("testEncodeTypeWithListWithNoSeparator", testEncodeTypeWithListWithNoSeparator),
-        ("testEncodeTypeWithListWithEncoding", testEncodeTypeWithListWithEncoding),
-        ("testEncodeTypeWithMap", testEncodeTypeWithMap),
-        ("testEncodeTypeWithMapWithNoSeparator", testEncodeTypeWithMapWithNoSeparator),
-        ("testEncodeTypeWithMapWithEncoding", testEncodeTypeWithMapWithEncoding),
-        ("testEncodeTypeWithInnerTypeList", testEncodeTypeWithInnerTypeList),
-        ("testEncodeTypeWithInnerType", testEncodeTypeWithInnerType),
-        ("testEncodeTypeWithInnerTypeListWithNoSeparator", testEncodeTypeWithInnerTypeListWithNoSeparator),
-        ("testEncodeTypeWithInnerTypeWithNoSeparator", testEncodeTypeWithInnerTypeWithNoSeparator),
-    ]
 }

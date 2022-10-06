@@ -119,13 +119,4 @@ class GetShapeForTemplateTests: XCTestCase {
         
         XCTAssertEqual(expected, values)
     }
-    
-    static var allTests = [
-        ("testBasicGetShape", testBasicGetShape),
-        ("testGetShapeWithSegments", testGetShapeWithSegments),
-        ("testCaseInsensitiveGetShape", testCaseInsensitiveGetShape),
-        ("testTooFewSegmentsGetShape", testTooFewSegmentsGetShape),
-        ("testTooManySegmentsGetShape", testTooManySegmentsGetShape),
-        ("testNotMatchingGetShape", testNotMatchingGetShape),
-        ]
 }

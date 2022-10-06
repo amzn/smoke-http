@@ -247,21 +247,4 @@ class StandardShapeParserTests: XCTestCase {
         
         XCTAssertEqual(expected, shape)
     }
-
-    static var allTests = [
-        ("testDecodeBasicType", testDecodeBasicType),
-        ("testDecodeBasicTypeWithUncapitalization", testDecodeBasicTypeWithUncapitalization),
-        ("testDecodeBasicTypeWithCustomTransform", testDecodeBasicTypeWithCustomTransform),
-        ("testDecodeBasicTypeWithEncoding", testDecodeBasicTypeWithEncoding),
-        ("testDecodeNoValues", testDecodeNoValues),
-        ("testDecodeTypeWithMap", testDecodeTypeWithMap),
-        ("testDecodeTypeWithMapWithUncapitalization", testDecodeTypeWithMapWithUncapitalization),
-        ("testDecodeTypeWithMapWithCustomTransform", testDecodeTypeWithMapWithCustomTransform),
-        ("testDecodeTypeWithMapLikeFlatStructure", testDecodeTypeWithMapLikeFlatStructure),
-        ("testDecodeTypeWithMapWithMapDecodingStrategy", testDecodeTypeWithMapWithMapDecodingStrategy),
-        ("testDecodeTypeWithMapWithMapDecodingStrategyWithUncapitialization",
-         testDecodeTypeWithMapWithMapDecodingStrategyWithUncapitialization),
-        ("testDecodeTypeWithMapWithMapDecodingStrategyWithCustomTransform", testDecodeTypeWithMapWithMapDecodingStrategyWithCustomTransform),
-        ("testDecodeTypeWithMapWithEncoding", testDecodeTypeWithMapWithEncoding),
-    ]
 }
