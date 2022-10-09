@@ -117,7 +117,7 @@ public extension HTTPOperationsClient {
                     
                     func afterRecordCompletion() {
                         let retryDescription = "Remaining retries: \(currentRetriesRemaining). Retrying in \(retryInterval) ms."
-                        logger.warning("Request failed with error: \(innerError). \(retryDescription)")
+                        logger.warning("Request failed with error: \(innerError). \(retryDescription) for hostname \(self.httpClient.endpointHostName)")
                         let deadline = DispatchTime.now() + .milliseconds(retryInterval)
                         queue.asyncAfter(deadline: deadline) {
                             logger.trace("Reattempting request due to remaining retries: \(currentRetriesRemaining)")

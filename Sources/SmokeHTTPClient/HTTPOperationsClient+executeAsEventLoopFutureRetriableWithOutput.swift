@@ -142,7 +142,7 @@ public extension HTTPOperationsClient {
                 }
                 
                 logger.warning(
-                    "Request failed with error: \(error). Remaining retries: \(currentRetriesRemaining). Retrying in \(retryInterval) ms.")
+                    "Request failed with error: \(error) for host \(self.httpClient.endpointHostName). Remaining retries: \(currentRetriesRemaining). Retrying in \(retryInterval) ms.")
                 let deadline = DispatchTime.now() + .milliseconds(retryInterval)
                 queue.asyncAfter(deadline: deadline) {
                     logger.trace("Reattempting request due to remaining retries: \(currentRetriesRemaining)")
