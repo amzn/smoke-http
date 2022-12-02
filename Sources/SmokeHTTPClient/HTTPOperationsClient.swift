@@ -49,6 +49,7 @@ public struct HTTPOperationsClient {
     
     /// The `HTTPClient` used for this instance
     private let wrappedHttpClient: HTTPClient
+    private let enableAHCLogging: Bool
     
     public var eventLoopGroup: EventLoopGroup {
         return self.wrappedHttpClient.eventLoopGroup
@@ -115,6 +116,7 @@ public struct HTTPOperationsClient {
         self.endpointPort = endpointPort
         self.contentType = contentType
         self.clientDelegate = clientDelegate
+        self.enableAHCLogging = enableAHCLogging
         
         let tlsConfiguration = clientDelegate.getTLSConfiguration()
         if tlsConfiguration != nil {
@@ -311,10 +313,20 @@ public struct HTTPOperationsClient {
         // if an event loop is provided that can be used with this client
         if let eventLoopOverride = invocationContext.reporting.eventLoop,
            self.eventLoopGroup.makeIterator().contains(where: { $0 === eventLoopOverride }) {
-            responseFuture = self.wrappedHttpClient.execute(request: request,
-                                                            eventLoop: .delegateAndChannel(on: eventLoopOverride))
+            if self.enableAHCLogging {
+                responseFuture = self.wrappedHttpClient.execute(request: request,
+                                                                eventLoop: .delegateAndChannel(on: eventLoopOverride),
+                                                                logger: logger)
+            } else {
+                responseFuture = self.wrappedHttpClient.execute(request: request,
+                                                                eventLoop: .delegateAndChannel(on: eventLoopOverride))
+            }
         } else {
-            responseFuture = self.wrappedHttpClient.execute(request: request)
+            if self.enableAHCLogging {
+                responseFuture = self.wrappedHttpClient.execute(request: request, logger: logger)
+            } else {
+                responseFuture = self.wrappedHttpClient.execute(request: request)
+            }
         }
         
         return (responseFuture, outwardsRequestContext)
