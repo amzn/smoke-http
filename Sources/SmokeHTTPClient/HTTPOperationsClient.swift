@@ -132,15 +132,15 @@ public struct HTTPOperationsClient {
             ignoreUncleanSSLShutdown: true)
         
         if enableAHCLogging {
-            self.wrappedHttpClient = HTTPClient(eventLoopGroupProvider: eventLoopProvider,
-                                                configuration: clientConfiguration)
-        } else {
             var backgroundActivityLogger = Logger(label: "com.amazon.SmokeHTTP.SmokeHTTPClient.BackgroundActivityLogger")
             backgroundActivityLogger[metadataKey: "lifecycle"] = "async-http-client"
             
             self.wrappedHttpClient = HTTPClient(eventLoopGroupProvider: eventLoopProvider,
                                                 configuration: clientConfiguration,
                                                 backgroundActivityLogger: backgroundActivityLogger)
+        } else {
+            self.wrappedHttpClient = HTTPClient(eventLoopGroupProvider: eventLoopProvider,
+                                                configuration: clientConfiguration)
         }
     }
     
