@@ -74,7 +74,8 @@ public struct HTTPOperationsClient {
                 clientDelegate: HTTPClientDelegate,
                 connectionTimeoutSeconds: Int64 = 10,
                 eventLoopProvider: HTTPClient.EventLoopGroupProvider = .createNew,
-                connectionPoolConfiguration connectionPoolConfigurationOptional: HTTPClient.Configuration.ConnectionPool? = nil) {
+                connectionPoolConfiguration connectionPoolConfigurationOptional: HTTPClient.Configuration.ConnectionPool? = nil,
+                enableAHCLogging: Bool = false) {
         let timeoutValue = TimeAmount.seconds(connectionTimeoutSeconds)
         let timeoutConfiguration = HTTPClient.Configuration.Timeout(connect: timeoutValue, read: timeoutValue)
         
@@ -84,7 +85,8 @@ public struct HTTPOperationsClient {
                   clientDelegate: clientDelegate,
                   timeoutConfiguration: timeoutConfiguration,
                   eventLoopProvider: eventLoopProvider,
-                  connectionPoolConfiguration: connectionPoolConfigurationOptional)
+                  connectionPoolConfiguration: connectionPoolConfigurationOptional,
+                  enableAHCLogging: enableAHCLogging)
     }
     
     /**
@@ -107,7 +109,8 @@ public struct HTTPOperationsClient {
                 clientDelegate: HTTPClientDelegate,
                 timeoutConfiguration: HTTPClient.Configuration.Timeout,
                 eventLoopProvider: HTTPClient.EventLoopGroupProvider = .createNew,
-                connectionPoolConfiguration connectionPoolConfigurationOptional: HTTPClient.Configuration.ConnectionPool? = nil) {
+                connectionPoolConfiguration connectionPoolConfigurationOptional: HTTPClient.Configuration.ConnectionPool? = nil,
+                enableAHCLogging: Bool = false) {
         self.endpointHostName = endpointHostName
         self.endpointPort = endpointPort
         self.contentType = contentType
@@ -127,8 +130,18 @@ public struct HTTPOperationsClient {
             timeout: timeoutConfiguration,
             connectionPool: connectionPool,
             ignoreUncleanSSLShutdown: true)
-        self.wrappedHttpClient = HTTPClient(eventLoopGroupProvider: eventLoopProvider,
-                                            configuration: clientConfiguration)
+        
+        if enableAHCLogging {
+            var backgroundActivityLogger = Logger(label: "com.amazon.SmokeHTTP.SmokeHTTPClient.BackgroundActivityLogger")
+            backgroundActivityLogger[metadataKey: "lifecycle"] = "async-http-client"
+            
+            self.wrappedHttpClient = HTTPClient(eventLoopGroupProvider: eventLoopProvider,
+                                                configuration: clientConfiguration,
+                                                backgroundActivityLogger: backgroundActivityLogger)
+        } else {
+            self.wrappedHttpClient = HTTPClient(eventLoopGroupProvider: eventLoopProvider,
+                                                configuration: clientConfiguration)
+        }
     }
     
     /**
@@ -349,8 +362,7 @@ public struct HTTPOperationsClient {
                 bodyData = nil
             }
             
-            let responseComponents = HTTPResponseComponents(headers: headers,
-                                                            body: bodyData)
+            let responseComponents = HTTPResponseComponents(headers: headers, body: bodyData)
             
             let isSuccess: Bool
             switch response.status {
