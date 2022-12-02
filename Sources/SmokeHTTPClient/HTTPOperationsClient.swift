@@ -362,8 +362,7 @@ public struct HTTPOperationsClient {
                 bodyData = nil
             }
             
-            let responseComponents = HTTPResponseComponents(headers: headers,
-                                                            body: bodyData)
+            let responseComponents = HTTPResponseComponents(headers: headers, body: bodyData)
             
             let isSuccess: Bool
             switch response.status {
