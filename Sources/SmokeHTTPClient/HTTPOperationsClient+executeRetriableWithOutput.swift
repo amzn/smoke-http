@@ -243,14 +243,19 @@ public extension HTTPOperationsClient {
         retryConfiguration: HTTPClientRetryConfiguration,
         retryOnError: @escaping (HTTPClientError) -> Bool) async throws -> OutputType
     where InputType: HTTPRequestInputProtocol, OutputType: HTTPResponseOutputProtocol {
-        return try await executeAsEventLoopFutureRetriableWithOutput(
-            endpointOverride: endpointOverride,
-            endpointPath: endpointPath,
-            httpMethod: httpMethod,
-            input: input,
-            invocationContext: invocationContext,
+        let wrappingInvocationContext = invocationContext.withOutgoingRequestIdLoggerMetadata()
+    
+        // use the specified event loop or pick one for the client to use for all retry attempts
+        let eventLoop = invocationContext.reporting.eventLoop ?? self.eventLoopGroup.next()
+        
+        let retriable = ExecuteWithOutputRetriable<InputType, OutputType, StandardHTTPClientInvocationReporting<InvocationReportingType.TraceContextType>, HandlerDelegateType>(
+            endpointOverride: endpointOverride, endpointPath: endpointPath,
+            httpMethod: httpMethod, input: input,
+            invocationContext: wrappingInvocationContext, eventLoopOverride: eventLoop, httpClient: self,
             retryConfiguration: retryConfiguration,
-            retryOnError: retryOnError).get()
+            retryOnError: retryOnError)
+        
+        return try await retriable.executeWithOutput()
     }
 }
 
