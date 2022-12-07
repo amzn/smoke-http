@@ -86,11 +86,25 @@ public extension HTTPOperationsClient {
 
         let requestDelegate = clientDelegate
         
-        let response: HTTPResponseComponents
+        let output: OutputType
         do {
-            response = try await execute(endpointOverride: endpointOverride,
+            let response = try await execute(endpointOverride: endpointOverride,
                                          endpointPath: endpointPath, httpMethod: httpMethod,
                                          input: input, invocationContext: invocationContext)
+            
+            do {
+                // decode the provided body into the desired type
+                output = try requestDelegate.decodeOutput(
+                    output: response.body,
+                    headers: response.headers,
+                    invocationReporting: invocationContext.reporting)
+                
+                // report success metric
+                invocationContext.reporting.successCounter?.increment()
+            } catch {
+                // if there was a decoding error, complete with that error
+                throw HTTPClientError(responseCode: 400, cause: error)
+            }
         } catch {
             if let typedError = error as? HTTPClientError {
                 // report failure metric
@@ -104,21 +118,6 @@ public extension HTTPOperationsClient {
             
             // rethrow the error
             throw error
-        }
-        
-        let output: OutputType
-        do {
-            // decode the provided body into the desired type
-            output = try requestDelegate.decodeOutput(
-                output: response.body,
-                headers: response.headers,
-                invocationReporting: invocationContext.reporting)
-            
-            // report success metric
-            invocationContext.reporting.successCounter?.increment()
-        } catch {
-            // if there was a decoding error, complete with that error
-            throw HTTPClientError(responseCode: 400, cause: error)
         }
         
         if let durationMetricDetails = durationMetricDetails {
