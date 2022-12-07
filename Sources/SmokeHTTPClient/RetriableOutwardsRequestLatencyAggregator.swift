@@ -58,6 +58,18 @@ internal class RetriableOutwardsRequestAggregator:  OutwardsRequestAggregator {
     }
 }
 
+#if (os(Linux) && compiler(>=5.5)) || (!os(Linux) && compiler(>=5.5.2)) && canImport(_Concurrency)
+extension RetriableOutwardsRequestAggregator {
+    func records() async -> [OutputRequestRecord] {
+        return await withCheckedContinuation { cont in
+            withRecords { records in
+                cont.resume(returning: records)
+            }
+        }
+    }
+}
+#endif
+
 struct StandardOutputRequestRecord: OutputRequestRecord {
     let requestLatency: TimeInterval
 }

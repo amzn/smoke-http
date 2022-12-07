@@ -204,19 +204,12 @@ public extension HTTPOperationsClient {
             
             // submit all the request latencies captured by the RetriableOutwardsRequestAggregator
             // to the provided outwardsRequestAggregator if it was provided
-            //if let outwardsRequestAggregators = self.outwardsRequestAggregators {
-            //    let promise = self.eventLoop.makePromise(of: Void.self)
-            //
-            //    outwardsRequestAggregators.1.withRecords { outputRequestRecords in
-            //        outwardsRequestAggregators.0.recordRetriableOutwardsRequest(
-            //            retriableOutwardsRequest: StandardRetriableOutputRequestRecord(outputRequests: outputRequestRecords)) {
-            //                promise.succeed(())
-            //            }
-            //    }
-            //
-            //
-            //    return promise.futureResult
-            //}
+            if let outwardsRequestAggregators = self.outwardsRequestAggregators {
+                let outputRequestRecords = await outwardsRequestAggregators.1.records()
+                
+                await outwardsRequestAggregators.0.recordRetriableOutwardsRequest(
+                    retriableOutwardsRequest: StandardRetriableOutputRequestRecord(outputRequests: outputRequestRecords))
+            }
         }
     }
     

@@ -127,10 +127,10 @@ public extension HTTPOperationsClient {
                 latencyTimer.recordMilliseconds(timeInterval.milliseconds)
             }
             
-            //if let outwardsRequestAggregator = durationMetricDetails.2 {
-            //    await outwardsRequestAggregator.recordOutwardsRequest(
-            //        outputRequestRecord: StandardOutputRequestRecord(requestLatency: timeInterval))
-            //}
+            if let outwardsRequestAggregator = durationMetricDetails.2 {
+                await outwardsRequestAggregator.recordOutwardsRequest(
+                    outputRequestRecord: StandardOutputRequestRecord(requestLatency: timeInterval))
+            }
         }
         
         return output

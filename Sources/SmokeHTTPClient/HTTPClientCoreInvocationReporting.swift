@@ -54,6 +54,35 @@ public protocol OutwardsRequestAggregator {
     func recordRetriableOutwardsRequest(retriableOutwardsRequest: RetriableOutputRequestRecord)
 }
 
+#if (os(Linux) && compiler(>=5.5)) || (!os(Linux) && compiler(>=5.5.2)) && canImport(_Concurrency)
+extension OutwardsRequestAggregator {
+
+    func recordOutwardsRequest(outputRequestRecord: OutputRequestRecord) async {
+        return await withCheckedContinuation { cont in
+            recordOutwardsRequest(outputRequestRecord: outputRequestRecord) {
+                cont.resume(returning: ())
+            }
+        }
+    }
+    
+    func recordRetryAttempt(retryAttemptRecord: RetryAttemptRecord) async {
+        return await withCheckedContinuation { cont in
+            recordRetryAttempt(retryAttemptRecord: retryAttemptRecord) {
+                cont.resume(returning: ())
+            }
+        }
+    }
+    
+    func recordRetriableOutwardsRequest(retriableOutwardsRequest: RetriableOutputRequestRecord) async {
+        return await withCheckedContinuation { cont in
+            recordRetriableOutwardsRequest(retriableOutwardsRequest: retriableOutwardsRequest) {
+                cont.resume(returning: ())
+            }
+        }
+    }
+}
+#endif
+
 public extension OutwardsRequestAggregator {
     @available(swift, deprecated: 2.0, message: "Not thread-safe")
     func recordOutwardsRequest(outputRequestRecord: OutputRequestRecord, onCompletion: @escaping () -> ()) {
