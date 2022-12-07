@@ -32,7 +32,7 @@ internal extension EventLoopFuture {
     /// function and want to get the result of this future.
     @inlinable
     func get() async throws -> Value {
-        return try await withUnsafeThrowingContinuation { cont in
+        return try await withCheckedThrowingContinuation { cont in
             self.whenComplete { result in
                 switch result {
                 case .success(let value):

@@ -168,7 +168,7 @@ public struct HTTPOperationsClient {
      */
 #if (os(Linux) && compiler(>=5.5)) || (!os(Linux) && compiler(>=5.5.2)) && canImport(_Concurrency)
     public func shutdown() async throws {
-        return try await withUnsafeThrowingContinuation { cont in
+        return try await withCheckedThrowingContinuation { cont in
             self.wrappedHttpClient.shutdown { error in
                 if let error = error {
                     cont.resume(throwing: error)
