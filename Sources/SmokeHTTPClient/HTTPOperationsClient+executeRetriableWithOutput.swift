@@ -152,18 +152,10 @@ public extension HTTPOperationsClient {
                 let currentRetriesRemaining = retriesRemaining
                 retriesRemaining -= 1
                 
-                //let recordFuture: EventLoopFuture<Void>
-                //if let outwardsRequestAggregators = self.outwardsRequestAggregators {
-                //    let promise = self.eventLoop.makePromise(of: Void.self)
-                //    outwardsRequestAggregators.0.recordRetryAttempt(
-                //        retryAttemptRecord: StandardRetryAttemptRecord(retryWait: retryInterval.millisecondsToTimeInterval)) {
-                //            promise.succeed(())
-                //        }
-                //
-                //    recordFuture = promise.futureResult
-                //} else {
-                //    recordFuture = self.eventLoop.makeSucceededVoidFuture()
-                //}
+                if let outwardsRequestAggregators = self.outwardsRequestAggregators {
+                    await outwardsRequestAggregators.0.recordRetryAttempt(
+                        retryAttemptRecord: StandardRetryAttemptRecord(retryWait: retryInterval.millisecondsToTimeInterval))
+                }
                 
                 logger.warning(
                     "Request failed with error: \(error). Remaining retries: \(currentRetriesRemaining). Retrying in \(retryInterval) ms.")
