@@ -179,7 +179,9 @@ public struct HTTPOperationsClient {
         }
     }
 #endif
-    
+}
+ 
+extension HTTPOperationsClient {
     func executeAsync<InputType, InvocationReportingType: HTTPClientInvocationReporting, HandlerDelegateType: HTTPClientInvocationDelegate>(
             endpointOverride: URL? = nil,
             endpointPath: String,
