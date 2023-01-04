@@ -168,7 +168,7 @@ public struct HTTPOperationsClient {
      */
 #if (os(Linux) && compiler(>=5.5)) || (!os(Linux) && compiler(>=5.5.2)) && canImport(_Concurrency)
     public func shutdown() async throws {
-        return try await withUnsafeThrowingContinuation { cont in
+        return try await withCheckedThrowingContinuation { cont in
             self.wrappedHttpClient.shutdown { error in
                 if let error = error {
                     cont.resume(throwing: error)
@@ -179,7 +179,9 @@ public struct HTTPOperationsClient {
         }
     }
 #endif
-    
+}
+ 
+extension HTTPOperationsClient {
     func executeAsync<InputType, InvocationReportingType: HTTPClientInvocationReporting, HandlerDelegateType: HTTPClientInvocationDelegate>(
             endpointOverride: URL? = nil,
             endpointPath: String,
@@ -253,6 +255,43 @@ public struct HTTPOperationsClient {
             promise.fail(error)
             
             return promise.futureResult
+        }
+    }
+    
+    func execute<InputType, InvocationReportingType: HTTPClientInvocationReporting, HandlerDelegateType: HTTPClientInvocationDelegate>(
+            endpointOverride: URL? = nil,
+            endpointPath: String,
+            httpMethod: HTTPMethod,
+            input: InputType,
+            invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>) async throws
+    -> HTTPResponseComponents where InputType: HTTPRequestInputProtocol {
+        let (responseFuture, outwardsRequestContext) = try performExecuteAsync(endpointOverride: endpointOverride,
+                                                                               endpointPath: endpointPath,
+                                                                               httpMethod: httpMethod,
+                                                                               input: input,
+                                                                               invocationContext: invocationContext)
+        
+        do {
+            let successResult = try await responseFuture.get()
+            
+            // a response has been successfully received; this reponse may be a successful response
+            // and generate a `HTTPResponseComponents` instance or be a failure response and cause
+            // a SmokeHTTPClient.HTTPClientError error to be thrown
+            return try self.handleCompleteResponseThrowingClientError(invocationContext: invocationContext,
+                                                                      outwardsRequestContext: outwardsRequestContext,
+                                                                      result: .success(successResult))
+        } catch {
+            // if this error has been thrown from just above
+            if let typedError = error as? SmokeHTTPClient.HTTPClientError {
+                // just rethrow the error
+                throw typedError
+            }
+            
+            // a response wasn't even able to be generated (for example due to a connection error)
+            // make sure this error is thrown correctly as a SmokeHTTPClient.HTTPClientError
+            return try self.handleCompleteResponseThrowingClientError(invocationContext: invocationContext,
+                                                                      outwardsRequestContext: outwardsRequestContext,
+                                                                      result: .failure(error))
         }
     }
     
