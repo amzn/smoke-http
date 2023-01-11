@@ -22,14 +22,9 @@ import Foundation
   This executor is intended for computationally intensive work such as serialization and deserialization.
  */
 internal struct OffTaskAsyncExecutor {
-    internal let executorQueue = DispatchQueue(
-                label: "com.amazon.SmokeHTTP.DispatchQueueAsyncExecutor.executorQueue",
-                attributes: [.concurrent],
-                target: DispatchQueue.global())
-    
     internal func execute(_ body: @escaping () -> ()) async {
         return await withCheckedContinuation { continuation in
-            self.executorQueue.async {
+            DispatchQueue.global().async {
                 body()
                 
                 continuation.resume()
@@ -39,7 +34,7 @@ internal struct OffTaskAsyncExecutor {
     
     internal func execute(_ body: @escaping () throws -> ()) async throws {
         return try await withCheckedThrowingContinuation { continuation in
-            self.executorQueue.async {
+            DispatchQueue.global().async {
                 do {
                     try body()
                     
@@ -53,7 +48,7 @@ internal struct OffTaskAsyncExecutor {
     
     internal func execute<ReturnType>(_ body: @escaping () -> (ReturnType)) async -> ReturnType {
         return await withCheckedContinuation { continuation in
-            self.executorQueue.async {
+            DispatchQueue.global().async {
                 let result = body()
                 
                 continuation.resume(returning: result)
@@ -63,7 +58,7 @@ internal struct OffTaskAsyncExecutor {
     
     internal func execute<ReturnType>(_ body: @escaping () throws -> (ReturnType)) async throws -> ReturnType {
         return try await withCheckedThrowingContinuation { continuation in
-            self.executorQueue.async {
+            DispatchQueue.global().async {
                 do {
                     let result = try body()
                     
