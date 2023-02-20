@@ -56,7 +56,7 @@ extension SmokeHTTPMiddleware {
          The post transformed output of the reqest having been made.
      */
     func execute<OriginalInput, TransformedOutput, InnerMiddlwareType: MiddlewareProtocol, OuterMiddlwareType: MiddlewareProtocol,  Context>(
-        outerMiddleware: OuterMiddlwareType, innerMiddleware: InnerMiddlwareType,
+        outerMiddleware: OuterMiddlwareType? = nil, innerMiddleware: InnerMiddlwareType? = nil,
         input: OriginalInput, endpointOverride: URL? = nil, endpointPath: String, httpMethod: HttpMethodType,
         context: Context) -> TransformedOutput
     where InnerMiddlwareType.Input == OriginalInput, InnerMiddlwareType.Output == TransformedOutput,

@@ -39,7 +39,7 @@ public protocol SmokeHTTPMiddlewareDelegate {
          The post transformed output of the reqest having been made.
      */
     func execute<OriginalInput, TransformedOutput, InnerMiddlwareType: MiddlewareProtocol, OuterMiddlwareType: MiddlewareProtocol,  Context>(
-        outerMiddleware: OuterMiddlwareType, innerMiddleware: InnerMiddlwareType,
+        outerMiddleware: OuterMiddlwareType?, innerMiddleware: InnerMiddlwareType?,
         input: OriginalInput, endpointOverride: URL?, endpointPath: String, httpMethod: HttpMethodType, context: Context,
         next: (SdkHttpRequestBuilder, Context) async throws -> HttpResponse) -> TransformedOutput
     where InnerMiddlwareType.Input == OriginalInput, InnerMiddlwareType.Output == TransformedOutput,
