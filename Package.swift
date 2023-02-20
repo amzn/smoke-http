@@ -1,4 +1,4 @@
-// swift-tools-version:5.2
+// swift-tools-version:5.5
 //
 // Copyright 2018-2022 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 //
@@ -25,6 +25,9 @@ let package = Package(
             name: "SmokeHTTPClient",
             targets: ["SmokeHTTPClient"]),
         .library(
+            name: "SmokeHTTPMiddleware",
+            targets: ["SmokeHTTPMiddleware"]),
+        .library(
             name: "_SmokeHTTPClientConcurrency",
             targets: ["_SmokeHTTPClientConcurrency"]),
         .library(
@@ -45,7 +48,9 @@ let package = Package(
         .package(url: "https://github.com/apple/swift-nio-ssl.git", from: "2.14.0"),
         .package(url: "https://github.com/apple/swift-log.git", from: "1.0.0"),
         .package(url: "https://github.com/apple/swift-metrics.git", "1.0.0"..<"3.0.0"),
-        .package(url: "https://github.com/swift-server/async-http-client.git", from: "1.6.4")
+        .package(url: "https://github.com/swift-server/async-http-client.git", from: "1.6.4"),
+        .package(url: "https://github.com/awslabs/smithy-swift", .exact("0.12.0")),
+        .package(url: "https://github.com/tachyonics/swift-middleware", branch: "static_poc_2")
     ],
     targets: [
         .target(
@@ -57,6 +62,13 @@ let package = Package(
                 .product(name: "NIOFoundationCompat", package: "swift-nio"),
                 .product(name: "NIOSSL", package: "swift-nio-ssl"),
                 .product(name: "AsyncHTTPClient", package: "async-http-client"),
+            ]),
+        .target(
+            name: "SmokeHTTPMiddleware", dependencies: [
+                .product(name: "Logging", package: "swift-log"),
+                .product(name: "Metrics", package: "swift-metrics"),
+                .product(name: "ClientRuntime", package: "smithy-swift"),
+                .product(name: "SwiftMiddleware", package: "swift-middleware"),
             ]),
         .target(
             name: "_SmokeHTTPClientConcurrency", dependencies: [
