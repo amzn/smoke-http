@@ -16,7 +16,6 @@
 //
 
 import Foundation
-import NIOHTTP1
 
 /**
  Errors that can be thrown as part of the SmokeHTTPClient library.

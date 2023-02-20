@@ -16,9 +16,8 @@
 //
 
 import Foundation
-import AsyncHTTPClient
-import NIOHTTP1
 import Logging
+import ClientRuntime
 
 public struct HTTPRequestParameters {
     /// The content type of the payload being sent.
@@ -28,7 +27,7 @@ public struct HTTPRequestParameters {
     /// The path to request a response from.
     public let endpointPath: String
     /// The http method to use for the request.
-    public let httpMethod: HTTPMethod
+    public let httpMethod: HttpMethodType
     /// The request body data to use.
     public let bodyData: Data
     /// Any additional headers to add
@@ -48,7 +47,7 @@ public struct HTTPRequestParameters {
     public init(contentType: String,
                 endpointUrl: URL,
                 endpointPath: String,
-                httpMethod: HTTPMethod,
+                httpMethod: HttpMethodType,
                 bodyData: Data,
                 additionalHeaders: [(String, String)]) {
         self.contentType = contentType
@@ -68,7 +67,7 @@ public protocol HTTPClientInvocationDelegate {
         invocationReporting: InvocationReportingType) -> [(String, String)]
 
     func handleErrorResponses<InvocationReportingType: HTTPClientInvocationReporting>(
-        response: HTTPClient.Response, responseBodyData: Data?,
+        response: HttpResponse, responseBodyData: Data?,
         invocationReporting: InvocationReportingType) -> HTTPClientError?
 }
 
@@ -82,7 +81,7 @@ public struct DefaultHTTPClientInvocationDelegate: HTTPClientInvocationDelegate 
     }
 
     public func handleErrorResponses<InvocationReportingType: HTTPClientInvocationReporting>(
-            response: HTTPClient.Response, responseBodyData: Data?,
+            response: HttpResponse, responseBodyData: Data?,
             invocationReporting: InvocationReportingType) -> HTTPClientError? {
         return nil
     }

@@ -16,22 +16,21 @@
 //
 
 import Foundation
-import NIOHTTP1
 import Logging
-import AsyncHTTPClient
+import ClientRuntime
 
 public protocol InvocationTraceContext {
     associatedtype OutwardsRequestContext
     
     func handleOutwardsRequestStart(
-        method: HTTPMethod, uri: String,
+        method: HttpMethodType, uri: Endpoint,
         logger: Logging.Logger, internalRequestId: String,
-        headers: inout HTTPHeaders, bodyData: Data) -> OutwardsRequestContext
+        headers: inout Headers, bodyData: Data) -> OutwardsRequestContext
     
     func handleOutwardsRequestSuccess(
         outwardsRequestContext: OutwardsRequestContext?, logger: Logging.Logger, internalRequestId: String,
-        response: HTTPClient.Response, bodyData: Data?)
+        response: HttpResponse, bodyData: Data?)
     
     func handleOutwardsRequestFailure(
-        outwardsRequestContext: OutwardsRequestContext?, logger: Logging.Logger, internalRequestId: String, response: HTTPClient.Response?, bodyData: Data?, error: Swift.Error)
+        outwardsRequestContext: OutwardsRequestContext?, logger: Logging.Logger, internalRequestId: String, response: HttpResponse?, bodyData: Data?, error: Swift.Error)
 }

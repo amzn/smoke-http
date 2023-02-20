@@ -16,9 +16,9 @@
 //
 
 import Foundation
-import AsyncHTTPClient
-import NIOSSL
 import Logging
+import ClientRuntime
+import AwsCommonRuntimeKit
 
 /**
  Delegate protocol that handles client-specific logic.
@@ -27,7 +27,7 @@ public protocol HTTPClientDelegate {
 
     /// Gets the error corresponding to a client response body on the response head and body data.
     func getResponseError<InvocationReportingType: HTTPClientInvocationReporting>(
-        response: HTTPClient.Response,
+        response: HttpResponse,
         responseComponents: HTTPResponseComponents,
         invocationReporting: InvocationReportingType) throws -> HTTPClientError
 
@@ -54,29 +54,27 @@ public protocol HTTPClientDelegate {
     /// Gets the TLS configuration required for HTTPClient's use-case.
     /// If this function returns nil, the HTTPClient will send requests as
     /// unencrypted http.
-    func getTLSConfiguration() -> TLSConfiguration?
+    func getTLSConnectionOptions() -> TLSConnectionOptions?
 }
 
 public extension HTTPClientDelegate {
     /// Overrides the protocol requirement by default, returning the default TLS configuration if no customization is needed
-    func getTLSConfiguration() -> TLSConfiguration? {
-        return getDefaultTLSConfiguration()
+    func getTLSConnectionOptions() -> TLSConnectionOptions? {
+        return getDefaultTLSConnectionOptions()
     }
     
     /// Default TLS configuration if no customization is needed. Simply turns certificate verification off if debugging, otherwise
     /// provides the default TLSConfiguration.
-    func getDefaultTLSConfiguration() -> TLSConfiguration? {
+    func getDefaultTLSConnectionOptions() -> TLSConnectionOptions? {
 
         // To help debugging, turn off certificate verification when locally calling.
         #if DEBUG
-        let certificateVerification = CertificateVerification.none
+        return nil
         #else
-        let certificateVerification = CertificateVerification.fullVerification
+        return TLSConnectionOptions(
+            context: SDKDefaultIO.shared.tlsContext,
+            serverName: endpoint.host
+        )
         #endif
-        
-        var tlsConfiguration = TLSConfiguration.makeClientConfiguration()
-        tlsConfiguration.certificateVerification = certificateVerification
-
-        return tlsConfiguration
     }
 }

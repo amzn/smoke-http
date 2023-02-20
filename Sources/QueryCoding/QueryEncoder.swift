@@ -135,4 +135,36 @@ public class QueryEncoder {
             }
         }.joined(separator: "&")
     }
+    
+    /**
+     Encode the provided value.
+
+     - Parameters:
+        - value: The value to be encoded
+        - allowedCharacterSet: The allowed character set for query values. If nil,
+          all characters are allowed.
+        - userInfo: The user info to use for this encoding.
+     */
+    public func encodeAsQueryItems<T: Swift.Encodable>(_ value: T,
+                                                       allowedCharacterSet: CharacterSet? = nil,
+                                                       userInfo: [CodingUserInfoKey: Any] = [:]) throws -> [URLQueryItem] {
+        let delegate = StandardShapeSingleValueEncodingContainerDelegate(options: options)
+        let container = ShapeSingleValueEncodingContainer(
+            userInfo: userInfo,
+            codingPath: [],
+            delegate: delegate,
+            allowedCharacterSet: allowedCharacterSet,
+            defaultValue: nil)
+        try value.encode(to: container)
+
+        var elements: [(String, String?)] = []
+        try container.getSerializedElements(nil, isRoot: true, elements: &elements)
+
+        // The query elements need to be sorted into canonical form
+        let sortedElements = elements.sorted { (left, right) in left.0.lowercased() < right.0.lowercased() }
+
+        return sortedElements.map { (key, value) -> URLQueryItem in
+            return URLQueryItem(name: key, value: value)
+        }
+    }
 }

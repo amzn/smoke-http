@@ -18,10 +18,8 @@
 #if (os(Linux) && compiler(>=5.5)) || (!os(Linux) && compiler(>=5.5.2)) && canImport(_Concurrency)
 
 import Foundation
-import NIO
-import NIOHTTP1
-import AsyncHTTPClient
 import Metrics
+import ClientRuntime
 
 public extension HTTPOperationsClient {
     
@@ -41,7 +39,7 @@ public extension HTTPOperationsClient {
             InvocationReportingType: HTTPClientInvocationReporting, HandlerDelegateType: HTTPClientInvocationDelegate>(
         endpointOverride: URL? = nil,
         endpointPath: String,
-        httpMethod: HTTPMethod,
+        httpMethod: HttpMethodType,
         input: InputType,
         invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>) async throws -> OutputType
     where InputType: HTTPRequestInputProtocol, OutputType: HTTPResponseOutputProtocol {
@@ -71,7 +69,7 @@ public extension HTTPOperationsClient {
         InvocationReportingType: HTTPClientInvocationReporting, HandlerDelegateType: HTTPClientInvocationDelegate>(
             endpointOverride: URL? = nil,
             endpointPath: String,
-            httpMethod: HTTPMethod,
+            httpMethod: HttpMethodType,
             input: InputType,
             invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>) async throws
     -> OutputType where InputType: HTTPRequestInputProtocol, OutputType: HTTPResponseOutputProtocol {

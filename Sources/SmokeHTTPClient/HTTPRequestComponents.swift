@@ -19,15 +19,18 @@ import Foundation
 
 /// The parsed components that specify a request.
 public struct HTTPRequestComponents {
-    /// the path for the request including the query.
-    public let pathWithQuery: String
+    /// the path for the request.
+    public let path: String
+    /// the query items for the request.
+    public let queryItems: [URLQueryItem]
     /// any request specific headers that needs to be added.
     public let additionalHeaders: [(String, String)]
     /// The body data of the request.
     public let body: Data
 
-    public init(pathWithQuery: String, additionalHeaders: [(String, String)], body: Data) {
-        self.pathWithQuery = pathWithQuery
+    public init(path: String, queryItems: [URLQueryItem], additionalHeaders: [(String, String)], body: Data) {
+        self.path = path
+        self.queryItems = queryItems
         self.additionalHeaders = additionalHeaders
         self.body = body
     }

@@ -2,21 +2,30 @@
   "object": {
     "pins": [
       {
-        "package": "async-http-client",
-        "repositoryURL": "https://github.com/swift-server/async-http-client.git",
+        "package": "aws-crt-swift",
+        "repositoryURL": "https://github.com/awslabs/aws-crt-swift.git",
         "state": {
           "branch": null,
-          "revision": "fc510a39cff61b849bf5cdff17eb2bd6d0777b49",
-          "version": "1.11.5"
+          "revision": "6feec6c3787877807aa9a00fad09591b96752376",
+          "version": "0.6.1"
         }
       },
       {
-        "package": "swift-atomics",
-        "repositoryURL": "https://github.com/apple/swift-atomics.git",
+        "package": "smithy-swift",
+        "repositoryURL": "https://github.com/awslabs/smithy-swift",
         "state": {
           "branch": null,
-          "revision": "919eb1d83e02121cdb434c7bfc1f0c66ef17febe",
-          "version": "1.0.2"
+          "revision": "4d843d4aed2f7223e18f0832e0f5e3ac38684a8d",
+          "version": "0.12.0"
+        }
+      },
+      {
+        "package": "swift-collections",
+        "repositoryURL": "https://github.com/apple/swift-collections",
+        "state": {
+          "branch": null,
+          "revision": "937e904258d22af6e447a0b72c0bc67583ef64a2",
+          "version": "1.0.4"
         }
       },
       {
@@ -38,48 +47,12 @@
         }
       },
       {
-        "package": "swift-nio",
-        "repositoryURL": "https://github.com/apple/swift-nio.git",
+        "package": "XMLCoder",
+        "repositoryURL": "https://github.com/MaxDesiatov/XMLCoder.git",
         "state": {
           "branch": null,
-          "revision": "b4e0a274f7f34210e97e2f2c50ab02a10b549250",
-          "version": "2.41.1"
-        }
-      },
-      {
-        "package": "swift-nio-extras",
-        "repositoryURL": "https://github.com/apple/swift-nio-extras.git",
-        "state": {
-          "branch": null,
-          "revision": "a75e92bde3683241c15df3dd905b7a6dcac4d551",
-          "version": "1.12.1"
-        }
-      },
-      {
-        "package": "swift-nio-http2",
-        "repositoryURL": "https://github.com/apple/swift-nio-http2.git",
-        "state": {
-          "branch": null,
-          "revision": "f9ab1c94c80d568efd762d2a638f25162691d766",
-          "version": "1.22.1"
-        }
-      },
-      {
-        "package": "swift-nio-ssl",
-        "repositoryURL": "https://github.com/apple/swift-nio-ssl.git",
-        "state": {
-          "branch": null,
-          "revision": "0265283d3539ced108b9b8287eb3328c9d85acdc",
-          "version": "2.21.0"
-        }
-      },
-      {
-        "package": "swift-nio-transport-services",
-        "repositoryURL": "https://github.com/apple/swift-nio-transport-services.git",
-        "state": {
-          "branch": null,
-          "revision": "4e02d9cf35cabfb538c96613272fb027dd0c8692",
-          "version": "1.13.1"
+          "revision": "c438dad94f6a243b411b70a4b4bac54595064808",
+          "version": "0.15.0"
         }
       }
     ]

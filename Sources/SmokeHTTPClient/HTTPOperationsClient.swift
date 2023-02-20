@@ -16,13 +16,8 @@
 //
 
 import Foundation
-import NIO
-import NIOHTTP1
-import NIOSSL
-import NIOTLS
-import AsyncHTTPClient
-import NIOFoundationCompat
 import Logging
+import ClientRuntime
 
 internal struct HttpHeaderNames {
     /// Content-Length Header
@@ -45,51 +40,10 @@ public struct HTTPOperationsClient {
     /// Delegate that provides client-specific logic for handling HTTP requests
     public let clientDelegate: HTTPClientDelegate
     /// What scheme to use for the endpoint
-    let endpointScheme: String
+    let endpointScheme: ProtocolType
     
-    /// The `HTTPClient` used for this instance
-    private let wrappedHttpClient: HTTPClient
-    private let enableAHCLogging: Bool
+    private let engine: HttpClientEngine
     private let offTaskAsyncExecutor = OffTaskAsyncExecutor()
-    
-    public var eventLoopGroup: EventLoopGroup {
-        return self.wrappedHttpClient.eventLoopGroup
-    }
-    
-    /**
-     Initializer.
-
-     - Parameters:
-         - endpointHostName: The server hostname to contact for requests from this client.
-         - endpointPort: The server port to connect to.
-         - contentType: The content type of the payload being sent by this client.
-         - clientDelegate: Delegate for the HTTP client that provides client-specific logic for handling HTTP requests.
-         - connectionTimeoutSeconds: The time in second the client should wait for a response. The default is 10 seconds.
-         - eventLoopProvider: Provides the event loop to be used by the client.
-                              If not specified, the client will create a new multi-threaded event loop
-                              with the number of threads specified by `System.coreCount`.
-         - optional configuration for the connection pool. If not provided, the default configuration is used.
-     */
-    public init(endpointHostName: String,
-                endpointPort: Int,
-                contentType: String,
-                clientDelegate: HTTPClientDelegate,
-                connectionTimeoutSeconds: Int64 = 10,
-                eventLoopProvider: HTTPClient.EventLoopGroupProvider = .createNew,
-                connectionPoolConfiguration connectionPoolConfigurationOptional: HTTPClient.Configuration.ConnectionPool? = nil,
-                enableAHCLogging: Bool = false) {
-        let timeoutValue = TimeAmount.seconds(connectionTimeoutSeconds)
-        let timeoutConfiguration = HTTPClient.Configuration.Timeout(connect: timeoutValue, read: timeoutValue)
-        
-        self.init(endpointHostName: endpointHostName,
-                  endpointPort: endpointPort,
-                  contentType: contentType,
-                  clientDelegate: clientDelegate,
-                  timeoutConfiguration: timeoutConfiguration,
-                  eventLoopProvider: eventLoopProvider,
-                  connectionPoolConfiguration: connectionPoolConfigurationOptional,
-                  enableAHCLogging: enableAHCLogging)
-    }
     
     /**
      Initializer.
@@ -109,173 +63,38 @@ public struct HTTPOperationsClient {
                 endpointPort: Int,
                 contentType: String,
                 clientDelegate: HTTPClientDelegate,
-                timeoutConfiguration: HTTPClient.Configuration.Timeout,
-                eventLoopProvider: HTTPClient.EventLoopGroupProvider = .createNew,
-                connectionPoolConfiguration connectionPoolConfigurationOptional: HTTPClient.Configuration.ConnectionPool? = nil,
-                enableAHCLogging: Bool = false) {
+                runtimeConfig: ClientRuntime.SDKRuntimeConfiguration) {
         self.endpointHostName = endpointHostName
         self.endpointPort = endpointPort
         self.contentType = contentType
         self.clientDelegate = clientDelegate
-        self.enableAHCLogging = enableAHCLogging
+        self.engine = runtimeConfig.httpClientEngine
         
-        let tlsConfiguration = clientDelegate.getTLSConfiguration()
-        if tlsConfiguration != nil {
-            self.endpointScheme = "https"
+        let tlsConnectionOptions = clientDelegate.getTLSConnectionOptions()
+        if tlsConnectionOptions != nil {
+            self.endpointScheme = .https
         } else {
-            self.endpointScheme = "http"
-        }
-        
-        let connectionPool = connectionPoolConfigurationOptional ?? HTTPClient.Configuration.ConnectionPool()
-        
-        let clientConfiguration = HTTPClient.Configuration(
-            tlsConfiguration: tlsConfiguration,
-            timeout: timeoutConfiguration,
-            connectionPool: connectionPool,
-            ignoreUncleanSSLShutdown: true)
-        
-        if enableAHCLogging {
-            var backgroundActivityLogger = Logger(label: "com.amazon.SmokeHTTP.SmokeHTTPClient.BackgroundActivityLogger")
-            backgroundActivityLogger[metadataKey: "lifecycle"] = "async-http-client"
-            
-            self.wrappedHttpClient = HTTPClient(eventLoopGroupProvider: eventLoopProvider,
-                                                configuration: clientConfiguration,
-                                                backgroundActivityLogger: backgroundActivityLogger)
-        } else {
-            self.wrappedHttpClient = HTTPClient(eventLoopGroupProvider: eventLoopProvider,
-                                                configuration: clientConfiguration)
+            self.endpointScheme = .http
         }
     }
-    
-    /**
-     Gracefully shuts down the eventloop if owned by this client.
-     This function is idempotent and will handle being called multiple
-     times. Will block until shutdown is complete.
-     */
-    public func syncShutdown() throws {
-        try wrappedHttpClient.syncShutdown()
-    }
-    
-    // renamed `syncShutdown` to make it clearer this version of shutdown will block.
-    @available(*, deprecated, renamed: "syncShutdown")
-    public func close() throws {
-        try wrappedHttpClient.syncShutdown()
-    }
-    
-    /**
-     Gracefully shuts down the eventloop if owned by this client.
-     This function is idempotent and will handle being called multiple
-     times. Will return when shutdown is complete.
-     */
-#if (os(Linux) && compiler(>=5.5)) || (!os(Linux) && compiler(>=5.5.2)) && canImport(_Concurrency)
-    public func shutdown() async throws {
-        return try await withCheckedThrowingContinuation { cont in
-            self.wrappedHttpClient.shutdown { error in
-                if let error = error {
-                    cont.resume(throwing: error)
-                } else {
-                    cont.resume(returning: ())
-                }
-            }
-        }
-    }
-#endif
 }
  
 extension HTTPOperationsClient {
-    func executeAsync<InputType, InvocationReportingType: HTTPClientInvocationReporting, HandlerDelegateType: HTTPClientInvocationDelegate>(
-            endpointOverride: URL? = nil,
-            endpointPath: String,
-            httpMethod: HTTPMethod,
-            input: InputType,
-            completion: @escaping (Result<HTTPResponseComponents, HTTPClientError>) -> (),
-            invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>) throws -> EventLoopFuture<HTTPClient.Response>
-            where InputType: HTTPRequestInputProtocol {
-        let (responseFuture, outwardsRequestContext) = try performExecuteAsync(endpointOverride: endpointOverride,
-                                                                               endpointPath: endpointPath,
-                                                                               httpMethod: httpMethod,
-                                                                               input: input,
-                                                                               invocationContext: invocationContext)
-
-        responseFuture.whenComplete { result in
-            do {
-                let responseComponents = try self.handleCompleteResponse(invocationContext: invocationContext,
-                                                                         outwardsRequestContext: outwardsRequestContext,
-                                                                         result: result)
-                completion(.success(responseComponents))
-            } catch let error as HTTPClientError {
-                completion(.failure(error))
-            } catch {
-                // if a non-HTTPClientError is thrown, wrap it
-                let responseError = HTTPClientError(responseCode: 400, cause: error)
-                completion(.failure(responseError))
-            }
-        }
-                
-        return responseFuture
-    }
-    
-    func executeAsEventLoopFuture<InputType, InvocationReportingType: HTTPClientInvocationReporting, HandlerDelegateType: HTTPClientInvocationDelegate>(
-            endpointOverride: URL? = nil,
-            endpointPath: String,
-            httpMethod: HTTPMethod,
-            input: InputType,
-            invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>) -> EventLoopFuture<HTTPResponseComponents>
-            where InputType: HTTPRequestInputProtocol {
-        do {
-            let (responseFuture, outwardsRequestContext) = try performExecuteAsync(endpointOverride: endpointOverride,
-                                                                                   endpointPath: endpointPath,
-                                                                                   httpMethod: httpMethod,
-                                                                                   input: input,
-                                                                                   invocationContext: invocationContext)
-            return responseFuture.flatMapThrowing { successResult in
-                // a response has been successfully received; this reponse may be a successful response
-                // and generate a `HTTPResponseComponents` instance or be a failure response and cause
-                // a SmokeHTTPClient.HTTPClientError error to be thrown
-                return try self.handleCompleteResponseThrowingClientError(invocationContext: invocationContext,
-                                                                          outwardsRequestContext: outwardsRequestContext,
-                                                                          result: .success(successResult))
-            } .flatMapErrorThrowing { error in
-                // if this error has been thrown from just above
-                if let typedError = error as? SmokeHTTPClient.HTTPClientError {
-                    // just rethrow the error
-                    throw typedError
-                }
-                
-                // a response wasn't even able to be generated (for example due to a connection error)
-                // make sure this error is thrown correctly as a SmokeHTTPClient.HTTPClientError
-                return try self.handleCompleteResponseThrowingClientError(invocationContext: invocationContext,
-                                                                          outwardsRequestContext: outwardsRequestContext,
-                                                                          result: .failure(error))
-            }
-        } catch {
-            let eventLoop = invocationContext.reporting.eventLoop ?? self.eventLoopGroup.next()
-            
-            let promise = eventLoop.makePromise(of: HTTPResponseComponents.self)
-            
-            promise.fail(error)
-            
-            return promise.futureResult
-        }
-    }
-    
     func execute<InputType, InvocationReportingType: HTTPClientInvocationReporting, HandlerDelegateType: HTTPClientInvocationDelegate>(
             endpointOverride: URL? = nil,
             endpointPath: String,
-            httpMethod: HTTPMethod,
+            httpMethod: HttpMethodType,
             input: InputType,
             invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>) async throws
     -> HTTPResponseComponents where InputType: HTTPRequestInputProtocol {
-        let (responseFuture, outwardsRequestContext) = try await self.offTaskAsyncExecutor.execute {
-            try performExecuteAsync(endpointOverride: endpointOverride,
-                                    endpointPath: endpointPath,
-                                    httpMethod: httpMethod,
-                                    input: input,
-                                    invocationContext: invocationContext)
-        }
+        let (request, outwardsRequestContext) = try await getRequest(endpointOverride: endpointOverride,
+                                                                     endpointPath: endpointPath,
+                                                                     httpMethod: httpMethod,
+                                                                     input: input,
+                                                                     invocationContext: invocationContext)
         
         do {
-            let successResult = try await responseFuture.get()
+            let response = try await self.engine.execute(request: request)
             
             // a response has been successfully received; this reponse may be a successful response
             // and generate a `HTTPResponseComponents` instance or be a failure response and cause
@@ -283,7 +102,7 @@ extension HTTPOperationsClient {
             return try await self.offTaskAsyncExecutor.execute {
                 try self.handleCompleteResponseThrowingClientError(invocationContext: invocationContext,
                                                                    outwardsRequestContext: outwardsRequestContext,
-                                                                   result: .success(successResult))
+                                                                   result: .success(response))
             }
         } catch {
             // if this error has been thrown from just above
@@ -302,42 +121,42 @@ extension HTTPOperationsClient {
         }
     }
     
-    // To maintain the existing behaviour of async functions, this function will throw for synchronous setup errors and fail
-    // the future otherwise.
-    private func performExecuteAsync<InputType, InvocationReportingType: HTTPClientInvocationReporting, HandlerDelegateType: HTTPClientInvocationDelegate>(
+    private func getRequest<InputType, InvocationReportingType: HTTPClientInvocationReporting, HandlerDelegateType: HTTPClientInvocationDelegate>(
             endpointOverride: URL? = nil,
             endpointPath: String,
-            httpMethod: HTTPMethod,
+            httpMethod: HttpMethodType,
             input: InputType,
-            invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>) throws
-        -> (EventLoopFuture<HTTPClient.Response>, InvocationReportingType.TraceContextType.OutwardsRequestContext)
-            where InputType: HTTPRequestInputProtocol {
-
+            invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>) async throws
+    -> (SdkHttpRequest, InvocationReportingType.TraceContextType.OutwardsRequestContext)
+    where InputType: HTTPRequestInputProtocol {
         let endpointHostName = endpointOverride?.host ?? self.endpointHostName
         let endpointPort = endpointOverride?.port ?? self.endpointPort
 
-        let requestComponents = try clientDelegate.encodeInputAndQueryString(
-            input: input,
-            httpPath: endpointPath,
-            invocationReporting: invocationContext.reporting)
+        let requestComponents = try await self.offTaskAsyncExecutor.execute {
+            return try clientDelegate.encodeInputAndQueryString(
+                input: input,
+                httpPath: endpointPath,
+                invocationReporting: invocationContext.reporting)
+        }
 
-        let pathWithQuery = requestComponents.pathWithQuery
-
-        let endpoint = "\(self.endpointScheme)://\(endpointHostName):\(endpointPort)\(pathWithQuery)"
-        let sendPath = pathWithQuery
+        let endpoint = Endpoint(host: endpointHostName,
+                                path: requestComponents.path,
+                                port: Int16(endpointPort),
+                                queryItems: requestComponents.queryItems,
+                                protocolType: self.endpointScheme)
         let sendBody = requestComponents.body
         let additionalHeaders = requestComponents.additionalHeaders
 
         let logger = invocationContext.reporting.logger
-        logger.trace("Sending \(httpMethod) request to endpoint: \(endpoint) at path: \(sendPath).")
-                
-        guard let url = URL(string: endpoint) else {
+        logger.trace("Sending \(httpMethod) request to endpoint: \(endpointHostName) at path: \(requestComponents.path).")
+        
+        guard let url = endpoint.url else {
             throw HTTPError.invalidRequest("Request endpoint '\(endpoint)' not valid URL.")
         }
                 
         let parameters = HTTPRequestParameters(contentType: contentType,
                                                endpointUrl: url,
-                                               endpointPath: sendPath,
+                                               endpointPath: requestComponents.path,
                                                httpMethod: httpMethod,
                                                bodyData: sendBody,
                                                additionalHeaders: additionalHeaders)
@@ -352,37 +171,20 @@ extension HTTPOperationsClient {
             internalRequestId: invocationContext.reporting.internalRequestId,
             headers: &requestHeaders, bodyData: sendBody)
                 
-        let request = try HTTPClient.Request(url: endpoint, method: httpMethod,
-                                             headers: requestHeaders, body: .data(sendBody))
+        let request = SdkHttpRequest(method: httpMethod,
+                                     endpoint: endpoint,
+                                     headers: requestHeaders,
+                                     queryItems: requestComponents.queryItems,
+                                     body: .data(sendBody))
                 
-        let responseFuture: EventLoopFuture<HTTPClient.Response>
-        // if an event loop is provided that can be used with this client
-        if let eventLoopOverride = invocationContext.reporting.eventLoop,
-           self.eventLoopGroup.makeIterator().contains(where: { $0 === eventLoopOverride }) {
-            if self.enableAHCLogging {
-                responseFuture = self.wrappedHttpClient.execute(request: request,
-                                                                eventLoop: .delegateAndChannel(on: eventLoopOverride),
-                                                                logger: logger)
-            } else {
-                responseFuture = self.wrappedHttpClient.execute(request: request,
-                                                                eventLoop: .delegateAndChannel(on: eventLoopOverride))
-            }
-        } else {
-            if self.enableAHCLogging {
-                responseFuture = self.wrappedHttpClient.execute(request: request, logger: logger)
-            } else {
-                responseFuture = self.wrappedHttpClient.execute(request: request)
-            }
-        }
-        
-        return (responseFuture, outwardsRequestContext)
+        return (request, outwardsRequestContext)
     }
     
     private func handleCompleteResponseThrowingClientError<InvocationReportingType: HTTPClientInvocationReporting,
                 HandlerDelegateType: HTTPClientInvocationDelegate>(
             invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>,
             outwardsRequestContext: InvocationReportingType.TraceContextType.OutwardsRequestContext,
-            result: Result<HTTPClient.Response, Error>) throws -> HTTPResponseComponents {
+            result: Result<HttpResponse, Error>) throws -> HTTPResponseComponents {
         do {
             return try handleCompleteResponse(invocationContext: invocationContext,
                                               outwardsRequestContext: outwardsRequestContext,
@@ -404,7 +206,7 @@ extension HTTPOperationsClient {
                 HandlerDelegateType: HTTPClientInvocationDelegate>(
             invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>,
             outwardsRequestContext: InvocationReportingType.TraceContextType.OutwardsRequestContext,
-            result: Result<HTTPClient.Response, Error>) throws -> HTTPResponseComponents {
+            result: Result<HttpResponse, Error>) throws -> HTTPResponseComponents {
         let invocationReporting = invocationContext.reporting
         let logger = invocationReporting.logger
         
@@ -413,17 +215,19 @@ extension HTTPOperationsClient {
             let headers = getHeadersFromResponse(response: response)
             
             let bodyData: Data?
-            if var bodyBuffer = response.body {
-                let byteBufferSize = bodyBuffer.readableBytes
-                bodyData = bodyBuffer.readData(length: byteBufferSize)
-            } else {
+            switch response.body {
+            case .data(let theBodyData):
+                bodyData = theBodyData
+            case .stream:
+                fatalError("Streaming not implemented.")
+            case .none:
                 bodyData = nil
             }
             
             let responseComponents = HTTPResponseComponents(headers: headers, body: bodyData)
             
             let isSuccess: Bool
-            switch response.status {
+            switch response.statusCode {
             case .ok, .created, .accepted, .nonAuthoritativeInformation, .noContent, .resetContent, .partialContent:
                 isSuccess = true
             default:
@@ -457,7 +261,7 @@ extension HTTPOperationsClient {
 
             let responseError: HTTPClientError
             do {
-                 let errorProvider: (HTTPClient.Response, HTTPResponseComponents, InvocationReportingType) throws
+                 let errorProvider: (HttpResponse, HTTPResponseComponents, InvocationReportingType) throws
                     -> HTTPClientError = self.clientDelegate.getResponseError
                 // attempt to get the error from the provider
                 responseError = try errorProvider(response, responseComponents, invocationReporting)
@@ -483,14 +287,6 @@ extension HTTPOperationsClient {
             let errorDescription = String(describing: error)
             
             switch error {
-            // for retriable HTTPClientErrors
-            case let clientError as AsyncHTTPClient.HTTPClientError where isRetriableHTTPClientError(clientError: clientError):
-                let cause = HTTPError.connectionError(errorDescription)
-                wrappingError = HTTPClientError(responseCode: 500, cause: cause)
-            // for non-retriable HTTPClientErrors
-            case _ as AsyncHTTPClient.HTTPClientError:
-                let cause = HTTPError.badResponse(errorDescription)
-                wrappingError = HTTPClientError(responseCode: 400, cause: cause)
             // by default treat all other errors as 500 so they can be retried
             default:
                 let cause = HTTPError.connectionError(errorDescription)
@@ -508,32 +304,21 @@ extension HTTPOperationsClient {
         }
     }
     
-    private func isRetriableHTTPClientError(clientError: AsyncHTTPClient.HTTPClientError) -> Bool {
-        // special case read, connect, connection pool or tls handshake timeouts and remote connection closed errors
-        // to a 500 error to allow for retries
-        if clientError == AsyncHTTPClient.HTTPClientError.readTimeout
-                || clientError == AsyncHTTPClient.HTTPClientError.connectTimeout
-                || clientError == AsyncHTTPClient.HTTPClientError.tlsHandshakeTimeout
-                || clientError == AsyncHTTPClient.HTTPClientError.remoteConnectionClosed
-                || clientError == AsyncHTTPClient.HTTPClientError.getConnectionFromPoolTimeout {
-            return true
-        }
-        
-        return false
-    }
-    
-    private func getHeadersFromResponse(response: HTTPClient.Response) -> [(String, String)] {
-        let headers: [(String, String)] = response.headers.map { header in
-            return (header.name, header.value)
+    private func getHeadersFromResponse(response: HttpResponse) -> [(String, String)] {
+        let headers: [(String, String)] = response.headers.headers.flatMap { header in
+            return header.value.map { value in
+                return (header.name, value)
+            }
         }
         
         return headers
     }
     
     private func getRequestHeaders<InvocationReportingType: HTTPClientInvocationReporting,
-                HandlerDelegateType: HTTPClientInvocationDelegate>(
+                                   HandlerDelegateType: HTTPClientInvocationDelegate>(
             parameters: HTTPRequestParameters,
-            invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>) -> HTTPHeaders {
+            invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>)
+    -> Headers {
         let delegate = invocationContext.handlerDelegate
         
         var headers = delegate.addClientSpecificHeaders(
@@ -549,6 +334,23 @@ extension HTTPOperationsClient {
         headers.append(("User-Agent", "SmokeHTTPClient"))
         headers.append(("Accept", "*/*"))
         
-        return HTTPHeaders(headers)
+        return Headers(headers.asMap())
+    }
+}
+
+private extension Array where Element == (String, String) {
+    func asMap() -> [String: [String]] {
+        var theMap: [String: [String]] = [:]
+        
+        self.forEach { (key, value) in
+            if var existingValues = theMap[key] {
+                existingValues.append(value)
+                theMap[key] = existingValues
+            } else {
+                theMap[key] = [value]
+            }
+        }
+        
+        return theMap
     }
 }

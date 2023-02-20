@@ -17,7 +17,6 @@
 
 import Foundation
 import Logging
-import NIO
 
 public protocol OutputRequestRecord {
     var requestLatency: TimeInterval { get }
@@ -113,8 +112,6 @@ public protocol HTTPClientInvocationAttributes {
     /// The internal Request Id associated with this invocation.
     var internalRequestId: String { get }
 
-    var eventLoop: EventLoop? { get }
-
     var outwardsRequestAggregator: OutwardsRequestAggregator? { get }
 }
 
@@ -133,10 +130,6 @@ public protocol HTTPClientCoreInvocationReporting: HTTPClientInvocationAttribute
 }
 
 public extension HTTPClientCoreInvocationReporting {
-    // The attribute is being added as a non-breaking change, so add a default implementation that replicates existing behaviour
-    var eventLoop: EventLoop? {
-        return nil
-    }
     
     // The attribute is being added as a non-breaking change, so add a default implementation that replicates existing behaviour
     var outwardsRequestAggregator: OutwardsRequestAggregator? {
