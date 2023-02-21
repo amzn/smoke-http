@@ -50,7 +50,7 @@ let package = Package(
         .package(url: "https://github.com/apple/swift-metrics.git", "1.0.0"..<"3.0.0"),
         .package(url: "https://github.com/swift-server/async-http-client.git", from: "1.6.4"),
         .package(url: "https://github.com/awslabs/smithy-swift", .exact("0.12.0")),
-        .package(url: "https://github.com/tachyonics/swift-middleware", branch: "static_poc_2")
+        .package(url: "https://github.com/tachyonics/swift-middleware", branch: "static_poc_2"),
     ],
     targets: [
         .target(

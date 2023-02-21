@@ -11,49 +11,27 @@
 // express or implied. See the License for the specific language governing
 // permissions and limitations under the License.
 //
-//  SDKHeaderMiddleware.swift
+//  SDKHTTPPathMiddleware.swift
 //  SmokeHTTPMiddleware
 //
 
 import SwiftMiddleware
 import ClientRuntime
 
-public struct HttpHeaderNames {
-    /// Content-Length Header
-    public static let contentLength = "Content-Length"
-
-    /// Content-Type Header
-    public static let contentType = "Content-Type"
-    
-    public static let userAgent = "User-Agent"
-    
-    public static let accept = "Accept"
-}
-
-public struct SDKHeaderMiddleware<Context>: MiddlewareProtocol {
+public struct SDKHTTPPortMiddleware<Context>: MiddlewareProtocol {
     public typealias Input = SmokeSdkHttpRequestBuilder
     public typealias Output = HttpResponse
     
-    let key: String
-    let value: String
+    let port: Int16
     
-    public init(key: String, value: String) {
-        self.key = key
-        self.value = value
-    }
-    
-    public static var userAgent: Self {
-        Self(key: HttpHeaderNames.userAgent, value: "SmokeHTTPClient")
-    }
-    
-    public static var accept: Self {
-        Self(key: HttpHeaderNames.accept, value: "*/*")
+    public init(port: Int16) {
+        self.port = port
     }
     
     public func handle(_ input: SmokeSdkHttpRequestBuilder, context: Context,
                        next: (SmokeSdkHttpRequestBuilder, Context) async throws -> HttpResponse) async throws
     -> HttpResponse {
-        input.withHeader(name: self.key, value: self.value)
+        input.withPort(port)
         
         return try await next(input, context)
     }

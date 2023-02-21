@@ -11,49 +11,34 @@
 // express or implied. See the License for the specific language governing
 // permissions and limitations under the License.
 //
-//  SDKHeaderMiddleware.swift
+//  SDKContentHeadersMiddleware.swift
 //  SmokeHTTPMiddleware
 //
 
 import SwiftMiddleware
 import ClientRuntime
 
-public struct HttpHeaderNames {
-    /// Content-Length Header
-    public static let contentLength = "Content-Length"
-
-    /// Content-Type Header
-    public static let contentType = "Content-Type"
-    
-    public static let userAgent = "User-Agent"
-    
-    public static let accept = "Accept"
-}
-
-public struct SDKHeaderMiddleware<Context>: MiddlewareProtocol {
+public struct SDKContentHeadersMiddleware<Context>: MiddlewareProtocol {
     public typealias Input = SmokeSdkHttpRequestBuilder
     public typealias Output = HttpResponse
     
-    let key: String
-    let value: String
+    let specifyContentHeadersForZeroLengthBody: Bool
+    let contentType: String
     
-    public init(key: String, value: String) {
-        self.key = key
-        self.value = value
-    }
-    
-    public static var userAgent: Self {
-        Self(key: HttpHeaderNames.userAgent, value: "SmokeHTTPClient")
-    }
-    
-    public static var accept: Self {
-        Self(key: HttpHeaderNames.accept, value: "*/*")
+    public init(specifyContentHeadersForZeroLengthBody: Bool, contentType: String) {
+        self.specifyContentHeadersForZeroLengthBody = specifyContentHeadersForZeroLengthBody
+        self.contentType = contentType
     }
     
     public func handle(_ input: SmokeSdkHttpRequestBuilder, context: Context,
                        next: (SmokeSdkHttpRequestBuilder, Context) async throws -> HttpResponse) async throws
     -> HttpResponse {
-        input.withHeader(name: self.key, value: self.value)
+        if case .data(let bodyDataOptional) = input.body, let bodyData = bodyDataOptional {
+            if bodyData.count > 0 || self.specifyContentHeadersForZeroLengthBody {
+                input.withHeader(name: HttpHeaderNames.contentType, value: contentType)
+                input.withHeader(name: HttpHeaderNames.contentLength, value: "\(bodyData.count)")
+            }
+        }
         
         return try await next(input, context)
     }
