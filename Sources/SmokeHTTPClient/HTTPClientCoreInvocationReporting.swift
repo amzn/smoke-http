@@ -55,7 +55,7 @@ public protocol OutwardsRequestAggregator {
 }
 
 #if (os(Linux) && compiler(>=5.5)) || (!os(Linux) && compiler(>=5.5.2)) && canImport(_Concurrency)
-extension OutwardsRequestAggregator {
+public extension OutwardsRequestAggregator {
 
     func recordOutwardsRequest(outputRequestRecord: OutputRequestRecord) async {
         return await withCheckedContinuation { cont in

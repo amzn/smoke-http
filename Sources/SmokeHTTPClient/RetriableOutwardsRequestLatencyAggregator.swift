@@ -70,14 +70,26 @@ extension RetriableOutwardsRequestAggregator {
 }
 #endif
 
-struct StandardOutputRequestRecord: OutputRequestRecord {
-    let requestLatency: TimeInterval
+public struct StandardOutputRequestRecord: OutputRequestRecord {
+    public let requestLatency: TimeInterval
+    
+    public init(requestLatency: TimeInterval) {
+        self.requestLatency = requestLatency
+    }
 }
 
-struct StandardRetryAttemptRecord: RetryAttemptRecord {
-    let retryWait: TimeInterval
+public struct StandardRetryAttemptRecord: RetryAttemptRecord {
+    public let retryWait: TimeInterval
+    
+    public init(retryWait: TimeInterval) {
+        self.retryWait = retryWait
+    }
 }
 
-struct StandardRetriableOutputRequestRecord: RetriableOutputRequestRecord {
-    var outputRequests: [OutputRequestRecord]
+public struct StandardRetriableOutputRequestRecord: RetriableOutputRequestRecord {
+    public var outputRequests: [OutputRequestRecord]
+    
+    public init(outputRequests: [OutputRequestRecord]) {
+        self.outputRequests = outputRequests
+    }
 }

@@ -65,6 +65,7 @@ let package = Package(
             ]),
         .target(
             name: "SmokeHTTPMiddleware", dependencies: [
+                .target(name: "SmokeHTTPClient"),
                 .product(name: "Logging", package: "swift-log"),
                 .product(name: "Metrics", package: "swift-metrics"),
                 .product(name: "ClientRuntime", package: "smithy-swift"),

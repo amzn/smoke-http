@@ -11,7 +11,7 @@
 // express or implied. See the License for the specific language governing
 // permissions and limitations under the License.
 //
-//  SDKCRTErrorMiddleware.swift
+//  SDKErrorMiddleware.swift
 //  SmokeHTTPMiddleware
 //
 
@@ -19,7 +19,7 @@ import SwiftMiddleware
 import ClientRuntime
 import AwsCommonRuntimeKit
 
-public struct SDKCRTErrorMiddleware<Context, ErrorType>: MiddlewareProtocol {
+public struct SDKErrorMiddleware<Context, ErrorType>: MiddlewareProtocol {
     public typealias Input = SmokeSdkHttpRequestBuilder
     public typealias Output = HttpResponse
         
@@ -36,6 +36,10 @@ public struct SDKCRTErrorMiddleware<Context, ErrorType>: MiddlewareProtocol {
         } catch let error as CommonRunTimeError {
             // wrap it appropriately
             throw SdkError<ErrorType>.client(.crtError(error))
+        // if some unknown error happened
+        } catch {
+            // wrap it appropriately
+            throw SdkError<ErrorType>.client(.networkError(error))
         }
     }
 }
