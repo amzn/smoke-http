@@ -19,19 +19,30 @@ import SwiftMiddleware
 import ClientRuntime
 import AwsCommonRuntimeKit
 
-public struct SDKErrorMiddleware<Context, ErrorType>: MiddlewareProtocol {
+public struct SDKErrorMiddleware<ErrorType, ErrorResponseTransformType: TransformProtocol>: MiddlewareProtocol
+where ErrorResponseTransformType.Input == HttpResponse, ErrorResponseTransformType.Output == ErrorType {
     public typealias Input = SmokeSdkHttpRequestBuilder
     public typealias Output = HttpResponse
+    public typealias Context = ErrorResponseTransformType.Context
+    
+    public let errorResponseTransform: ErrorResponseTransformType
         
-    public init() {
-
+    public init(errorResponseTransform: ErrorResponseTransformType) {
+        self.errorResponseTransform = errorResponseTransform
     }
     
     public func handle(_ input: SmokeSdkHttpRequestBuilder, context: Context,
                        next: (SmokeSdkHttpRequestBuilder, Context) async throws -> HttpResponse) async throws
     -> HttpResponse {
         do {
-            return try await next(input, context)
+            let response = try await next(input, context)
+            
+            if (200..<300).contains(response.statusCode.rawValue) {
+                return response
+            } else {
+                let error = try await self.errorResponseTransform.transform(response, context: context)
+                throw SdkError.service(error, response)
+            }
         // if a `CommonRunTimeError` is thrown
         } catch let error as CommonRunTimeError {
             // wrap it appropriately
