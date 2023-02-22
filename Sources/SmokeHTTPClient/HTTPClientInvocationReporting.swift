@@ -49,8 +49,8 @@ public struct StandardHTTPClientInvocationMetrics: HTTPClientInvocationMetrics {
     public let retryCountRecorder: CoreMetrics.Recorder?
     public let latencyTimer: CoreMetrics.Timer?
     
-    public init(successCounter: CoreMetrics.Counter?, failure5XXCounter: CoreMetrics.Counter?,
-                failure4XXCounter: CoreMetrics.Counter?, retryCountRecorder: CoreMetrics.Recorder?,
+    public init(successCounter: CoreMetrics.Counter? = nil, failure5XXCounter: CoreMetrics.Counter? = nil,
+                failure4XXCounter: CoreMetrics.Counter? = nil, retryCountRecorder: CoreMetrics.Recorder? = nil,
                 latencyTimer: CoreMetrics.Timer?) {
         self.successCounter = successCounter
         self.failure5XXCounter = failure5XXCounter
