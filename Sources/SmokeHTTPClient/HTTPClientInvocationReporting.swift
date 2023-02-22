@@ -51,7 +51,7 @@ public struct StandardHTTPClientInvocationMetrics: HTTPClientInvocationMetrics {
     
     public init(successCounter: CoreMetrics.Counter? = nil, failure5XXCounter: CoreMetrics.Counter? = nil,
                 failure4XXCounter: CoreMetrics.Counter? = nil, retryCountRecorder: CoreMetrics.Recorder? = nil,
-                latencyTimer: CoreMetrics.Timer?) {
+                latencyTimer: CoreMetrics.Timer? = nil) {
         self.successCounter = successCounter
         self.failure5XXCounter = failure5XXCounter
         self.failure4XXCounter = failure4XXCounter
