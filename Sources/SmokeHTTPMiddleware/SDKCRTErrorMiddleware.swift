@@ -22,11 +22,9 @@ import AwsCommonRuntimeKit
 public struct SDKCRTErrorMiddleware<Context, ErrorType>: MiddlewareProtocol {
     public typealias Input = SmokeSdkHttpRequestBuilder
     public typealias Output = HttpResponse
-    
-    let hostName: String
-    
-    public init(hostName: String) {
-        self.hostName = hostName
+        
+    public init() {
+
     }
     
     public func handle(_ input: SmokeSdkHttpRequestBuilder, context: Context,
