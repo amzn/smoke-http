@@ -34,15 +34,9 @@ where ErrorResponseTransformType.Input == HttpResponse {
     public func handle(_ input: SmokeSdkHttpRequestBuilder, context: Context,
                        next: (SmokeSdkHttpRequestBuilder, Context) async throws -> HttpResponse) async throws
     -> HttpResponse {
+        let response: HttpResponse
         do {
-            let response = try await next(input, context)
-            
-            if (200..<300).contains(response.statusCode.rawValue) {
-                return response
-            } else {
-                let error = try await self.errorResponseTransform.transform(response, context: context)
-                throw SdkError.service(error, response)
-            }
+            response = try await next(input, context)
         // if a `CommonRunTimeError` is thrown
         } catch let error as CommonRunTimeError {
             // wrap it appropriately
@@ -51,6 +45,13 @@ where ErrorResponseTransformType.Input == HttpResponse {
         } catch {
             // wrap it appropriately
             throw SdkError<Output>.client(.networkError(error))
+        }
+        
+        if (200..<300).contains(response.statusCode.rawValue) {
+            return response
+        } else {
+            let error = try await self.errorResponseTransform.transform(response, context: context)
+            throw SdkError.service(error, response)
         }
     }
 }
