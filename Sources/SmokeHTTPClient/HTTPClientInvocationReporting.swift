@@ -42,6 +42,24 @@ public protocol HTTPClientInvocationMetrics {
     var latencyTimer: Metrics.Timer? { get }
 }
 
+public struct StandardHTTPClientInvocationMetrics: HTTPClientInvocationMetrics {
+    public let successCounter: CoreMetrics.Counter?
+    public let failure5XXCounter: CoreMetrics.Counter?
+    public let failure4XXCounter: CoreMetrics.Counter?
+    public let retryCountRecorder: CoreMetrics.Recorder?
+    public let latencyTimer: CoreMetrics.Timer?
+    
+    public init(successCounter: CoreMetrics.Counter?, failure5XXCounter: CoreMetrics.Counter?,
+                failure4XXCounter: CoreMetrics.Counter?, retryCountRecorder: CoreMetrics.Recorder?,
+                latencyTimer: CoreMetrics.Timer?) {
+        self.successCounter = successCounter
+        self.failure5XXCounter = failure5XXCounter
+        self.failure4XXCounter = failure4XXCounter
+        self.retryCountRecorder = retryCountRecorder
+        self.latencyTimer = latencyTimer
+    }
+}
+
 /**
  A context related to reporting on the invocation of the HTTPClient. This interface extends the
  `HTTPClientCoreInvocationReporting` protocol by adding metrics defined by the `HTTPClientInvocationMetrics` protocol.

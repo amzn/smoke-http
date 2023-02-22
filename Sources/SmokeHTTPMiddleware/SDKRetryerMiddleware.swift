@@ -36,14 +36,13 @@ private extension Int {
     }
 }
 
-public struct SDKRetryerMiddleware<Context: SmokeMiddlewareContext, ErrorType,
-                                   MetricsType: HTTPClientInvocationMetrics>: MiddlewareProtocol {
+public struct SDKRetryerMiddleware<Context: SmokeMiddlewareContext, ErrorType>: MiddlewareProtocol {
     public typealias Input = SmokeSdkHttpRequestBuilder
     public typealias Output = HttpResponse
         
     let retryer: SDKRetryer
     let retryConfiguration: HTTPClientRetryConfiguration
-    let metrics: MetricsType
+    let metrics: StandardHTTPClientInvocationMetrics
     let outwardsRequestAggregatorV2: OutwardsRequestAggregatorV2?
     // legacy aggregator; only the boxed/existential will be available
     let outwardsRequestAggregator: OutwardsRequestAggregator?
@@ -53,7 +52,7 @@ public struct SDKRetryerMiddleware<Context: SmokeMiddlewareContext, ErrorType,
     }
 
     public init(retryer: SDKRetryer, retryConfiguration: HTTPClientRetryConfiguration,
-                metrics: MetricsType, outwardsRequestAggregatorV2: OutwardsRequestAggregatorV2?,
+                metrics: StandardHTTPClientInvocationMetrics, outwardsRequestAggregatorV2: OutwardsRequestAggregatorV2?,
                 outwardsRequestAggregator: OutwardsRequestAggregator?) {
         self.retryer = retryer
         self.retryConfiguration = retryConfiguration
