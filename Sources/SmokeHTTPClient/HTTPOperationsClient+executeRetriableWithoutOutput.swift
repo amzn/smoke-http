@@ -81,7 +81,7 @@ public extension HTTPOperationsClient {
             let innerReporting = HTTPClientInnerRetryInvocationReporting(internalRequestId: invocationContext.reporting.internalRequestId,
                                                                          traceContext: invocationContext.reporting.traceContext,
                                                                          logger: invocationContext.reporting.logger,
-                                                                         eventLoop: eventLoop,
+                                                                         eventLoop: nil,
                                                                          outwardsRequestAggregator: outwardsRequestAggregators?.1)
             self.innerInvocationContext = HTTPClientInvocationContext(reporting: innerReporting, handlerDelegate: invocationContext.handlerDelegate)
         }
