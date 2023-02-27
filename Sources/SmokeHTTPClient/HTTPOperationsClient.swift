@@ -50,7 +50,6 @@ public struct HTTPOperationsClient {
     /// The `HTTPClient` used for this instance
     private let wrappedHttpClient: HTTPClient
     private let enableAHCLogging: Bool
-    private let offTaskAsyncExecutor = OffTaskAsyncExecutor()
     
     public var eventLoopGroup: EventLoopGroup {
         return self.wrappedHttpClient.eventLoopGroup
@@ -266,13 +265,11 @@ extension HTTPOperationsClient {
             input: InputType,
             invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>) async throws
     -> HTTPResponseComponents where InputType: HTTPRequestInputProtocol {
-        let (responseFuture, outwardsRequestContext) = try await self.offTaskAsyncExecutor.execute {
-            try performExecuteAsync(endpointOverride: endpointOverride,
-                                    endpointPath: endpointPath,
-                                    httpMethod: httpMethod,
-                                    input: input,
-                                    invocationContext: invocationContext)
-        }
+        let (responseFuture, outwardsRequestContext) = try performExecuteAsync(endpointOverride: endpointOverride,
+                                                                               endpointPath: endpointPath,
+                                                                               httpMethod: httpMethod,
+                                                                               input: input,
+                                                                               invocationContext: invocationContext)
         
         do {
             let successResult = try await responseFuture.get()
@@ -280,11 +277,9 @@ extension HTTPOperationsClient {
             // a response has been successfully received; this reponse may be a successful response
             // and generate a `HTTPResponseComponents` instance or be a failure response and cause
             // a SmokeHTTPClient.HTTPClientError error to be thrown
-            return try await self.offTaskAsyncExecutor.execute {
-                try self.handleCompleteResponseThrowingClientError(invocationContext: invocationContext,
-                                                                   outwardsRequestContext: outwardsRequestContext,
-                                                                   result: .success(successResult))
-            }
+            return try self.handleCompleteResponseThrowingClientError(invocationContext: invocationContext,
+                                                                      outwardsRequestContext: outwardsRequestContext,
+                                                                      result: .success(successResult))
         } catch {
             // if this error has been thrown from just above
             if let typedError = error as? SmokeHTTPClient.HTTPClientError {
@@ -294,11 +289,9 @@ extension HTTPOperationsClient {
             
             // a response wasn't even able to be generated (for example due to a connection error)
             // make sure this error is thrown correctly as a SmokeHTTPClient.HTTPClientError
-            return try await self.offTaskAsyncExecutor.execute {
-                try self.handleCompleteResponseThrowingClientError(invocationContext: invocationContext,
-                                                                   outwardsRequestContext: outwardsRequestContext,
-                                                                   result: .failure(error))
-            }
+            return try self.handleCompleteResponseThrowingClientError(invocationContext: invocationContext,
+                                                                      outwardsRequestContext: outwardsRequestContext,
+                                                                      result: .failure(error))
         }
     }
     
