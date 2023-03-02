@@ -118,7 +118,7 @@ public extension HTTPOperationsClient {
             let promise = self.eventLoop.makePromise(of: OutputType.self)
             let logger = invocationContext.reporting.logger
 
-            let shouldRetryOnError = retryConfiguration.retryOnError?(error) ?? retryOnError(error)
+            let shouldRetryOnError = retryConfiguration.retryOnErrorOverride?(error) ?? retryOnError(error)
             
             // if there are retries remaining and we should retry on this error
             if retriesRemaining > 0 && shouldRetryOnError {

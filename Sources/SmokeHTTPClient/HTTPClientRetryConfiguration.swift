@@ -35,8 +35,8 @@ public struct HTTPClientRetryConfiguration {
     // Ramdomized backoff
     public var jitter: Bool
     // provider that determines if the retry policy should be applied to a thrown error
-    // if nil, errors will be retried according to the client's policy.
-    public var retryOnError: ((HTTPClientError) -> Bool)?
+    // if nil or returning nil, errors will be retried according to the client's policy.
+    public var retryOnErrorOverride: ((HTTPClientError) -> Bool?)?
  
     /**
      Initializer.
@@ -48,17 +48,17 @@ public struct HTTPClientRetryConfiguration {
          - exponentialBackoff: exponential backoff for each retry
          - jitter: ramdomized backoff
          - retryOnError: provider that determines if the retry policy should be applied to a thrown error
-                     if nil, errors will be retried according to the client's policy.
+                     if nil or returning nil, errors will be retried according to the client's policy.
      */
     public init(numRetries: Int, baseRetryInterval: RetryInterval, maxRetryInterval: RetryInterval,
                 exponentialBackoff: Double, jitter: Bool = true,
-                retryOnError: ((HTTPClientError) -> Bool)? = nil) {
+                retryOnErrorOverride: ((HTTPClientError) -> Bool?)? = nil) {
         self.numRetries = numRetries
         self.baseRetryInterval = baseRetryInterval
         self.maxRetryInterval = maxRetryInterval
         self.exponentialBackoff = exponentialBackoff
         self.jitter = jitter
-        self.retryOnError = retryOnError
+        self.retryOnErrorOverride = retryOnErrorOverride
     }
     
     public func getRetryInterval(retriesRemaining: Int) -> RetryInterval {

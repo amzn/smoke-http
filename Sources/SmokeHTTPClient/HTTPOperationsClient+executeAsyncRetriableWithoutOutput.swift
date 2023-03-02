@@ -105,7 +105,7 @@ public extension HTTPOperationsClient {
             let logger = invocationContext.reporting.logger
 
             if let innerError = innerError {
-                let shouldRetryOnError = retryConfiguration.retryOnError?(innerError) ?? retryOnError(innerError)
+                let shouldRetryOnError = retryConfiguration.retryOnErrorOverride?(innerError) ?? retryOnError(innerError)
                 
                 // if there are retries remaining and we should retry on this error
                 if retriesRemaining > 0 && shouldRetryOnError {

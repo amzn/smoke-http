@@ -150,7 +150,7 @@ public extension HTTPOperationsClient {
                 // never retry
                 shouldRetryOnError = false
             case .serverError:
-                shouldRetryOnError = retryConfiguration.retryOnError?(error) ?? retryOnError(error)
+                shouldRetryOnError = retryConfiguration.retryOnErrorOverride?(error) ?? retryOnError(error)
             }
             let logger = invocationContext.reporting.logger
             

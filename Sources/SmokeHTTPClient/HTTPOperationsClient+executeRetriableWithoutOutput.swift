@@ -119,7 +119,7 @@ public extension HTTPOperationsClient {
         func retry(error: HTTPClientError) async throws {
             let logger = invocationContext.reporting.logger
 
-            let shouldRetryOnError = retryConfiguration.retryOnError?(error) ?? retryOnError(error)
+            let shouldRetryOnError = retryConfiguration.retryOnErrorOverride?(error) ?? retryOnError(error)
             
             // if there are retries remaining and we should retry on this error
             if retriesRemaining > 0 && shouldRetryOnError {
