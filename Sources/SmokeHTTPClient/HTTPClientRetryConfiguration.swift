@@ -25,15 +25,18 @@ public typealias RetryInterval = UInt32
  */
 public struct HTTPClientRetryConfiguration {
     // Number of retries to be attempted
-    public let numRetries: Int
+    public var numRetries: Int
     // First interval of retry in millis
-    public let baseRetryInterval: RetryInterval
+    public var baseRetryInterval: RetryInterval
     // Max amount of cumulative time to attempt retries in millis
-    public let maxRetryInterval: RetryInterval
+    public var maxRetryInterval: RetryInterval
     // Exponential backoff for each retry
-    public let exponentialBackoff: Double
+    public var exponentialBackoff: Double
     // Ramdomized backoff
-    public let jitter: Bool
+    public var jitter: Bool
+    // provider that determines if the retry policy should be applied to a thrown error
+    // if nil, errors will be retried according to the client's policy.
+    public var retryOnError: ((HTTPClientError) -> Bool)?
  
     /**
      Initializer.
@@ -44,14 +47,18 @@ public struct HTTPClientRetryConfiguration {
          - maxRetryInterval: max amount of cumulative time to attempt retries in millis
          - exponentialBackoff: exponential backoff for each retry
          - jitter: ramdomized backoff
+         - retryOnError: provider that determines if the retry policy should be applied to a thrown error
+                     if nil, errors will be retried according to the client's policy.
      */
     public init(numRetries: Int, baseRetryInterval: RetryInterval, maxRetryInterval: RetryInterval,
-                exponentialBackoff: Double, jitter: Bool = true) {
+                exponentialBackoff: Double, jitter: Bool = true,
+                retryOnError: ((HTTPClientError) -> Bool)? = nil) {
         self.numRetries = numRetries
         self.baseRetryInterval = baseRetryInterval
         self.maxRetryInterval = maxRetryInterval
         self.exponentialBackoff = exponentialBackoff
         self.jitter = jitter
+        self.retryOnError = retryOnError
     }
     
     public func getRetryInterval(retriesRemaining: Int) -> RetryInterval {
