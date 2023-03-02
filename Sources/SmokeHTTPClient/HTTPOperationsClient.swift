@@ -458,7 +458,8 @@ extension HTTPOperationsClient {
                 responseError = error
             } catch {
                 // if the provider throws an error, use this error
-                responseError = HTTPClientError(responseCode: 400, cause: error)
+                responseError = HTTPClientError(responseCode: Int(response.status.code),
+                                                cause: error)
             }
             
             invocationReporting.traceContext.handleOutwardsRequestFailure(
