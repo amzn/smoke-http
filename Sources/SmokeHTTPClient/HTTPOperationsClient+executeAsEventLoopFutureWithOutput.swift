@@ -56,10 +56,12 @@ public extension HTTPOperationsClient {
             endpointOverride: URL? = nil,
             endpointPath: String,
             httpMethod: HTTPMethod,
+            operation: String? = nil,
             input: InputType,
-            invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>) -> EventLoopFuture<OutputType>
-            where InputType: HTTPRequestInputProtocol, OutputType: HTTPResponseOutputProtocol {
-            let wrappingInvocationContext = invocationContext.withOutgoingRequestIdLoggerMetadata()
+            invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>)
+    -> EventLoopFuture<OutputType> where InputType: HTTPRequestInputProtocol, OutputType: HTTPResponseOutputProtocol {
+            let endpoint = getEndpoint(endpointOverride: endpointOverride, path: endpointPath)
+            let wrappingInvocationContext = invocationContext.withOutgoingDecoratedLogger(endpoint: endpoint, outgoingOperation: operation)
             
             return executeAsEventLoopFutureWithOutputWithWrappedInvocationContext(
                 endpointOverride: endpointOverride,

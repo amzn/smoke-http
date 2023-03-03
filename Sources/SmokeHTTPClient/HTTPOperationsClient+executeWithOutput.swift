@@ -42,10 +42,12 @@ public extension HTTPOperationsClient {
         endpointOverride: URL? = nil,
         endpointPath: String,
         httpMethod: HTTPMethod,
+        operation: String? = nil,
         input: InputType,
         invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>) async throws -> OutputType
     where InputType: HTTPRequestInputProtocol, OutputType: HTTPResponseOutputProtocol {
-        let wrappingInvocationContext = invocationContext.withOutgoingRequestIdLoggerMetadata()
+        let endpoint = getEndpoint(endpointOverride: endpointOverride, path: endpointPath)
+        let wrappingInvocationContext = invocationContext.withOutgoingDecoratedLogger(endpoint: endpoint, outgoingOperation: operation)
         
         return try await executeWithOutputWithWrappedInvocationContext(
             endpointOverride: endpointOverride,

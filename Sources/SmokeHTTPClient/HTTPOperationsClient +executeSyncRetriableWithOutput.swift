@@ -205,13 +205,15 @@ public extension HTTPOperationsClient {
         endpointOverride: URL? = nil,
         endpointPath: String,
         httpMethod: HTTPMethod,
+        operation: String? = nil,
         input: InputType,
         invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>,
         retryConfiguration: HTTPClientRetryConfiguration,
         retryOnError: @escaping (HTTPClientError) -> Bool) throws -> OutputType
         where InputType: HTTPRequestInputProtocol,
         OutputType: HTTPResponseOutputProtocol {
-            let wrappingInvocationContext = invocationContext.withOutgoingRequestIdLoggerMetadata()
+            let endpoint = getEndpoint(endpointOverride: endpointOverride, path: endpointPath)
+            let wrappingInvocationContext = invocationContext.withOutgoingDecoratedLogger(endpoint: endpoint, outgoingOperation: operation)
         
             // use the specified event loop or pick one for the client to use for all retry attempts
             let eventLoop = invocationContext.reporting.eventLoop ?? self.eventLoopGroup.next()
@@ -233,13 +235,15 @@ public extension HTTPOperationsClient {
         endpointOverride: URL? = nil,
         endpointPath: String,
         httpMethod: HTTPMethod,
+        operation: String? = nil,
         input: InputType,
         invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>,
         retryConfiguration: HTTPClientRetryConfiguration,
         retryOnError: @escaping (Swift.Error) -> Bool) throws -> OutputType
         where InputType: HTTPRequestInputProtocol,
         OutputType: HTTPResponseOutputProtocol {
-            let wrappingInvocationContext = invocationContext.withOutgoingRequestIdLoggerMetadata()
+            let endpoint = getEndpoint(endpointOverride: endpointOverride, path: endpointPath)
+            let wrappingInvocationContext = invocationContext.withOutgoingDecoratedLogger(endpoint: endpoint, outgoingOperation: operation)
         
             // use the specified event loop or pick one for the client to use for all retry attempts
             let eventLoop = invocationContext.reporting.eventLoop ?? self.eventLoopGroup.next()
