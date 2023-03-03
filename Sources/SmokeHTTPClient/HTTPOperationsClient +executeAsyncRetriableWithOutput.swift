@@ -216,6 +216,7 @@ public extension HTTPOperationsClient {
             endpointOverride: URL? = nil,
             endpointPath: String,
             httpMethod: HTTPMethod,
+            operation: String? = nil,
             input: InputType,
             completion: @escaping (Result<OutputType, HTTPClientError>) -> (),
             invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>,
@@ -226,6 +227,7 @@ public extension HTTPOperationsClient {
                 endpointOverride: endpointOverride,
                 endpointPath: endpointPath,
                 httpMethod: httpMethod,
+                operation: operation,
                 input: input,
                 completion: completion,
                 asyncResponseInvocationStrategy: GlobalDispatchQueueAsyncResponseInvocationStrategy<Result<OutputType, HTTPClientError>>(),
@@ -252,6 +254,7 @@ public extension HTTPOperationsClient {
             endpointOverride: URL? = nil,
             endpointPath: String,
             httpMethod: HTTPMethod,
+            operation: String? = nil,
             input: InputType,
             completion: @escaping (Result<OutputType, HTTPClientError>) -> (),
             asyncResponseInvocationStrategy: InvocationStrategyType,
@@ -261,7 +264,8 @@ public extension HTTPOperationsClient {
         where InputType: HTTPRequestInputProtocol, InvocationStrategyType: AsyncResponseInvocationStrategy,
         InvocationStrategyType.OutputType == Result<OutputType, HTTPClientError>,
         OutputType: HTTPResponseOutputProtocol {
-            let wrappingInvocationContext = invocationContext.withOutgoingRequestIdLoggerMetadata()
+            let endpoint = getEndpoint(endpointOverride: endpointOverride, path: endpointPath)
+            let wrappingInvocationContext = invocationContext.withOutgoingDecoratedLogger(endpoint: endpoint, outgoingOperation: operation)
         
             // use the specified event loop or pick one for the client to use for all retry attempts
             let eventLoop = invocationContext.reporting.eventLoop ?? self.eventLoopGroup.next()

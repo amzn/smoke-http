@@ -41,6 +41,7 @@ public extension HTTPOperationsClient {
         endpointOverride: URL? = nil,
         endpointPath: String,
         httpMethod: HTTPMethod,
+        operation: String? = nil,
         input: InputType,
         completion: @escaping (HTTPClientError?) -> (),
         invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>) throws -> EventLoopFuture<HTTPClient.Response>
@@ -49,6 +50,7 @@ public extension HTTPOperationsClient {
                 endpointOverride: endpointOverride,
                 endpointPath: endpointPath,
                 httpMethod: httpMethod,
+                operation: operation,
                 input: input,
                 completion: completion,
                 asyncResponseInvocationStrategy: GlobalDispatchQueueAsyncResponseInvocationStrategy<HTTPClientError?>(),
@@ -71,13 +73,15 @@ public extension HTTPOperationsClient {
         endpointOverride: URL? = nil,
         endpointPath: String,
         httpMethod: HTTPMethod,
+        operation: String? = nil,
         input: InputType,
         completion: @escaping (HTTPClientError?) -> (),
         asyncResponseInvocationStrategy: InvocationStrategyType,
         invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>) throws -> EventLoopFuture<HTTPClient.Response>
         where InputType: HTTPRequestInputProtocol, InvocationStrategyType: AsyncResponseInvocationStrategy,
         InvocationStrategyType.OutputType == HTTPClientError? {
-            let wrappingInvocationContext = invocationContext.withOutgoingRequestIdLoggerMetadata()
+            let endpoint = getEndpoint(endpointOverride: endpointOverride, path: endpointPath)
+            let wrappingInvocationContext = invocationContext.withOutgoingDecoratedLogger(endpoint: endpoint, outgoingOperation: operation)
             
             return try executeAsyncWithoutOutputWithWrappedInvocationContext(
                 endpointOverride: endpointOverride,

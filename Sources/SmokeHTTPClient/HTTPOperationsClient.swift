@@ -55,6 +55,16 @@ public struct HTTPOperationsClient {
         return self.wrappedHttpClient.eventLoopGroup
     }
     
+    internal func getEndpoint(endpointOverride: URL?, path: String) -> URL? {
+        var components = URLComponents()
+        components.scheme = self.endpointScheme
+        components.host = endpointOverride?.host ?? self.endpointHostName
+        components.port = endpointOverride?.port ?? self.endpointPort
+        components.path = path
+        
+        return components.url
+    }
+    
     /**
      Initializer.
 

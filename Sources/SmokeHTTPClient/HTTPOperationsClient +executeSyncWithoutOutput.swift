@@ -38,10 +38,12 @@ public extension HTTPOperationsClient {
         endpointOverride: URL? = nil,
         endpointPath: String,
         httpMethod: HTTPMethod,
+        operation: String? = nil,
         input: InputType,
         invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>) throws
         where InputType: HTTPRequestInputProtocol {
-            let wrappingInvocationContext = invocationContext.withOutgoingRequestIdLoggerMetadata()
+            let endpoint = getEndpoint(endpointOverride: endpointOverride, path: endpointPath)
+            let wrappingInvocationContext = invocationContext.withOutgoingDecoratedLogger(endpoint: endpoint, outgoingOperation: operation)
         
             try executeSyncWithoutOutputWithWrappedInvocationContext(
                 endpointOverride: endpointOverride,

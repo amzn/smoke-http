@@ -212,6 +212,7 @@ public extension HTTPOperationsClient {
         endpointOverride: URL? = nil,
         endpointPath: String,
         httpMethod: HTTPMethod,
+        operation: String? = nil,
         input: InputType,
         completion: @escaping (HTTPClientError?) -> (),
         invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>,
@@ -222,6 +223,7 @@ public extension HTTPOperationsClient {
                 endpointOverride: endpointOverride,
                 endpointPath: endpointPath,
                 httpMethod: httpMethod,
+                operation: operation,
                 input: input,
                 completion: completion,
                 asyncResponseInvocationStrategy: GlobalDispatchQueueAsyncResponseInvocationStrategy<HTTPClientError?>(),
@@ -248,6 +250,7 @@ public extension HTTPOperationsClient {
         endpointOverride: URL? = nil,
         endpointPath: String,
         httpMethod: HTTPMethod,
+        operation: String? = nil,
         input: InputType,
         completion: @escaping (HTTPClientError?) -> (),
         asyncResponseInvocationStrategy: InvocationStrategyType,
@@ -256,7 +259,8 @@ public extension HTTPOperationsClient {
         retryOnError: @escaping (HTTPClientError) -> Bool) throws
         where InputType: HTTPRequestInputProtocol, InvocationStrategyType: AsyncResponseInvocationStrategy,
         InvocationStrategyType.OutputType == HTTPClientError? {
-            let wrappingInvocationContext = invocationContext.withOutgoingRequestIdLoggerMetadata()
+            let endpoint = getEndpoint(endpointOverride: endpointOverride, path: endpointPath)
+            let wrappingInvocationContext = invocationContext.withOutgoingDecoratedLogger(endpoint: endpoint, outgoingOperation: operation)
         
             // use the specified event loop or pick one for the client to use for all retry attempts
             let eventLoop = invocationContext.reporting.eventLoop ?? self.eventLoopGroup.next()

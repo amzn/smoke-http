@@ -20,6 +20,8 @@ import Logging
 import Metrics
 
 private let outgoingRequestId = "outgoingRequestId"
+private let outgoingEndpointKey = "outgoingEndpoint"
+private let outgoingOperationKey = "outgoingOperation"
 
 /**
  A context related to the invocation of the HTTPClient.
@@ -36,10 +38,18 @@ public struct HTTPClientInvocationContext<InvocationReportingType: HTTPClientInv
 }
 
 extension HTTPClientInvocationContext {
-    func withOutgoingRequestIdLoggerMetadata() ->
-            HTTPClientInvocationContext<StandardHTTPClientInvocationReporting<InvocationReportingType.TraceContextType>, HandlerDelegateType> {
+    func withOutgoingDecoratedLogger(endpoint endpointOptional: URL?, outgoingOperation outgoingOperationOptional: String?)
+    -> HTTPClientInvocationContext<StandardHTTPClientInvocationReporting<InvocationReportingType.TraceContextType>, HandlerDelegateType> {
         var outwardInvocationLogger = reporting.logger
         outwardInvocationLogger[metadataKey: outgoingRequestId] = "\(UUID().uuidString)"
+                
+        if let endpoint = endpointOptional {
+            outwardInvocationLogger[metadataKey: outgoingEndpointKey] = "\(endpoint.absoluteString)"
+        }
+                
+        if let outgoingOperation = outgoingOperationOptional {
+            outwardInvocationLogger[metadataKey: outgoingOperationKey] = "\(outgoingOperation)"
+        }
         
         let wrappingInvocationReporting = StandardHTTPClientInvocationReporting(
             internalRequestId: reporting.internalRequestId,
