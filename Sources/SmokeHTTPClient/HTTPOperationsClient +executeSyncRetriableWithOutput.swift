@@ -210,9 +210,13 @@ public extension HTTPOperationsClient {
         invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>,
         retryConfiguration: HTTPClientRetryConfiguration,
         retryOnError: @escaping (HTTPClientError) -> Bool) throws -> OutputType
-        where InputType: HTTPRequestInputProtocol,
+    where InputType: HTTPRequestInputProtocol,
         OutputType: HTTPResponseOutputProtocol {
-            let endpoint = getEndpoint(endpointOverride: endpointOverride, path: endpointPath)
+            let endpoint = try getEndpoint(
+                endpointOverride: endpointOverride,
+                path: endpointPath,
+                input: input,
+                invocationReporting: invocationContext.reporting)
             let wrappingInvocationContext = invocationContext.withOutgoingDecoratedLogger(endpoint: endpoint, outgoingOperation: operation)
         
             // use the specified event loop or pick one for the client to use for all retry attempts
@@ -240,9 +244,13 @@ public extension HTTPOperationsClient {
         invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>,
         retryConfiguration: HTTPClientRetryConfiguration,
         retryOnError: @escaping (Swift.Error) -> Bool) throws -> OutputType
-        where InputType: HTTPRequestInputProtocol,
+    where InputType: HTTPRequestInputProtocol,
         OutputType: HTTPResponseOutputProtocol {
-            let endpoint = getEndpoint(endpointOverride: endpointOverride, path: endpointPath)
+            let endpoint = try getEndpoint(
+                endpointOverride: endpointOverride,
+                path: endpointPath,
+                input: input,
+                invocationReporting: invocationContext.reporting)
             let wrappingInvocationContext = invocationContext.withOutgoingDecoratedLogger(endpoint: endpoint, outgoingOperation: operation)
         
             // use the specified event loop or pick one for the client to use for all retry attempts

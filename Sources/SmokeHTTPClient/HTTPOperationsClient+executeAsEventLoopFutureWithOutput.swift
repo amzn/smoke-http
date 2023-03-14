@@ -60,15 +60,26 @@ public extension HTTPOperationsClient {
             input: InputType,
             invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>)
     -> EventLoopFuture<OutputType> where InputType: HTTPRequestInputProtocol, OutputType: HTTPResponseOutputProtocol {
-            let endpoint = getEndpoint(endpointOverride: endpointOverride, path: endpointPath)
-            let wrappingInvocationContext = invocationContext.withOutgoingDecoratedLogger(endpoint: endpoint, outgoingOperation: operation)
-            
-            return executeAsEventLoopFutureWithOutputWithWrappedInvocationContext(
+        let eventLoop = invocationContext.reporting.eventLoop ?? self.eventLoopGroup.next()
+        let endpoint: URL?
+        do {
+            endpoint = try getEndpoint(
                 endpointOverride: endpointOverride,
-                endpointPath: endpointPath,
-                httpMethod: httpMethod,
+                path: endpointPath,
                 input: input,
-                invocationContext: wrappingInvocationContext)
+                invocationReporting: invocationContext.reporting)
+        } catch {
+            return eventLoop.makeFailedFuture(error)
+        }
+
+        let wrappingInvocationContext = invocationContext.withOutgoingDecoratedLogger(endpoint: endpoint, outgoingOperation: operation)
+        
+        return executeAsEventLoopFutureWithOutputWithWrappedInvocationContext(
+            endpointOverride: endpointOverride,
+            endpointPath: endpointPath,
+            httpMethod: httpMethod,
+            input: input,
+            invocationContext: wrappingInvocationContext)
     }
 
     /**

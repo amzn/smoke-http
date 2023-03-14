@@ -45,7 +45,11 @@ public extension HTTPOperationsClient {
         input: InputType,
         invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>) async throws
     where InputType: HTTPRequestInputProtocol {
-        let endpoint = getEndpoint(endpointOverride: endpointOverride, path: endpointPath)
+        let endpoint = try getEndpoint(
+            endpointOverride: endpointOverride,
+            path: endpointPath,
+            input: input,
+            invocationReporting: invocationContext.reporting)
         let wrappingInvocationContext = invocationContext.withOutgoingDecoratedLogger(endpoint: endpoint, outgoingOperation: operation)
         
         return try await executeWithoutOutputWithWrappedInvocationContext(

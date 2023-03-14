@@ -41,16 +41,20 @@ public extension HTTPOperationsClient {
         operation: String? = nil,
         input: InputType,
         invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>) throws
-        where InputType: HTTPRequestInputProtocol {
-            let endpoint = getEndpoint(endpointOverride: endpointOverride, path: endpointPath)
-            let wrappingInvocationContext = invocationContext.withOutgoingDecoratedLogger(endpoint: endpoint, outgoingOperation: operation)
-        
-            try executeSyncWithoutOutputWithWrappedInvocationContext(
-                endpointOverride: endpointOverride,
-                endpointPath: endpointPath,
-                httpMethod: httpMethod,
-                input: input,
-                invocationContext: wrappingInvocationContext)
+    where InputType: HTTPRequestInputProtocol {
+        let endpoint = try getEndpoint(
+            endpointOverride: endpointOverride,
+            path: endpointPath,
+            input: input,
+            invocationReporting: invocationContext.reporting)
+        let wrappingInvocationContext = invocationContext.withOutgoingDecoratedLogger(endpoint: endpoint, outgoingOperation: operation)
+    
+        try executeSyncWithoutOutputWithWrappedInvocationContext(
+            endpointOverride: endpointOverride,
+            endpointPath: endpointPath,
+            httpMethod: httpMethod,
+            input: input,
+            invocationContext: wrappingInvocationContext)
     }
     
     /**

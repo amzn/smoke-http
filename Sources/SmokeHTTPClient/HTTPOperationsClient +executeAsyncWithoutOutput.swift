@@ -78,9 +78,13 @@ public extension HTTPOperationsClient {
         completion: @escaping (HTTPClientError?) -> (),
         asyncResponseInvocationStrategy: InvocationStrategyType,
         invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>) throws -> EventLoopFuture<HTTPClient.Response>
-        where InputType: HTTPRequestInputProtocol, InvocationStrategyType: AsyncResponseInvocationStrategy,
+    where InputType: HTTPRequestInputProtocol, InvocationStrategyType: AsyncResponseInvocationStrategy,
         InvocationStrategyType.OutputType == HTTPClientError? {
-            let endpoint = getEndpoint(endpointOverride: endpointOverride, path: endpointPath)
+            let endpoint = try getEndpoint(
+                endpointOverride: endpointOverride,
+                path: endpointPath,
+                input: input,
+                invocationReporting: invocationContext.reporting)
             let wrappingInvocationContext = invocationContext.withOutgoingDecoratedLogger(endpoint: endpoint, outgoingOperation: operation)
             
             return try executeAsyncWithoutOutputWithWrappedInvocationContext(

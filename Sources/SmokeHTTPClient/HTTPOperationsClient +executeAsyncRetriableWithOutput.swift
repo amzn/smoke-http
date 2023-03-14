@@ -261,10 +261,14 @@ public extension HTTPOperationsClient {
             invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>,
             retryConfiguration: HTTPClientRetryConfiguration,
             retryOnError: @escaping (HTTPClientError) -> Bool) throws
-        where InputType: HTTPRequestInputProtocol, InvocationStrategyType: AsyncResponseInvocationStrategy,
+    where InputType: HTTPRequestInputProtocol, InvocationStrategyType: AsyncResponseInvocationStrategy,
         InvocationStrategyType.OutputType == Result<OutputType, HTTPClientError>,
         OutputType: HTTPResponseOutputProtocol {
-            let endpoint = getEndpoint(endpointOverride: endpointOverride, path: endpointPath)
+            let endpoint = try getEndpoint(
+                endpointOverride: endpointOverride,
+                path: endpointPath,
+                input: input,
+                invocationReporting: invocationContext.reporting)
             let wrappingInvocationContext = invocationContext.withOutgoingDecoratedLogger(endpoint: endpoint, outgoingOperation: operation)
         
             // use the specified event loop or pick one for the client to use for all retry attempts

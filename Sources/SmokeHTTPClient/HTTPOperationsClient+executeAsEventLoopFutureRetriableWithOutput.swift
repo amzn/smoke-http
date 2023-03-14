@@ -229,20 +229,29 @@ public extension HTTPOperationsClient {
             invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>,
             retryConfiguration: HTTPClientRetryConfiguration,
             retryOnError: @escaping (HTTPClientError) -> Bool) -> EventLoopFuture<OutputType>
-        where InputType: HTTPRequestInputProtocol, OutputType: HTTPResponseOutputProtocol {
-            let endpoint = getEndpoint(endpointOverride: endpointOverride, path: endpointPath)
-            let wrappingInvocationContext = invocationContext.withOutgoingDecoratedLogger(endpoint: endpoint, outgoingOperation: operation)
+    where InputType: HTTPRequestInputProtocol, OutputType: HTTPResponseOutputProtocol {
+        // use the specified event loop or pick one for the client to use for all retry attempts
+        let eventLoop = invocationContext.reporting.eventLoop ?? self.eventLoopGroup.next()
+        let endpoint: URL?
+        do {
+            endpoint = try getEndpoint(
+                endpointOverride: endpointOverride,
+                path: endpointPath,
+                input: input,
+                invocationReporting: invocationContext.reporting)
+        } catch {
+            return eventLoop.makeFailedFuture(error)
+        }
+
+        let wrappingInvocationContext = invocationContext.withOutgoingDecoratedLogger(endpoint: endpoint, outgoingOperation: operation)
         
-            // use the specified event loop or pick one for the client to use for all retry attempts
-            let eventLoop = invocationContext.reporting.eventLoop ?? self.eventLoopGroup.next()
-            
-            let retriable = ExecuteAsEventLoopFutureWithOutputRetriable<InputType, OutputType, StandardHTTPClientInvocationReporting<InvocationReportingType.TraceContextType>, HandlerDelegateType>(
-                endpointOverride: endpointOverride, endpointPath: endpointPath,
-                httpMethod: httpMethod, input: input,
-                invocationContext: wrappingInvocationContext, eventLoopOverride: eventLoop, httpClient: self,
-                retryConfiguration: retryConfiguration,
-                retryOnError: retryOnError)
-            
-            return retriable.executeAsEventLoopFutureWithOutput()
+        let retriable = ExecuteAsEventLoopFutureWithOutputRetriable<InputType, OutputType, StandardHTTPClientInvocationReporting<InvocationReportingType.TraceContextType>, HandlerDelegateType>(
+            endpointOverride: endpointOverride, endpointPath: endpointPath,
+            httpMethod: httpMethod, input: input,
+            invocationContext: wrappingInvocationContext, eventLoopOverride: eventLoop, httpClient: self,
+            retryConfiguration: retryConfiguration,
+            retryOnError: retryOnError)
+        
+        return retriable.executeAsEventLoopFutureWithOutput()
     }
 }

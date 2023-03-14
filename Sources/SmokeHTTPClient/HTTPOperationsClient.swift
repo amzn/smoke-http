@@ -54,13 +54,21 @@ public struct HTTPOperationsClient {
     public var eventLoopGroup: EventLoopGroup {
         return self.wrappedHttpClient.eventLoopGroup
     }
-    
-    internal func getEndpoint(endpointOverride: URL?, path: String) -> URL? {
+
+    internal func getEndpoint<InputType, InvocationReportingType: HTTPClientInvocationReporting>(
+        endpointOverride: URL?,
+        path: String,
+        input: InputType,
+        invocationReporting: InvocationReportingType) throws -> URL?
+    where InputType: HTTPRequestInputProtocol {
         var components = URLComponents()
         components.scheme = self.endpointScheme
         components.host = endpointOverride?.host ?? self.endpointHostName
         components.port = endpointOverride?.port ?? self.endpointPort
-        components.path = path
+        components.path = try clientDelegate.encodeInputAndQueryString(
+            input: input,
+            httpPath: path,
+            invocationReporting: invocationReporting).pathWithQuery
         
         return components.url
     }
