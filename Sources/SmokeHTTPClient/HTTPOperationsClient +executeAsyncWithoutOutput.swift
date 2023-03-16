@@ -45,7 +45,7 @@ public extension HTTPOperationsClient {
         input: InputType,
         completion: @escaping (HTTPClientError?) -> (),
         invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>) throws -> EventLoopFuture<HTTPClient.Response>
-        where InputType: HTTPRequestInputProtocol {
+    where InputType: HTTPRequestInputProtocol {
             return try executeAsyncWithoutOutput(
                 endpointOverride: endpointOverride,
                 endpointPath: endpointPath,
@@ -80,21 +80,50 @@ public extension HTTPOperationsClient {
         invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>) throws -> EventLoopFuture<HTTPClient.Response>
     where InputType: HTTPRequestInputProtocol, InvocationStrategyType: AsyncResponseInvocationStrategy,
         InvocationStrategyType.OutputType == HTTPClientError? {
-            let endpoint = try getEndpoint(
-                endpointOverride: endpointOverride,
-                path: endpointPath,
+            let requestComponents = try clientDelegate.encodeInputAndQueryString(
                 input: input,
+                httpPath: endpointPath,
                 invocationReporting: invocationContext.reporting)
+            let endpoint = getEndpoint(endpointOverride: endpointOverride, path: requestComponents.pathWithQuery)
             let wrappingInvocationContext = invocationContext.withOutgoingDecoratedLogger(endpoint: endpoint, outgoingOperation: operation)
             
-            return try executeAsyncWithoutOutputWithWrappedInvocationContext(
+            return try executeAsyncWithoutOutput(
                 endpointOverride: endpointOverride,
-                endpointPath: endpointPath,
+                requestComponents: requestComponents,
                 httpMethod: httpMethod,
-                input: input,
                 completion: completion,
                 asyncResponseInvocationStrategy: asyncResponseInvocationStrategy,
                 invocationContext: wrappingInvocationContext)
+    }
+
+    /**
+     Submits a request that will not return a response body to this client asynchronously.
+     
+     - Parameters:
+        - requestComponents: The request components for this request.
+        - httpMethod: The http method to use for this request.
+        - completion: Completion handler called with an error if one occurs or nil otherwise.
+        - asyncResponseInvocationStrategy: The invocation strategy for the response from this request.
+        - invocationContext: context to use for this invocation.
+     */
+    internal func executeAsyncWithoutOutput<InvocationStrategyType,
+            InvocationReportingType: HTTPClientInvocationReporting, HandlerDelegateType: HTTPClientInvocationDelegate>(
+        endpointOverride: URL? = nil,
+        requestComponents: HTTPRequestComponents,
+        httpMethod: HTTPMethod,
+        operation: String? = nil,
+        completion: @escaping (HTTPClientError?) -> (),
+        asyncResponseInvocationStrategy: InvocationStrategyType,
+        invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>) throws -> EventLoopFuture<HTTPClient.Response>
+    where InvocationStrategyType: AsyncResponseInvocationStrategy,
+        InvocationStrategyType.OutputType == HTTPClientError? {
+            return try executeAsyncWithoutOutputWithWrappedInvocationContext(
+                endpointOverride: endpointOverride,
+                requestComponents: requestComponents,
+                httpMethod: httpMethod,
+                completion: completion,
+                asyncResponseInvocationStrategy: asyncResponseInvocationStrategy,
+                invocationContext: invocationContext)
     }
     
     /**
@@ -108,16 +137,15 @@ public extension HTTPOperationsClient {
         - asyncResponseInvocationStrategy: The invocation strategy for the response from this request.
         - invocationContext: context to use for this invocation.
      */
-    internal func executeAsyncWithoutOutputWithWrappedInvocationContext<InputType, InvocationStrategyType,
+    internal func executeAsyncWithoutOutputWithWrappedInvocationContext<InvocationStrategyType,
             InvocationReportingType: HTTPClientInvocationReporting, HandlerDelegateType: HTTPClientInvocationDelegate>(
         endpointOverride: URL? = nil,
-        endpointPath: String,
+        requestComponents: HTTPRequestComponents,
         httpMethod: HTTPMethod,
-        input: InputType,
         completion: @escaping (HTTPClientError?) -> (),
         asyncResponseInvocationStrategy: InvocationStrategyType,
         invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>) throws -> EventLoopFuture<HTTPClient.Response>
-        where InputType: HTTPRequestInputProtocol, InvocationStrategyType: AsyncResponseInvocationStrategy,
+        where InvocationStrategyType: AsyncResponseInvocationStrategy,
         InvocationStrategyType.OutputType == HTTPClientError? {
             
             let durationMetricDetails: (Date, Metrics.Timer?, OutwardsRequestAggregator?)?
@@ -173,10 +201,9 @@ public extension HTTPOperationsClient {
             
             // submit the asynchronous request
             return try executeAsync(endpointOverride: endpointOverride,
-                                                 endpointPath: endpointPath,
-                                                 httpMethod: httpMethod,
-                                                 input: input,
-                                                 completion: wrappingCompletion,
-                                                 invocationContext: invocationContext)
+                                    requestComponents: requestComponents,
+                                    httpMethod: httpMethod,
+                                    completion: wrappingCompletion,
+                                    invocationContext: invocationContext)
     }
 }

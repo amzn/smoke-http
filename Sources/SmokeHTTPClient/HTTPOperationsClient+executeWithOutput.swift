@@ -46,18 +46,17 @@ public extension HTTPOperationsClient {
         input: InputType,
         invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>) async throws -> OutputType
     where InputType: HTTPRequestInputProtocol, OutputType: HTTPResponseOutputProtocol {
-        let endpoint = try getEndpoint(
-            endpointOverride: endpointOverride,
-            path: endpointPath,
+        let requestComponents = try clientDelegate.encodeInputAndQueryString(
             input: input,
+            httpPath: endpointPath,
             invocationReporting: invocationContext.reporting)
+        let endpoint = getEndpoint(endpointOverride: endpointOverride, path: requestComponents.pathWithQuery)
         let wrappingInvocationContext = invocationContext.withOutgoingDecoratedLogger(endpoint: endpoint, outgoingOperation: operation)
         
         return try await executeWithOutputWithWrappedInvocationContext(
             endpointOverride: endpointOverride,
-            endpointPath: endpointPath,
+            requestComponents: requestComponents,
             httpMethod: httpMethod,
-            input: input,
             invocationContext: wrappingInvocationContext)
     }
     
@@ -73,14 +72,13 @@ public extension HTTPOperationsClient {
          - invocationContext: context to use for this invocation.
         - Returns: A future that will produce the execution result or failure.
      */
-    internal func executeWithOutputWithWrappedInvocationContext<InputType, OutputType,
+    internal func executeWithOutputWithWrappedInvocationContext<OutputType,
         InvocationReportingType: HTTPClientInvocationReporting, HandlerDelegateType: HTTPClientInvocationDelegate>(
             endpointOverride: URL? = nil,
-            endpointPath: String,
+            requestComponents: HTTPRequestComponents,
             httpMethod: HTTPMethod,
-            input: InputType,
             invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>) async throws
-    -> OutputType where InputType: HTTPRequestInputProtocol, OutputType: HTTPResponseOutputProtocol {
+    -> OutputType where OutputType: HTTPResponseOutputProtocol {
         let durationMetricDetails: (Date, Metrics.Timer?, OutwardsRequestAggregator?)?
         
         if invocationContext.reporting.outwardsRequestAggregator != nil ||
@@ -94,9 +92,11 @@ public extension HTTPOperationsClient {
         
         let output: OutputType
         do {
-            let response = try await execute(endpointOverride: endpointOverride,
-                                         endpointPath: endpointPath, httpMethod: httpMethod,
-                                         input: input, invocationContext: invocationContext)
+            let response = try await execute(
+                endpointOverride: endpointOverride,
+                requestComponents: requestComponents,
+                httpMethod: httpMethod,
+                invocationContext: invocationContext)
             
             do {
                 // decode the provided body into the desired type

@@ -43,18 +43,17 @@ public extension HTTPOperationsClient {
         invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>) throws -> OutputType
     where InputType: HTTPRequestInputProtocol,
         OutputType: HTTPResponseOutputProtocol {
-            let endpoint = try getEndpoint(
-                endpointOverride: endpointOverride,
-                path: endpointPath,
+            let requestComponents = try clientDelegate.encodeInputAndQueryString(
                 input: input,
+                httpPath: endpointPath,
                 invocationReporting: invocationContext.reporting)
+            let endpoint = getEndpoint(endpointOverride: endpointOverride, path: requestComponents.pathWithQuery)
             let wrappingInvocationContext = invocationContext.withOutgoingDecoratedLogger(endpoint: endpoint, outgoingOperation: operation)
             
             return try executeSyncWithOutputWithWrappedInvocationContext(
                 endpointOverride: endpointOverride,
-                endpointPath: endpointPath,
+                requestComponents: requestComponents,
                 httpMethod: httpMethod,
-                input: input,
                 invocationContext: wrappingInvocationContext)
     }
     
@@ -69,15 +68,13 @@ public extension HTTPOperationsClient {
          - Returns: the response body.
          - Throws: If an error occurred during the request.
      */
-    internal func executeSyncWithOutputWithWrappedInvocationContext<InputType, OutputType, InvocationReportingType: HTTPClientInvocationReporting,
+    internal func executeSyncWithOutputWithWrappedInvocationContext<OutputType, InvocationReportingType: HTTPClientInvocationReporting,
             HandlerDelegateType: HTTPClientInvocationDelegate>(
         endpointOverride: URL? = nil,
-        endpointPath: String,
+        requestComponents: HTTPRequestComponents,
         httpMethod: HTTPMethod,
-        input: InputType,
         invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>) throws -> OutputType
-        where InputType: HTTPRequestInputProtocol,
-        OutputType: HTTPResponseOutputProtocol {
+        where OutputType: HTTPResponseOutputProtocol {
             
             var responseResult: Result<OutputType, HTTPClientError>?
             let completedSemaphore = DispatchSemaphore(value: 0)
@@ -89,9 +86,8 @@ public extension HTTPOperationsClient {
             
             _ = try executeAsyncWithOutput(
                 endpointOverride: endpointOverride,
-                endpointPath: endpointPath,
+                requestComponents: requestComponents,
                 httpMethod: httpMethod,
-                input: input,
                 completion: completion,
                 // the completion handler can be safely executed on a SwiftNIO thread
                 asyncResponseInvocationStrategy: SameThreadAsyncResponseInvocationStrategy<Result<OutputType, HTTPClientError>>(),

@@ -62,24 +62,23 @@ public extension HTTPOperationsClient {
         invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>) -> EventLoopFuture<Void>
     where InputType: HTTPRequestInputProtocol {
         let eventLoop = invocationContext.reporting.eventLoop ?? self.eventLoopGroup.next()
-        let endpoint: URL?
+        let requestComponents: HTTPRequestComponents
         do {
-            endpoint = try getEndpoint(
-                endpointOverride: endpointOverride,
-                path: endpointPath,
+            requestComponents = try clientDelegate.encodeInputAndQueryString(
                 input: input,
+                httpPath: endpointPath,
                 invocationReporting: invocationContext.reporting)
         } catch {
             return eventLoop.makeFailedFuture(error)
         }
 
+        let endpoint = getEndpoint(endpointOverride: endpointOverride, path: requestComponents.pathWithQuery)
         let wrappingInvocationContext = invocationContext.withOutgoingDecoratedLogger(endpoint: endpoint, outgoingOperation: operation)
         
         return executeAsEventLoopFutureWithoutOutputWithWrappedInvocationContext(
             endpointOverride: endpointOverride,
-            endpointPath: endpointPath,
+            requestComponents: requestComponents,
             httpMethod: httpMethod,
-            input: input,
             invocationContext: wrappingInvocationContext)
     }
     
@@ -94,14 +93,13 @@ public extension HTTPOperationsClient {
         - invocationContext: context to use for this invocation.
      - Returns: A future that will produce a Void result or failure.
      */
-    internal func executeAsEventLoopFutureWithoutOutputWithWrappedInvocationContext<InputType,
-            InvocationReportingType: HTTPClientInvocationReporting, HandlerDelegateType: HTTPClientInvocationDelegate>(
+    internal func executeAsEventLoopFutureWithoutOutputWithWrappedInvocationContext<
+            InvocationReportingType: HTTPClientInvocationReporting,
+            HandlerDelegateType: HTTPClientInvocationDelegate>(
         endpointOverride: URL? = nil,
-        endpointPath: String,
+        requestComponents: HTTPRequestComponents,
         httpMethod: HTTPMethod,
-        input: InputType,
-        invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>) -> EventLoopFuture<Void>
-        where InputType: HTTPRequestInputProtocol {
+        invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>) -> EventLoopFuture<Void> {
             
             let durationMetricDetails: (Date, Metrics.Timer?, OutwardsRequestAggregator?)?
             
@@ -114,9 +112,8 @@ public extension HTTPOperationsClient {
         
             // submit the asynchronous request
             let future = executeAsEventLoopFuture(endpointOverride: endpointOverride,
-                                                  endpointPath: endpointPath,
+                                                  requestComponents: requestComponents,
                                                   httpMethod: httpMethod,
-                                                  input: input,
                                                   invocationContext: invocationContext)
                 .map { _ -> Void in
                     invocationContext.reporting.successCounter?.increment()

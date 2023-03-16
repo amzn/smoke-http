@@ -49,13 +49,12 @@ public extension HTTPOperationsClient {
     /**
      Helper type that manages the state of a retriable async request.
      */
-    private class ExecuteWithOutputRetriable<InputType, OutputType,
+    private class ExecuteWithOutputRetriable<OutputType,
         InvocationReportingType: HTTPClientInvocationReporting, HandlerDelegateType: HTTPClientInvocationDelegate>
-            where InputType: HTTPRequestInputProtocol, OutputType: HTTPResponseOutputProtocol {
+            where OutputType: HTTPResponseOutputProtocol {
         let endpointOverride: URL?
-        let endpointPath: String
+        let requestComponents: HTTPRequestComponents
         let httpMethod: HTTPMethod
-        let input: InputType
         let invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>
         let eventLoop: EventLoop
         let innerInvocationContext:
@@ -69,16 +68,15 @@ public extension HTTPOperationsClient {
         
         var retriesRemaining: Int
         
-        init(endpointOverride: URL?, endpointPath: String, httpMethod: HTTPMethod, input: InputType,
+        init(endpointOverride: URL?, requestComponents: HTTPRequestComponents, httpMethod: HTTPMethod,
              invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>,
              eventLoopOverride eventLoop: EventLoop,
              httpClient: HTTPOperationsClient,
              retryConfiguration: HTTPClientRetryConfiguration,
              retryOnError: @escaping (HTTPClientError) -> Bool) {
             self.endpointOverride = endpointOverride
-            self.endpointPath = endpointPath
+            self.requestComponents = requestComponents
             self.httpMethod = httpMethod
-            self.input = input
             self.invocationContext = invocationContext
             self.eventLoop = eventLoop
             self.httpClient = httpClient
@@ -113,8 +111,8 @@ public extension HTTPOperationsClient {
             do {
                 result = try await httpClient.executeWithOutputWithWrappedInvocationContext(
                     endpointOverride: endpointOverride,
-                    endpointPath: endpointPath, httpMethod: httpMethod,
-                    input: input, invocationContext: innerInvocationContext)
+                    requestComponents: requestComponents, httpMethod: httpMethod,
+                    invocationContext: innerInvocationContext)
             } catch {
                 let httpClientError: HTTPClientError
                 if let typedError = error as? HTTPClientError {
@@ -229,19 +227,19 @@ public extension HTTPOperationsClient {
         retryConfiguration: HTTPClientRetryConfiguration,
         retryOnError: @escaping (HTTPClientError) -> Bool) async throws -> OutputType
     where InputType: HTTPRequestInputProtocol, OutputType: HTTPResponseOutputProtocol {
-        let endpoint = try getEndpoint(
-            endpointOverride: endpointOverride,
-            path: endpointPath,
+        let requestComponents = try clientDelegate.encodeInputAndQueryString(
             input: input,
+            httpPath: endpointPath,
             invocationReporting: invocationContext.reporting)
+        let endpoint = getEndpoint(endpointOverride: endpointOverride, path: requestComponents.pathWithQuery)
         let wrappingInvocationContext = invocationContext.withOutgoingDecoratedLogger(endpoint: endpoint, outgoingOperation: operation)
     
         // use the specified event loop or pick one for the client to use for all retry attempts
         let eventLoop = invocationContext.reporting.eventLoop ?? self.eventLoopGroup.next()
         
-        let retriable = ExecuteWithOutputRetriable<InputType, OutputType, StandardHTTPClientInvocationReporting<InvocationReportingType.TraceContextType>, HandlerDelegateType>(
-            endpointOverride: endpointOverride, endpointPath: endpointPath,
-            httpMethod: httpMethod, input: input,
+        let retriable = ExecuteWithOutputRetriable<OutputType, StandardHTTPClientInvocationReporting<InvocationReportingType.TraceContextType>, HandlerDelegateType>(
+            endpointOverride: endpointOverride, requestComponents: requestComponents,
+            httpMethod: httpMethod,
             invocationContext: wrappingInvocationContext, eventLoopOverride: eventLoop, httpClient: self,
             retryConfiguration: retryConfiguration,
             retryOnError: retryOnError)
