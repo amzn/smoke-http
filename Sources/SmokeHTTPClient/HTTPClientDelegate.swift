@@ -18,7 +18,10 @@
 import Foundation
 import AsyncHTTPClient
 import NIOSSL
+import NIOHTTP1
+import NIOCore
 import Logging
+import HTTPHeadersCoding
 
 /**
  Delegate protocol that handles client-specific logic.
@@ -78,5 +81,99 @@ public extension HTTPClientDelegate {
         tlsConfiguration.certificateVerification = certificateVerification
 
         return tlsConfiguration
+    }
+}
+
+public struct HTTPClientJSONDelegate: HTTPClientDelegate {
+    public init() {}
+
+    struct HTTPClientErrorDetails: Error, CustomStringConvertible {
+        let response: AsyncHTTPClient.HTTPClient.Response
+
+        var description: String {
+            var message = "HTTP request failed with error \(response.status.reasonPhrase). Response headers are \(response.headers)."
+            if response.status.mayHaveResponseBody,
+                let body = response.body,
+                let bodyString = body.getString(at: 0, length: body.readableBytes) {
+                message += " Response body is '\(bodyString)'."
+            }
+
+            return message
+        }
+    }
+
+    public func getResponseError<InvocationReportingType>(
+        response: AsyncHTTPClient.HTTPClient.Response,
+        responseComponents: HTTPResponseComponents,
+        invocationReporting: InvocationReportingType) throws -> HTTPClientError 
+    where InvocationReportingType : HTTPClientCoreInvocationReporting, InvocationReportingType : HTTPClientInvocationMetrics {
+        return HTTPClientError(responseCode: Int(response.status.code), cause: HTTPClientErrorDetails(response: response))
+    }
+
+    public func encodeInputAndQueryString<InputType, InvocationReportingType>(
+        input: InputType,
+        httpPath: String,
+        invocationReporting: InvocationReportingType) throws -> HTTPRequestComponents
+    where InputType : HTTPRequestInputProtocol,
+        InvocationReportingType : HTTPClientCoreInvocationReporting,
+        InvocationReportingType : HTTPClientInvocationMetrics {
+            let bodyData: Data
+            if let bodyEncodable = input.bodyEncodable {
+                bodyData = try JSONEncoder().encode(bodyEncodable)
+            } else {
+                bodyData = Data()
+            }
+            
+            return HTTPRequestComponents(
+                pathWithQuery: httpPath,
+                additionalHeaders: [],
+                body: bodyData)
+    }
+
+    public func decodeOutput<OutputType, InvocationReportingType>(
+        output: Data?,
+        headers: [(String, String)],
+        invocationReporting: InvocationReportingType) throws -> OutputType
+    where OutputType : HTTPResponseOutputProtocol,
+        InvocationReportingType : HTTPClientCoreInvocationReporting,
+        InvocationReportingType : HTTPClientInvocationMetrics {
+            // Convert output to a debug string only if trace logging is enabled
+            invocationReporting.logger.trace("Attempting to decode result data from JSON to \(OutputType.self)",
+                                             metadata: ["body": "\(output.debugString)"])
+
+            func bodyDecodableProvider() throws -> OutputType.BodyType {
+                // we are expecting a response body
+                guard let responseBody = output else {
+                    throw HTTPError.badResponse("Unexpected empty response.")
+                }
+                
+                return try JSONDecoder().decode(OutputType.BodyType.self, from: responseBody)
+            }
+            
+            func headersDecodableProvider() throws -> OutputType.HeadersType {
+                let headersDecoder = HTTPHeadersDecoder(keyDecodingStrategy: .useShapePrefix)
+                return try headersDecoder.decode(OutputType.HeadersType.self,
+                                                 from: headers)
+            }
+            
+            return try OutputType.compose(bodyDecodableProvider: bodyDecodableProvider,
+                                          headersDecodableProvider: headersDecodableProvider)
+    }
+}
+
+private extension Data {
+    var debugString: String {
+        return String(data: self, encoding: .utf8) ?? ""
+    }
+}
+
+private extension Optional where Wrapped == Data {
+    var debugString: String {
+        switch self {
+        case .some(let wrapped):
+            return wrapped.debugString
+        case .none:
+            return ""
+        }
     }
 }
