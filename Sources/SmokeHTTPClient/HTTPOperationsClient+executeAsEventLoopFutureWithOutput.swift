@@ -60,15 +60,25 @@ public extension HTTPOperationsClient {
             input: InputType,
             invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>)
     -> EventLoopFuture<OutputType> where InputType: HTTPRequestInputProtocol, OutputType: HTTPResponseOutputProtocol {
-            let endpoint = getEndpoint(endpointOverride: endpointOverride, path: endpointPath)
-            let wrappingInvocationContext = invocationContext.withOutgoingDecoratedLogger(endpoint: endpoint, outgoingOperation: operation)
-            
-            return executeAsEventLoopFutureWithOutputWithWrappedInvocationContext(
-                endpointOverride: endpointOverride,
-                endpointPath: endpointPath,
-                httpMethod: httpMethod,
+        let eventLoop = invocationContext.reporting.eventLoop ?? self.eventLoopGroup.next()
+        let requestComponents: HTTPRequestComponents
+        do {
+            requestComponents = try clientDelegate.encodeInputAndQueryString(
                 input: input,
-                invocationContext: wrappingInvocationContext)
+                httpPath: endpointPath,
+                invocationReporting: invocationContext.reporting)
+        } catch {
+            return eventLoop.makeFailedFuture(error)
+        }
+
+        let endpoint = getEndpoint(endpointOverride: endpointOverride, path: requestComponents.pathWithQuery)
+        let wrappingInvocationContext = invocationContext.withOutgoingDecoratedLogger(endpoint: endpoint, outgoingOperation: operation)
+        
+        return executeAsEventLoopFutureWithOutputWithWrappedInvocationContext(
+            endpointOverride: endpointOverride,
+            requestComponents: requestComponents,
+            httpMethod: httpMethod,
+            invocationContext: wrappingInvocationContext)
     }
 
     /**
@@ -83,14 +93,13 @@ public extension HTTPOperationsClient {
          - invocationContext: context to use for this invocation.
         - Returns: A future that will produce the execution result or failure.
      */
-    internal func executeAsEventLoopFutureWithOutputWithWrappedInvocationContext<InputType, OutputType,
+    internal func executeAsEventLoopFutureWithOutputWithWrappedInvocationContext< OutputType,
         InvocationReportingType: HTTPClientInvocationReporting, HandlerDelegateType: HTTPClientInvocationDelegate>(
             endpointOverride: URL? = nil,
-            endpointPath: String,
+            requestComponents: HTTPRequestComponents,
             httpMethod: HTTPMethod,
-            input: InputType,
             invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>) -> EventLoopFuture<OutputType>
-            where InputType: HTTPRequestInputProtocol, OutputType: HTTPResponseOutputProtocol {
+    where OutputType: HTTPResponseOutputProtocol {
         let durationMetricDetails: (Date, Metrics.Timer?, OutwardsRequestAggregator?)?
         
         if invocationContext.reporting.outwardsRequestAggregator != nil ||
@@ -105,8 +114,8 @@ public extension HTTPOperationsClient {
         // that will decode the returned body into the desired decodable type.
         
         let future = executeAsEventLoopFuture(endpointOverride: endpointOverride,
-                                              endpointPath: endpointPath, httpMethod: httpMethod,
-                                              input: input, invocationContext: invocationContext)
+                                              requestComponents: requestComponents, httpMethod: httpMethod,
+                                              invocationContext: invocationContext)
             .flatMapThrowing { (response) -> OutputType in
                 do {
                     // decode the provided body into the desired type

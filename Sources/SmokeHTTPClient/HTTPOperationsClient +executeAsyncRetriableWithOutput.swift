@@ -27,15 +27,14 @@ public extension HTTPOperationsClient {
     /**
      Helper type that manages the state of a retriable async request.
      */
-    private class ExecuteAsyncWithOutputRetriable<InputType, OutputType, InvocationStrategyType,
+    private class ExecuteAsyncWithOutputRetriable<OutputType, InvocationStrategyType,
         InvocationReportingType: HTTPClientInvocationReporting, HandlerDelegateType: HTTPClientInvocationDelegate>
-            where InputType: HTTPRequestInputProtocol, InvocationStrategyType: AsyncResponseInvocationStrategy,
+            where InvocationStrategyType: AsyncResponseInvocationStrategy,
             InvocationStrategyType.OutputType == Result<OutputType, HTTPClientError>,
             OutputType: HTTPResponseOutputProtocol {
         let endpointOverride: URL?
-        let endpointPath: String
+        let requestComponents: HTTPRequestComponents
         let httpMethod: HTTPMethod
-        let input: InputType
         let outerCompletion: (Result<OutputType, HTTPClientError>) -> ()
         let asyncResponseInvocationStrategy: InvocationStrategyType
         let invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>
@@ -51,8 +50,8 @@ public extension HTTPOperationsClient {
         
         var retriesRemaining: Int
         
-        init(endpointOverride: URL?, endpointPath: String, httpMethod: HTTPMethod,
-             input: InputType, outerCompletion: @escaping (Result<OutputType, HTTPClientError>) -> (),
+        init(endpointOverride: URL?, requestComponents: HTTPRequestComponents, httpMethod: HTTPMethod,
+             outerCompletion: @escaping (Result<OutputType, HTTPClientError>) -> (),
              asyncResponseInvocationStrategy: InvocationStrategyType,
              invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>,
              eventLoopOverride eventLoop: EventLoop,
@@ -60,9 +59,8 @@ public extension HTTPOperationsClient {
              retryConfiguration: HTTPClientRetryConfiguration,
              retryOnError: @escaping (HTTPClientError) -> Bool) {
             self.endpointOverride = endpointOverride
-            self.endpointPath = endpointPath
+            self.requestComponents = requestComponents
             self.httpMethod = httpMethod
-            self.input = input
             self.outerCompletion = outerCompletion
             self.asyncResponseInvocationStrategy = asyncResponseInvocationStrategy
             self.invocationContext = invocationContext
@@ -97,8 +95,9 @@ public extension HTTPOperationsClient {
             // submit the asynchronous request
             _ = try httpClient.executeAsyncWithOutputWithWrappedInvocationContext(
                 endpointOverride: endpointOverride,
-                endpointPath: endpointPath, httpMethod: httpMethod,
-                input: input, completion: completion,
+                requestComponents: requestComponents,
+                httpMethod: httpMethod,
+                completion: completion,
                 asyncResponseInvocationStrategy: asyncResponseInvocationStrategy,
                 invocationContext: innerInvocationContext)
         }
@@ -261,18 +260,22 @@ public extension HTTPOperationsClient {
             invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>,
             retryConfiguration: HTTPClientRetryConfiguration,
             retryOnError: @escaping (HTTPClientError) -> Bool) throws
-        where InputType: HTTPRequestInputProtocol, InvocationStrategyType: AsyncResponseInvocationStrategy,
+    where InputType: HTTPRequestInputProtocol, InvocationStrategyType: AsyncResponseInvocationStrategy,
         InvocationStrategyType.OutputType == Result<OutputType, HTTPClientError>,
         OutputType: HTTPResponseOutputProtocol {
-            let endpoint = getEndpoint(endpointOverride: endpointOverride, path: endpointPath)
+            let requestComponents = try clientDelegate.encodeInputAndQueryString(
+                input: input,
+                httpPath: endpointPath,
+                invocationReporting: invocationContext.reporting)
+            let endpoint = getEndpoint(endpointOverride: endpointOverride, path: requestComponents.pathWithQuery)
             let wrappingInvocationContext = invocationContext.withOutgoingDecoratedLogger(endpoint: endpoint, outgoingOperation: operation)
         
             // use the specified event loop or pick one for the client to use for all retry attempts
             let eventLoop = invocationContext.reporting.eventLoop ?? self.eventLoopGroup.next()
             
             let retriable = ExecuteAsyncWithOutputRetriable(
-                endpointOverride: endpointOverride, endpointPath: endpointPath,
-                httpMethod: httpMethod, input: input, outerCompletion: completion,
+                endpointOverride: endpointOverride, requestComponents: requestComponents,
+                httpMethod: httpMethod, outerCompletion: completion,
                 asyncResponseInvocationStrategy: asyncResponseInvocationStrategy,
                 invocationContext: wrappingInvocationContext, eventLoopOverride: eventLoop, httpClient: self,
                 retryConfiguration: retryConfiguration,

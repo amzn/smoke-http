@@ -41,16 +41,19 @@ public extension HTTPOperationsClient {
         operation: String? = nil,
         input: InputType,
         invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>) throws
-        where InputType: HTTPRequestInputProtocol {
-            let endpoint = getEndpoint(endpointOverride: endpointOverride, path: endpointPath)
-            let wrappingInvocationContext = invocationContext.withOutgoingDecoratedLogger(endpoint: endpoint, outgoingOperation: operation)
-        
-            try executeSyncWithoutOutputWithWrappedInvocationContext(
-                endpointOverride: endpointOverride,
-                endpointPath: endpointPath,
-                httpMethod: httpMethod,
-                input: input,
-                invocationContext: wrappingInvocationContext)
+    where InputType: HTTPRequestInputProtocol {
+        let requestComponents = try clientDelegate.encodeInputAndQueryString(
+            input: input,
+            httpPath: endpointPath,
+            invocationReporting: invocationContext.reporting)
+        let endpoint = getEndpoint(endpointOverride: endpointOverride, path: requestComponents.pathWithQuery)
+        let wrappingInvocationContext = invocationContext.withOutgoingDecoratedLogger(endpoint: endpoint, outgoingOperation: operation)
+    
+        try executeSyncWithoutOutputWithWrappedInvocationContext(
+            endpointOverride: endpointOverride,
+            requestComponents: requestComponents,
+            httpMethod: httpMethod,
+            invocationContext: wrappingInvocationContext)
     }
     
     /**
@@ -63,14 +66,12 @@ public extension HTTPOperationsClient {
          - invocationContext: context to use for this invocation.
          - Throws: If an error occurred during the request.
      */
-    internal func executeSyncWithoutOutputWithWrappedInvocationContext<InputType, InvocationReportingType: HTTPClientInvocationReporting,
+    internal func executeSyncWithoutOutputWithWrappedInvocationContext<InvocationReportingType: HTTPClientInvocationReporting,
             HandlerDelegateType: HTTPClientInvocationDelegate>(
         endpointOverride: URL? = nil,
-        endpointPath: String,
+        requestComponents: HTTPRequestComponents,
         httpMethod: HTTPMethod,
-        input: InputType,
-        invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>) throws
-        where InputType: HTTPRequestInputProtocol {
+        invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>) throws {
             var responseError: HTTPClientError?
             let completedSemaphore = DispatchSemaphore(value: 0)
             
@@ -81,11 +82,10 @@ public extension HTTPOperationsClient {
                 completedSemaphore.signal()
             }
             
-            _ = try executeAsyncWithoutOutput(
+            _ = try executeAsyncWithoutOutputWithWrappedInvocationContext(
                 endpointOverride: endpointOverride,
-                endpointPath: endpointPath,
+                requestComponents: requestComponents,
                 httpMethod: httpMethod,
-                input: input,
                 completion: completion,
                 // the completion handler can be safely executed on a SwiftNIO thread
                 asyncResponseInvocationStrategy: SameThreadAsyncResponseInvocationStrategy<HTTPClientError?>(),

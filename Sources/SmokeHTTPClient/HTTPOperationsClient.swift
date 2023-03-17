@@ -54,7 +54,7 @@ public struct HTTPOperationsClient {
     public var eventLoopGroup: EventLoopGroup {
         return self.wrappedHttpClient.eventLoopGroup
     }
-    
+
     internal func getEndpoint(endpointOverride: URL?, path: String) -> URL? {
         var components = URLComponents()
         components.scheme = self.endpointScheme
@@ -192,18 +192,16 @@ public struct HTTPOperationsClient {
 }
  
 extension HTTPOperationsClient {
-    func executeAsync<InputType, InvocationReportingType: HTTPClientInvocationReporting, HandlerDelegateType: HTTPClientInvocationDelegate>(
-            endpointOverride: URL? = nil,
-            endpointPath: String,
-            httpMethod: HTTPMethod,
-            input: InputType,
-            completion: @escaping (Result<HTTPResponseComponents, HTTPClientError>) -> (),
-            invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>) throws -> EventLoopFuture<HTTPClient.Response>
-            where InputType: HTTPRequestInputProtocol {
+    func executeAsync<InvocationReportingType: HTTPClientInvocationReporting, HandlerDelegateType: HTTPClientInvocationDelegate>(
+        endpointOverride: URL? = nil,
+        requestComponents: HTTPRequestComponents,
+        httpMethod: HTTPMethod,
+        completion: @escaping (Result<HTTPResponseComponents, HTTPClientError>) -> (),
+        invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>) throws 
+    -> EventLoopFuture<HTTPClient.Response> {
         let (responseFuture, outwardsRequestContext) = try performExecuteAsync(endpointOverride: endpointOverride,
-                                                                               endpointPath: endpointPath,
+                                                                               requestComponents: requestComponents,
                                                                                httpMethod: httpMethod,
-                                                                               input: input,
                                                                                invocationContext: invocationContext)
 
         responseFuture.whenComplete { result in
@@ -224,18 +222,16 @@ extension HTTPOperationsClient {
         return responseFuture
     }
     
-    func executeAsEventLoopFuture<InputType, InvocationReportingType: HTTPClientInvocationReporting, HandlerDelegateType: HTTPClientInvocationDelegate>(
-            endpointOverride: URL? = nil,
-            endpointPath: String,
-            httpMethod: HTTPMethod,
-            input: InputType,
-            invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>) -> EventLoopFuture<HTTPResponseComponents>
-            where InputType: HTTPRequestInputProtocol {
+    func executeAsEventLoopFuture<InvocationReportingType: HTTPClientInvocationReporting, HandlerDelegateType: HTTPClientInvocationDelegate>(
+        endpointOverride: URL? = nil,
+        requestComponents: HTTPRequestComponents,
+        httpMethod: HTTPMethod,
+        invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>)
+    -> EventLoopFuture<HTTPResponseComponents> {
         do {
             let (responseFuture, outwardsRequestContext) = try performExecuteAsync(endpointOverride: endpointOverride,
-                                                                                   endpointPath: endpointPath,
+                                                                                   requestComponents: requestComponents,
                                                                                    httpMethod: httpMethod,
-                                                                                   input: input,
                                                                                    invocationContext: invocationContext)
             return responseFuture.flatMapThrowing { successResult in
                 // a response has been successfully received; this reponse may be a successful response
@@ -268,17 +264,15 @@ extension HTTPOperationsClient {
         }
     }
     
-    func execute<InputType, InvocationReportingType: HTTPClientInvocationReporting, HandlerDelegateType: HTTPClientInvocationDelegate>(
-            endpointOverride: URL? = nil,
-            endpointPath: String,
-            httpMethod: HTTPMethod,
-            input: InputType,
-            invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>) async throws
-    -> HTTPResponseComponents where InputType: HTTPRequestInputProtocol {
+    func execute< InvocationReportingType: HTTPClientInvocationReporting, HandlerDelegateType: HTTPClientInvocationDelegate>(
+        endpointOverride: URL? = nil,
+        requestComponents: HTTPRequestComponents,
+        httpMethod: HTTPMethod,
+        invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>) async throws
+    -> HTTPResponseComponents  {
         let (responseFuture, outwardsRequestContext) = try performExecuteAsync(endpointOverride: endpointOverride,
-                                                                               endpointPath: endpointPath,
+                                                                               requestComponents: requestComponents,
                                                                                httpMethod: httpMethod,
-                                                                               input: input,
                                                                                invocationContext: invocationContext)
         
         do {
@@ -307,22 +301,15 @@ extension HTTPOperationsClient {
     
     // To maintain the existing behaviour of async functions, this function will throw for synchronous setup errors and fail
     // the future otherwise.
-    private func performExecuteAsync<InputType, InvocationReportingType: HTTPClientInvocationReporting, HandlerDelegateType: HTTPClientInvocationDelegate>(
-            endpointOverride: URL? = nil,
-            endpointPath: String,
-            httpMethod: HTTPMethod,
-            input: InputType,
-            invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>) throws
-        -> (EventLoopFuture<HTTPClient.Response>, InvocationReportingType.TraceContextType.OutwardsRequestContext)
-            where InputType: HTTPRequestInputProtocol {
+    private func performExecuteAsync<InvocationReportingType: HTTPClientInvocationReporting, HandlerDelegateType: HTTPClientInvocationDelegate>(
+        endpointOverride: URL? = nil,
+        requestComponents: HTTPRequestComponents,
+        httpMethod: HTTPMethod,
+        invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>) throws
+    -> (EventLoopFuture<HTTPClient.Response>, InvocationReportingType.TraceContextType.OutwardsRequestContext) {
 
         let endpointHostName = endpointOverride?.host ?? self.endpointHostName
         let endpointPort = endpointOverride?.port ?? self.endpointPort
-
-        let requestComponents = try clientDelegate.encodeInputAndQueryString(
-            input: input,
-            httpPath: endpointPath,
-            invocationReporting: invocationContext.reporting)
 
         let pathWithQuery = requestComponents.pathWithQuery
 
