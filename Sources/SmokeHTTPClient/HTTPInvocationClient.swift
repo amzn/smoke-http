@@ -61,6 +61,8 @@ public struct HTTPInvocationClient<TraceContextType: InvocationTraceContext, Han
     let retryOnErrorProvider: (HTTPClientError) -> Bool
     let invocationContext: HTTPClientInvocationContext<StandardHTTPClientInvocationReporting<TraceContextType>, HandlerDelegateType>
 
+    // Only Swift >= 5.7 supports type inference from default expressions
+    #if swift(>=5.7)
     public init(
         endpointHostName: String = "", // If empty, client will have to provide endpoint in each individual request
         endpointPort: Int = 443,
@@ -114,6 +116,61 @@ public struct HTTPInvocationClient<TraceContextType: InvocationTraceContext, Han
                 invocationDelegate: invocationDelegate,
                 invocationMetrics: invocationMetrics)
     }
+    #else
+    public init(
+        endpointHostName: String = "", // If empty, client will have to provide endpoint in each individual request
+        endpointPort: Int = 443,
+        contentType: String = "application/json",
+        clientDelegate: HTTPClientDelegate = HTTPClientJSONDelegate(),
+        timeoutConfiguration: HTTPClient.Configuration.Timeout = .init(
+            connect: .seconds(10), read: .seconds(10)),
+        connectionPoolConfiguration: HTTPClient.Configuration.ConnectionPool? = nil,
+        eventLoopProvider: HTTPClient.EventLoopGroupProvider = .createNew,
+        retryConfiguration: HTTPClientRetryConfiguration = .default,
+        retryOnErrorProvider: @escaping (SmokeHTTPClient.HTTPClientError) -> Bool = { error in error.isRetriable() },
+        invocationAttributes: HTTPClientInvocationAttributes,
+        invocationTraceContext: TraceContextType,
+        invocationDelegate: HandlerDelegateType,
+        invocationMetrics: HTTPClientInvocationMetrics? = nil) {
+            let httpClient = HTTPOperationsClient(
+                endpointHostName: endpointHostName,
+                endpointPort: endpointPort,
+                contentType: contentType,
+                clientDelegate: clientDelegate,
+                timeoutConfiguration: timeoutConfiguration,
+                eventLoopProvider: eventLoopProvider,
+                connectionPoolConfiguration: connectionPoolConfiguration)
+
+            self.init(
+                httpClient: httpClient,
+                ownsHttpClients: false,
+                retryConfiguration: retryConfiguration,
+                retryOnErrorProvider: retryOnErrorProvider,
+                invocationAttributes: invocationAttributes,
+                invocationTraceContext: invocationTraceContext,
+                invocationDelegate: invocationDelegate,
+                invocationMetrics: invocationMetrics)
+    }
+
+    public init(
+        httpClient: HTTPOperationsClient,
+        retryConfiguration: HTTPClientRetryConfiguration = .default,
+        retryOnErrorProvider: @escaping (SmokeHTTPClient.HTTPClientError) -> Bool = { error in error.isRetriable() },
+        invocationAttributes: HTTPClientInvocationAttributes,
+        invocationTraceContext: TraceContextType,
+        invocationDelegate: HandlerDelegateType,
+        invocationMetrics: HTTPClientInvocationMetrics? = nil) {
+            self.init(
+                httpClient: httpClient,
+                ownsHttpClients: false,
+                retryConfiguration: retryConfiguration,
+                retryOnErrorProvider: retryOnErrorProvider,
+                invocationAttributes: invocationAttributes,
+                invocationTraceContext: invocationTraceContext,
+                invocationDelegate: invocationDelegate,
+                invocationMetrics: invocationMetrics)
+    }
+    #endif
 
     private init(
         httpClient: HTTPOperationsClient,
@@ -122,7 +179,7 @@ public struct HTTPInvocationClient<TraceContextType: InvocationTraceContext, Han
         retryOnErrorProvider: @escaping (SmokeHTTPClient.HTTPClientError) -> Bool = { error in error.isRetriable() },
         invocationAttributes: HTTPClientInvocationAttributes,
         invocationTraceContext: TraceContextType,
-        invocationDelegate: HandlerDelegateType = DefaultHTTPClientInvocationDelegate(),
+        invocationDelegate: HandlerDelegateType,
         invocationMetrics: HTTPClientInvocationMetrics? = nil) {
             self.httpClient = httpClient
 

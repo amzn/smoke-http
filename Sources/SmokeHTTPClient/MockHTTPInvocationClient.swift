@@ -60,7 +60,8 @@ public struct MockHTTPInvocationClient<OverrideInputType: HTTPRequestInputProtoc
         httpMethod: HTTPMethod,
         operation: String?,
         input: InputType) async throws {
-            if let executeWithoutOutputOverride, let convertedInput = input as? OverrideInputType {
+            if let executeWithoutOutputOverride = executeWithoutOutputOverride,
+                let convertedInput = input as? OverrideInputType {
                 try await executeWithoutOutputOverride(endpoint, endpointPath, httpMethod, operation, convertedInput)
             }
     }
@@ -71,9 +72,10 @@ public struct MockHTTPInvocationClient<OverrideInputType: HTTPRequestInputProtoc
         httpMethod: HTTPMethod,
         operation: String?,
         input: InputType) async throws -> OutputType {
-            if let executeWithOutputOverride, let convertedInput = input as? OverrideInputType {
+            if let executeWithOutputOverride = executeWithOutputOverride,
+                let convertedInput = input as? OverrideInputType {
                 let output = try await executeWithOutputOverride(endpoint, endpointPath, httpMethod, operation, convertedInput) as? OutputType
-                guard let output else {
+                guard let output = output else {
                     throw MockHTTPInvocationClientErrors.mismatchingOutputTypes(outputType: String(describing: OutputType.self), overrideOutputType: String(describing: OverrideOutputType.self))
                 }
 
@@ -89,7 +91,8 @@ public struct MockHTTPInvocationClient<OverrideInputType: HTTPRequestInputProtoc
         httpMethod: HTTPMethod,
         operation: String?,
         input: InputType) async throws {
-            if let executeWithoutOutputOverride, let convertedInput = input as? OverrideInputType {
+            if let executeWithoutOutputOverride = executeWithoutOutputOverride,
+                let convertedInput = input as? OverrideInputType {
                 try await executeWithoutOutputOverride(endpoint, endpointPath, httpMethod, operation, convertedInput)
             }
     }
@@ -100,9 +103,10 @@ public struct MockHTTPInvocationClient<OverrideInputType: HTTPRequestInputProtoc
         httpMethod: HTTPMethod,
         operation: String?,
         input: InputType) async throws -> OutputType {
-            if let executeWithOutputOverride, let convertedInput = input as? OverrideInputType {
+            if let executeWithOutputOverride = executeWithOutputOverride,
+                let convertedInput = input as? OverrideInputType {
                 let output = try await executeWithOutputOverride(endpoint, endpointPath, httpMethod, operation, convertedInput) as? OutputType
-                guard let output else {
+                guard let output = output else {
                     throw MockHTTPInvocationClientErrors.mismatchingOutputTypes(outputType: String(describing: OutputType.self), overrideOutputType: String(describing: OverrideOutputType.self))
                 }
 
