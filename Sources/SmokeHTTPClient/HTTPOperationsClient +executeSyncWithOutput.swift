@@ -84,7 +84,7 @@ public extension HTTPOperationsClient {
                 completedSemaphore.signal()
             }
             
-            _ = try executeAsyncWithOutput(
+            _ = try executeAsyncWithOutputWithWrappedInvocationContext(
                 endpointOverride: endpointOverride,
                 requestComponents: requestComponents,
                 httpMethod: httpMethod,

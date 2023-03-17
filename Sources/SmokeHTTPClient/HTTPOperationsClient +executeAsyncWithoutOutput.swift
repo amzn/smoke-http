@@ -87,43 +87,13 @@ public extension HTTPOperationsClient {
             let endpoint = getEndpoint(endpointOverride: endpointOverride, path: requestComponents.pathWithQuery)
             let wrappingInvocationContext = invocationContext.withOutgoingDecoratedLogger(endpoint: endpoint, outgoingOperation: operation)
             
-            return try executeAsyncWithoutOutput(
-                endpointOverride: endpointOverride,
-                requestComponents: requestComponents,
-                httpMethod: httpMethod,
-                completion: completion,
-                asyncResponseInvocationStrategy: asyncResponseInvocationStrategy,
-                invocationContext: wrappingInvocationContext)
-    }
-
-    /**
-     Submits a request that will not return a response body to this client asynchronously.
-     
-     - Parameters:
-        - requestComponents: The request components for this request.
-        - httpMethod: The http method to use for this request.
-        - completion: Completion handler called with an error if one occurs or nil otherwise.
-        - asyncResponseInvocationStrategy: The invocation strategy for the response from this request.
-        - invocationContext: context to use for this invocation.
-     */
-    internal func executeAsyncWithoutOutput<InvocationStrategyType,
-            InvocationReportingType: HTTPClientInvocationReporting, HandlerDelegateType: HTTPClientInvocationDelegate>(
-        endpointOverride: URL? = nil,
-        requestComponents: HTTPRequestComponents,
-        httpMethod: HTTPMethod,
-        operation: String? = nil,
-        completion: @escaping (HTTPClientError?) -> (),
-        asyncResponseInvocationStrategy: InvocationStrategyType,
-        invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>) throws -> EventLoopFuture<HTTPClient.Response>
-    where InvocationStrategyType: AsyncResponseInvocationStrategy,
-        InvocationStrategyType.OutputType == HTTPClientError? {
             return try executeAsyncWithoutOutputWithWrappedInvocationContext(
                 endpointOverride: endpointOverride,
                 requestComponents: requestComponents,
                 httpMethod: httpMethod,
                 completion: completion,
                 asyncResponseInvocationStrategy: asyncResponseInvocationStrategy,
-                invocationContext: invocationContext)
+                invocationContext: wrappingInvocationContext)
     }
     
     /**

@@ -89,45 +89,13 @@ public extension HTTPOperationsClient {
             let endpoint = getEndpoint(endpointOverride: endpointOverride, path: requestComponents.pathWithQuery)
             let wrappingInvocationContext = invocationContext.withOutgoingDecoratedLogger(endpoint: endpoint, outgoingOperation: operation)
             
-            return try executeAsyncWithOutput(
-                endpointOverride: endpointOverride,
-                requestComponents: requestComponents,
-                httpMethod: httpMethod,
-                completion: completion,
-                asyncResponseInvocationStrategy: asyncResponseInvocationStrategy,
-                invocationContext: wrappingInvocationContext)
-    }
-
-    /**
-     Submits a request that will return a response body to this client asynchronously.
-
-     - Parameters:
-         - requestComponents: The request components for this request.
-         - httpMethod: The http method to use for this request.
-         - input: the input body data to send with this request.
-         - completion: Completion handler called with the response body or any error.
-         - asyncResponseInvocationStrategy: The invocation strategy for the response from this request.
-         - invocationContext: context to use for this invocation.
-     */
-    internal func executeAsyncWithOutput<OutputType, InvocationStrategyType,
-        InvocationReportingType: HTTPClientInvocationReporting, HandlerDelegateType: HTTPClientInvocationDelegate>(
-            endpointOverride: URL? = nil,
-            requestComponents: HTTPRequestComponents,
-            httpMethod: HTTPMethod,
-            operation: String? = nil,
-            completion: @escaping (Result<OutputType, HTTPClientError>) -> (),
-            asyncResponseInvocationStrategy: InvocationStrategyType,
-            invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>) throws -> EventLoopFuture<HTTPClient.Response>
-    where InvocationStrategyType: AsyncResponseInvocationStrategy,
-        InvocationStrategyType.OutputType == Result<OutputType, HTTPClientError>,
-        OutputType: HTTPResponseOutputProtocol {            
             return try executeAsyncWithOutputWithWrappedInvocationContext(
                 endpointOverride: endpointOverride,
                 requestComponents: requestComponents,
                 httpMethod: httpMethod,
                 completion: completion,
                 asyncResponseInvocationStrategy: asyncResponseInvocationStrategy,
-                invocationContext: invocationContext)
+                invocationContext: wrappingInvocationContext)
     }
 
     /**
