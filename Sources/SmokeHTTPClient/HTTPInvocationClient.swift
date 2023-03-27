@@ -20,7 +20,7 @@ import AsyncHTTPClient
 import NIOHTTP1
 
 public protocol HTTPInvocationClientProtocol {
-     func shutdown() async throws
+    func shutdown() async throws
 
     func executeRetriableWithoutOutput<InputType: HTTPRequestInputProtocol>(
         endpoint: URL?,
@@ -218,6 +218,8 @@ public struct HTTPInvocationClient<TraceContextType: InvocationTraceContext, Han
         httpMethod: HTTPMethod,
         operation: String? = nil,
         input: InputType) async throws {
+            // Users can either specify a default endpoint for the `HTTPInvocationClient` instance
+            // or pass in an request-specific endpoint. Doing neither is an error.
             guard endpoint != nil || self.httpClient.endpointHostName != "" else {
                 throw HTTPError.badRequest("No endpoint host name was specified.")
             }
@@ -239,6 +241,8 @@ public struct HTTPInvocationClient<TraceContextType: InvocationTraceContext, Han
         httpMethod: HTTPMethod,
         operation: String? = nil,
         input: InputType) async throws -> OutputType {
+            // Users can either specify a default endpoint for the `HTTPInvocationClient` instance
+            // or pass in an request-specific endpoint. Doing neither is an error.
             guard endpoint != nil || self.httpClient.endpointHostName != "" else {
                 throw HTTPError.badRequest("No endpoint host name was specified.")
             }
@@ -260,6 +264,8 @@ public struct HTTPInvocationClient<TraceContextType: InvocationTraceContext, Han
         httpMethod: HTTPMethod,
         operation: String? = nil,
         input: InputType) async throws {
+            // Users can either specify a default endpoint for the `HTTPInvocationClient` instance
+            // or pass in an request-specific endpoint. Doing neither is an error.
             guard endpoint != nil || self.httpClient.endpointHostName != "" else {
                 throw HTTPError.badRequest("No endpoint host name was specified.")
             }
@@ -279,6 +285,8 @@ public struct HTTPInvocationClient<TraceContextType: InvocationTraceContext, Han
         httpMethod: HTTPMethod,
         operation: String? = nil,
         input: InputType) async throws -> OutputType {
+            // Users can either specify a default endpoint for the `HTTPInvocationClient` instance
+            // or pass in an request-specific endpoint. Doing neither is an error.
             guard endpoint != nil || self.httpClient.endpointHostName != "" else {
                 throw HTTPError.badRequest("No endpoint host name was specified.")
             }
