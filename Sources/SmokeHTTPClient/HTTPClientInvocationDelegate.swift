@@ -73,7 +73,11 @@ public protocol HTTPClientInvocationDelegate {
 }
 
 public struct DefaultHTTPClientInvocationDelegate: HTTPClientInvocationDelegate {
-    public let specifyContentHeadersForZeroLengthBody: Bool = true
+    public let specifyContentHeadersForZeroLengthBody: Bool
+
+    public init(specifyContentHeadersForZeroLengthBody: Bool = true) {
+        self.specifyContentHeadersForZeroLengthBody = specifyContentHeadersForZeroLengthBody
+    }
 
     public func addClientSpecificHeaders<InvocationReportingType: HTTPClientInvocationReporting>(
             parameters: HTTPRequestParameters,

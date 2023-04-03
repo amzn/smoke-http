@@ -17,6 +17,7 @@
 
 import Foundation
 import AsyncHTTPClient
+import NIOCore
 import NIOHTTP1
 
 public protocol HTTPInvocationClientProtocol {
