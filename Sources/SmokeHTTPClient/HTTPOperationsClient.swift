@@ -23,6 +23,7 @@ import NIOTLS
 import AsyncHTTPClient
 import NIOFoundationCompat
 import Logging
+import Tracing
 
 internal struct HttpHeaderNames {
     /// Content-Length Header
@@ -273,7 +274,8 @@ extension HTTPOperationsClient {
         let (responseFuture, outwardsRequestContext) = try performExecuteAsync(endpointOverride: endpointOverride,
                                                                                requestComponents: requestComponents,
                                                                                httpMethod: httpMethod,
-                                                                               invocationContext: invocationContext)
+                                                                               invocationContext: invocationContext,
+                                                                               serviceContext: ServiceContext.current)
         
         do {
             let successResult = try await responseFuture.get()
@@ -305,7 +307,8 @@ extension HTTPOperationsClient {
         endpointOverride: URL? = nil,
         requestComponents: HTTPRequestComponents,
         httpMethod: HTTPMethod,
-        invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>) throws
+        invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>,
+        serviceContext: ServiceContext? = nil) throws
     -> (EventLoopFuture<HTTPClient.Response>, InvocationReportingType.TraceContextType.OutwardsRequestContext) {
 
         let endpointHostName = endpointOverride?.host ?? self.endpointHostName
@@ -335,6 +338,14 @@ extension HTTPOperationsClient {
         var requestHeaders = getRequestHeaders(
             parameters: parameters,
             invocationContext: invocationContext)
+        
+        if let serviceContext = serviceContext {
+            InstrumentationSystem.instrument.inject(
+                serviceContext,
+                into: &requestHeaders,
+                using: HTTPHeadersInjector()
+            )
+          }
                 
         let outwardsRequestContext = invocationContext.reporting.traceContext.handleOutwardsRequestStart(
             method: httpMethod, uri: endpoint,
@@ -539,5 +550,11 @@ extension HTTPOperationsClient {
         headers.append(("Accept", "*/*"))
         
         return HTTPHeaders(headers)
+    }
+}
+
+struct HTTPHeadersInjector: Injector {
+    func inject(_ value: String, forKey key: String, into carrier: inout HTTPHeaders) {
+        carrier.add(name: key, value: value)
     }
 }
