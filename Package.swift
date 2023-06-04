@@ -45,7 +45,8 @@ let package = Package(
         .package(url: "https://github.com/apple/swift-nio-ssl.git", from: "2.14.0"),
         .package(url: "https://github.com/apple/swift-log.git", from: "1.0.0"),
         .package(url: "https://github.com/apple/swift-metrics.git", "1.0.0"..<"3.0.0"),
-        .package(url: "https://github.com/swift-server/async-http-client.git", from: "1.6.4")
+        .package(url: "https://github.com/swift-server/async-http-client.git", from: "1.6.4"),
+        .package(url: "https://github.com/apple/swift-distributed-tracing.git", from: "1.0.0"),
     ],
     targets: [
         .target(
@@ -57,6 +58,7 @@ let package = Package(
                 .product(name: "NIOFoundationCompat", package: "swift-nio"),
                 .product(name: "NIOSSL", package: "swift-nio-ssl"),
                 .product(name: "AsyncHTTPClient", package: "async-http-client"),
+                .product(name: "Tracing", package: "swift-distributed-tracing"),
             ]),
         .target(
             name: "_SmokeHTTPClientConcurrency", dependencies: [
