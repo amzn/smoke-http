@@ -25,6 +25,14 @@ import NIOFoundationCompat
 import Logging
 import Tracing
 
+private struct UnauthorizedBody: Codable {
+    let message: String
+
+    enum CodingKeys: String, CodingKey {
+        case message = "Message"
+    }
+}
+
 internal struct HttpHeaderNames {
     /// Content-Length Header
     static let contentLength = "Content-Length"
@@ -465,8 +473,10 @@ extension HTTPOperationsClient {
             } catch let error as HTTPClientError {
                 responseError = error
             } catch {
+                let cause = getResponseErrorFromProviderError(response: response, bodyData: bodyData, providerError: error)
+                
                 // if the provider throws an error, use this error
-                responseError = HTTPClientError(responseCode: Int(response.status.code), cause: error)
+                responseError = HTTPClientError(responseCode: Int(response.status.code), cause: cause)
             }
             
             invocationReporting.traceContext.handleOutwardsRequestFailure(
@@ -506,6 +516,24 @@ extension HTTPOperationsClient {
             // complete with this error
             throw wrappingError
         }
+    }
+    
+    private func getResponseErrorFromProviderError(response: HTTPClient.Response, bodyData: Data?,
+                                                   providerError: Swift.Error) -> Error {
+        if case .forbidden = response.status {
+            if let bodyData {
+                do {
+                    let unauthorizedBody = try JSONDecoder().decode(UnauthorizedBody.self, from: bodyData)
+                    
+                    return HTTPError.unauthorized(unauthorizedBody.message)
+                } catch {
+                    return HTTPError.unauthorized(bodyData.debugDescription)
+                }
+            }
+        }
+        
+        // otherwise just return the error
+        return providerError
     }
     
     private func isRetriableHTTPClientError(clientError: AsyncHTTPClient.HTTPClientError) -> Bool {
