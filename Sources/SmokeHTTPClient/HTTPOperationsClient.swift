@@ -521,7 +521,7 @@ extension HTTPOperationsClient {
     private func getResponseErrorFromProviderError(response: HTTPClient.Response, bodyData: Data?,
                                                    providerError: Swift.Error) -> Error {
         if case .forbidden = response.status {
-            if let bodyData {
+            if let bodyData = bodyData {
                 do {
                     let unauthorizedBody = try JSONDecoder().decode(UnauthorizedBody.self, from: bodyData)
                     
