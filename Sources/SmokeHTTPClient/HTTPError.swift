@@ -39,5 +39,6 @@ public enum HTTPError: Error {
 
     // Other
     case validationError(reason: String)
+    case deserializationError(cause: Swift.Error)
     case unknownError(String)
 }
