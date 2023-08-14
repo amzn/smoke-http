@@ -21,6 +21,7 @@ import Foundation
 import NIO
 import NIOHTTP1
 import Metrics
+import Tracing
 
 private let millisecondsToNanoSeconds: UInt64 = 1000000
 
@@ -220,7 +221,15 @@ public extension HTTPOperationsClient {
             retryConfiguration: retryConfiguration,
             retryOnError: retryOnError)
         
-        return try await retriable.executeWithoutOutput()
+        let spanName: String
+        if let operation = operation {
+            spanName = "Retry Block for \(operation)"
+        } else {
+            spanName = "Retry Block"
+        }
+        return try await withSpanIfEnabled(spanName) { _ in
+            return try await retriable.executeWithoutOutput()
+        }
     }
 }
 

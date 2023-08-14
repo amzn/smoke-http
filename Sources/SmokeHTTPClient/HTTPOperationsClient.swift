@@ -279,14 +279,35 @@ extension HTTPOperationsClient {
         httpMethod: HTTPMethod,
         invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>) async throws
     -> HTTPResponseComponents  {
-        let (responseFuture, outwardsRequestContext) = try performExecuteAsync(endpointOverride: endpointOverride,
-                                                                               requestComponents: requestComponents,
-                                                                               httpMethod: httpMethod,
-                                                                               invocationContext: invocationContext,
-                                                                               serviceContext: ServiceContext.current)
+        let (responseResult, outwardsRequestContext):
+        (Result<HTTPClient.Response, Swift.Error>, InvocationReportingType.TraceContextType.OutwardsRequestContext)
+        
+        let serviceContext = ServiceContext.current
+        (responseResult, outwardsRequestContext) = try await withSpanIfEnabled("Request Attempt",
+                                                                               context: serviceContext) { span in
+            let (responseFuture, outwardsRequestContext) = try performExecuteAsync(endpointOverride: endpointOverride,
+                                                                                   requestComponents: requestComponents,
+                                                                                   httpMethod: httpMethod,
+                                                                                   invocationContext: invocationContext,
+                                                                                   serviceContext: span?.context)
+            
+            do {
+                let successResult = try await responseFuture.get()
+                
+                return (.success(successResult), outwardsRequestContext)
+            } catch {
+                return (.failure(error), outwardsRequestContext)
+            }
+        }
         
         do {
-            let successResult = try await responseFuture.get()
+            let successResult: HTTPClient.Response
+            switch responseResult {
+            case .success(let result):
+                successResult = result
+            case .failure(let error):
+                throw error
+            }
             
             // a response has been successfully received; this reponse may be a successful response
             // and generate a `HTTPResponseComponents` instance or be a failure response and cause
@@ -578,6 +599,19 @@ extension HTTPOperationsClient {
         headers.append(("Accept", "*/*"))
         
         return HTTPHeaders(headers)
+    }
+    
+    internal func withSpanIfEnabled<T>(_ operationName: String,
+                                       context: ServiceContext? = ServiceContext.current,
+                                       ofKind kind: SpanKind = .internal,
+                                       _ operation: ((any Span)?) async throws -> T) async rethrows -> T {
+        if let context = context {
+            return try await withSpan(operationName, context: context, ofKind: kind) { span in
+                return try await operation(span)
+            }
+        } else {
+            return try await operation(nil)
+        }
     }
 }
 
