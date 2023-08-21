@@ -624,6 +624,12 @@ extension HTTPOperationsClient {
             return try await withSpan(operationName, context: context, ofKind: kind) { span in
                 do {
                     return try await operation(span)
+                } catch let error as HTTPClientError {
+                    span.attributes["http.status_code"] = error.responseCode
+                    span.setStatus(.init(code: .error))
+                    
+                    // rethrow error
+                    throw error
                 } catch {
                     span.setStatus(.init(code: .error))
                     
