@@ -289,7 +289,7 @@ extension HTTPOperationsClient {
                                                                                    requestComponents: requestComponents,
                                                                                    httpMethod: httpMethod,
                                                                                    invocationContext: invocationContext,
-                                                                                   serviceContext: span?.context)
+                                                                                   span: span)
             
             do {
                 let successResult = try await responseFuture.get()
@@ -341,7 +341,7 @@ extension HTTPOperationsClient {
         requestComponents: HTTPRequestComponents,
         httpMethod: HTTPMethod,
         invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>,
-        serviceContext: ServiceContext? = nil) throws
+        span: Span? = nil) throws
     -> (EventLoopFuture<HTTPClient.Response>, InvocationReportingType.TraceContextType.OutwardsRequestContext) {
 
         let endpointHostName = endpointOverride?.host ?? self.endpointHostName
@@ -372,9 +372,15 @@ extension HTTPOperationsClient {
             parameters: parameters,
             invocationContext: invocationContext)
         
-        if let serviceContext = serviceContext {
+        if let span = span {
+            span.attributes["http.method"] = httpMethod.rawValue
+            span.attributes["http.target"] = endpoint
+            span.attributes["http.flavor"] = "1.1"
+            span.attributes["http.user_agent"] = requestHeaders.first(name: "user-agent")
+            span.attributes["http.request_content_length"] = requestHeaders.first(name: "content-length")
+            
             InstrumentationSystem.instrument.inject(
-                serviceContext,
+                span.context,
                 into: &requestHeaders,
                 using: HTTPHeadersInjector()
             )
