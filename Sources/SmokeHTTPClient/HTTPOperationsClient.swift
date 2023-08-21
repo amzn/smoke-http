@@ -296,9 +296,14 @@ extension HTTPOperationsClient {
                 
                 span?.attributes["http.status_code"] = Int(successResult.status.code)
                 
+                if successResult.status.code >= 400 && successResult.status.code < 600 {
+                    span?.setStatus(.init(code: .error))
+                }
+                
                 return (.success(successResult), outwardsRequestContext)
             } catch {
                 span?.recordError(error)
+                span?.setStatus(.init(code: .error))
                 
                 return (.failure(error), outwardsRequestContext)
             }
@@ -617,7 +622,14 @@ extension HTTPOperationsClient {
                                        _ operation: ((any Span)?) async throws -> T) async rethrows -> T {
         if let context = context {
             return try await withSpan(operationName, context: context, ofKind: kind) { span in
-                return try await operation(span)
+                do {
+                    return try await operation(span)
+                } catch {
+                    span.setStatus(.init(code: .error))
+                    
+                    // rethrow error
+                    throw error
+                }
             }
         } else {
             return try await operation(nil)
