@@ -283,7 +283,7 @@ extension HTTPOperationsClient {
         (Result<HTTPClient.Response, Swift.Error>, InvocationReportingType.TraceContextType.OutwardsRequestContext)
         
         let serviceContext = ServiceContext.current
-        (responseResult, outwardsRequestContext) = try await withSpanIfEnabled("Request Attempt",
+        (responseResult, outwardsRequestContext) = try await withSpanIfEnabled("Invocation",
                                                                                context: serviceContext) { span in
             let (responseFuture, outwardsRequestContext) = try performExecuteAsync(endpointOverride: endpointOverride,
                                                                                    requestComponents: requestComponents,

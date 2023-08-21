@@ -187,6 +187,8 @@ public extension HTTPOperationsClient {
      - Parameters:
         - endpointPath: The endpoint path for this request.
         - httpMethod: The http method to use for this request.
+        - clientName: Optionally the name of the client to use for reporting.
+        - operation: Optionally the name of the operation to use for reporting.
         - input: the input body data to send with this request.
         - invocationContext: context to use for this invocation.
         - retryConfiguration: the retry configuration for this request.
@@ -198,6 +200,7 @@ public extension HTTPOperationsClient {
         endpointOverride: URL? = nil,
         endpointPath: String,
         httpMethod: HTTPMethod,
+        clientName: String? = nil,
         operation: String? = nil,
         input: InputType,
         invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>,
@@ -221,12 +224,10 @@ public extension HTTPOperationsClient {
             retryConfiguration: retryConfiguration,
             retryOnError: retryOnError)
         
-        let spanName: String
-        if let operation = operation {
-            spanName = "Retry Block for \(operation)"
-        } else {
-            spanName = "Retry Block"
-        }
+        let clientNameToUse = clientName ?? "UnnamedClient"
+        let operationToUse = operation ?? "UnnamedOperation"
+        let spanName = "\(clientNameToUse).\(operationToUse)"
+
         return try await withSpanIfEnabled(spanName) { _ in
             return try await retriable.executeWithoutOutput()
         }

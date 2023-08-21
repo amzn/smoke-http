@@ -30,6 +30,8 @@ public extension HTTPOperationsClient {
      - Parameters:
         - endpointPath: The endpoint path for this request.
         - httpMethod: The http method to use for this request.
+        - clientName: Optionally the name of the client to use for reporting.
+        - operation: Optionally the name of the operation to use for reporting.
         - input: the input body data to send with this request.
         - completion: Completion handler called with an error if one occurs or nil otherwise.
         - asyncResponseInvocationStrategy: The invocation strategy for the response from this request.
@@ -41,6 +43,7 @@ public extension HTTPOperationsClient {
         endpointOverride: URL? = nil,
         endpointPath: String,
         httpMethod: HTTPMethod,
+        clientName: String? = nil,
         operation: String? = nil,
         input: InputType,
         invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>) async throws
@@ -52,11 +55,17 @@ public extension HTTPOperationsClient {
         let endpoint = getEndpoint(endpointOverride: endpointOverride, path: requestComponents.pathWithQuery)
         let wrappingInvocationContext = invocationContext.withOutgoingDecoratedLogger(endpoint: endpoint, outgoingOperation: operation)
         
-        return try await executeWithoutOutputWithWrappedInvocationContext(
-            endpointOverride: endpointOverride,
-            requestComponents: requestComponents,
-            httpMethod: httpMethod,
-            invocationContext: wrappingInvocationContext)
+        let clientNameToUse = clientName ?? "UnnamedClient"
+        let operationToUse = operation ?? "UnnamedOperation"
+        let spanName = "\(clientNameToUse).\(operationToUse)"
+        
+        return try await withSpanIfEnabled(spanName) { _ in
+            return try await executeWithoutOutputWithWrappedInvocationContext(
+                endpointOverride: endpointOverride,
+                requestComponents: requestComponents,
+                httpMethod: httpMethod,
+                invocationContext: wrappingInvocationContext)
+        }
     }
     
     /**
