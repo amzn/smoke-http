@@ -294,8 +294,12 @@ extension HTTPOperationsClient {
             do {
                 let successResult = try await responseFuture.get()
                 
+                span?.attributes["http.status_code"] = Int(successResult.status.code)
+                
                 return (.success(successResult), outwardsRequestContext)
             } catch {
+                span?.recordError(error)
+                
                 return (.failure(error), outwardsRequestContext)
             }
         }
