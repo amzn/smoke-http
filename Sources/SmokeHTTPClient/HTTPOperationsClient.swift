@@ -379,7 +379,7 @@ extension HTTPOperationsClient {
         
         if let span = span {
             span.attributes["http.method"] = httpMethod.rawValue
-            span.attributes["http.target"] = endpoint
+            span.attributes["http.url"] = endpoint
             span.attributes["http.flavor"] = "1.1"
             span.attributes["http.user_agent"] = requestHeaders.first(name: "user-agent")
             span.attributes["http.request_content_length"] = requestHeaders.first(name: "content-length")
