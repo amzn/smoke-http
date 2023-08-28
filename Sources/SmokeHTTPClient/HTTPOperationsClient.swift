@@ -279,14 +279,44 @@ extension HTTPOperationsClient {
         httpMethod: HTTPMethod,
         invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>) async throws
     -> HTTPResponseComponents  {
-        let (responseFuture, outwardsRequestContext) = try performExecuteAsync(endpointOverride: endpointOverride,
-                                                                               requestComponents: requestComponents,
-                                                                               httpMethod: httpMethod,
-                                                                               invocationContext: invocationContext,
-                                                                               serviceContext: ServiceContext.current)
+        let (responseResult, outwardsRequestContext):
+        (Result<HTTPClient.Response, Swift.Error>, InvocationReportingType.TraceContextType.OutwardsRequestContext)
+        
+        let serviceContext = ServiceContext.current
+        (responseResult, outwardsRequestContext) = try await withSpanIfEnabled("Invocation",
+                                                                               context: serviceContext) { span in
+            let (responseFuture, outwardsRequestContext) = try performExecuteAsync(endpointOverride: endpointOverride,
+                                                                                   requestComponents: requestComponents,
+                                                                                   httpMethod: httpMethod,
+                                                                                   invocationContext: invocationContext,
+                                                                                   span: span)
+            
+            do {
+                let successResult = try await responseFuture.get()
+                
+                span?.attributes["http.status_code"] = Int(successResult.status.code)
+                
+                if successResult.status.code >= 400 && successResult.status.code < 600 {
+                    span?.setStatus(.init(code: .error))
+                }
+                
+                return (.success(successResult), outwardsRequestContext)
+            } catch {
+                span?.recordError(error)
+                span?.setStatus(.init(code: .error))
+                
+                return (.failure(error), outwardsRequestContext)
+            }
+        }
         
         do {
-            let successResult = try await responseFuture.get()
+            let successResult: HTTPClient.Response
+            switch responseResult {
+            case .success(let result):
+                successResult = result
+            case .failure(let error):
+                throw error
+            }
             
             // a response has been successfully received; this reponse may be a successful response
             // and generate a `HTTPResponseComponents` instance or be a failure response and cause
@@ -316,7 +346,7 @@ extension HTTPOperationsClient {
         requestComponents: HTTPRequestComponents,
         httpMethod: HTTPMethod,
         invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>,
-        serviceContext: ServiceContext? = nil) throws
+        span: Span? = nil) throws
     -> (EventLoopFuture<HTTPClient.Response>, InvocationReportingType.TraceContextType.OutwardsRequestContext) {
 
         let endpointHostName = endpointOverride?.host ?? self.endpointHostName
@@ -347,9 +377,15 @@ extension HTTPOperationsClient {
             parameters: parameters,
             invocationContext: invocationContext)
         
-        if let serviceContext = serviceContext {
+        if let span = span {
+            span.attributes["http.method"] = httpMethod.rawValue
+            span.attributes["http.url"] = endpoint
+            span.attributes["http.flavor"] = "1.1"
+            span.attributes["http.user_agent"] = requestHeaders.first(name: "user-agent")
+            span.attributes["http.request_content_length"] = requestHeaders.first(name: "content-length")
+            
             InstrumentationSystem.instrument.inject(
-                serviceContext,
+                span.context,
                 into: &requestHeaders,
                 using: HTTPHeadersInjector()
             )
@@ -578,6 +614,32 @@ extension HTTPOperationsClient {
         headers.append(("Accept", "*/*"))
         
         return HTTPHeaders(headers)
+    }
+    
+    internal func withSpanIfEnabled<T>(_ operationName: String,
+                                       context: ServiceContext? = ServiceContext.current,
+                                       ofKind kind: SpanKind = .internal,
+                                       _ operation: ((any Span)?) async throws -> T) async rethrows -> T {
+        if let context = context {
+            return try await withSpan(operationName, context: context, ofKind: kind) { span in
+                do {
+                    return try await operation(span)
+                } catch let error as HTTPClientError {
+                    span.attributes["http.status_code"] = error.responseCode
+                    span.setStatus(.init(code: .error))
+                    
+                    // rethrow error
+                    throw error
+                } catch {
+                    span.setStatus(.init(code: .error))
+                    
+                    // rethrow error
+                    throw error
+                }
+            }
+        } else {
+            return try await operation(nil)
+        }
     }
 }
 
