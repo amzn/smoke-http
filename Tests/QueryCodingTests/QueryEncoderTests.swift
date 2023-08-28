@@ -434,30 +434,4 @@ class QueryEncoderTests: XCTestCase {
         XCTAssertEqual(decoded.int, intValue)
         XCTAssertEqual(String(decoded.double!), String(doubleValue))
     }
-
-    static var allTests = [
-        ("testEncodeBasicType", testEncodeBasicType),
-        ("testEncodeBasicTypeWithEncoding", testEncodeBasicTypeWithEncoding),
-        ("testEncodeNotCompatibleType", testEncodeNotCompatibleType),
-        ("testEncodeNotCompatibleListType", testEncodeNotCompatibleListType),
-        ("testEncodeTypeWithList", testEncodeTypeWithList),
-        ("testEncodeTypeWithListAndItemTag", testEncodeTypeWithListAndItemTag),
-        ("testEncodeTypeWithListWithNoSeparator", testEncodeTypeWithListWithNoSeparator),
-        ("testEncodeTypeWithListWithNoSeparatorAndItemTag", testEncodeTypeWithListWithNoSeparatorAndItemTag),
-        ("testEncodeTypeWithListWithEncoding", testEncodeTypeWithListWithEncoding),
-        ("testEncodeTypeWithMap", testEncodeTypeWithMap),
-        ("testEncodeTypeWithMapWithNoSeparator", testEncodeTypeWithMapWithNoSeparator),
-        ("testEncodeTypeWithMapWithMapEncodingStrategy", testEncodeTypeWithMapWithMapEncodingStrategy),
-        ("testEncodeTypeWithMapWithEncoding", testEncodeTypeWithMapWithEncoding),
-        ("testEncodeTypeWithInnerTypeList", testEncodeTypeWithInnerTypeList),
-        ("testEncodeTypeWithInnerTypeListWithItemTag", testEncodeTypeWithInnerTypeListWithItemTag),
-        ("testEncodeTypeWithInnerType", testEncodeTypeWithInnerType),
-        ("testEncodeTypeWithInnerTypeListWithNoSeparator", testEncodeTypeWithInnerTypeListWithNoSeparator),
-        ("testEncodeTypeWithInnerTypeListWithNoSeparatorAndItemTag", testEncodeTypeWithInnerTypeListWithNoSeparatorAndItemTag),
-        ("testEncodeTypeWithInnerTypeWithNoSeparator", testEncodeTypeWithInnerTypeWithNoSeparator),
-        ("testEncodeTypeWithInnerTypeListWithMapEncodingStrategy", testEncodeTypeWithInnerTypeListWithMapEncodingStrategy),
-        ("testEncodeTypeWithInnerTypeWithMapEncodingStrategy", testEncodeTypeWithInnerTypeWithMapEncodingStrategy),
-        ("testArrayLikeFlatStructure", testArrayLikeFlatStructure),
-        ("testMapLikeFlatStructure", testMapLikeFlatStructure),
-    ]
 }

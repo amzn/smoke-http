@@ -90,12 +90,4 @@ class HTTPPathTokenTests: XCTestCase {
             // expected
         }
     }
-
-    static var allTests = [
-        ("testBasicTokenize", testBasicTokenize),
-        ("testTokenizeAtStart", testTokenizeAtStart),
-        ("testTokenizeAtEnd", testTokenizeAtEnd),
-        ("testTokenizeAtEndWithPlus", testTokenizeAtEndWithPlus),
-        ("testInvalidTokenize", testInvalidTokenize),
-    ]
 }

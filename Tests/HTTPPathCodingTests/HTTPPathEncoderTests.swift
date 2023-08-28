@@ -359,27 +359,4 @@ class HTTPPathEncoderTests: XCTestCase {
             // expected error thrown
         }
     }
-
-    static var allTests = [
-        ("testEncodeBasicType", testEncodeBasicType),
-        ("testEncodeBasicTypeWithStartingSlash", testEncodeBasicTypeWithStartingSlash),
-        ("testEncodeNotCompatibleType", testEncodeNotCompatibleType),
-        ("testEncodeNotCompatibleListType", testEncodeNotCompatibleListType),
-        ("testEncodeTypeWithList", testEncodeTypeWithList),
-        ("testEncodeTypeWithListWithNoSeparator", testEncodeTypeWithListWithNoSeparator),
-        ("testEncodeTypeWithMap", testEncodeTypeWithMap),
-        ("testEncodeTypeWithMapWithNoSeparator", testEncodeTypeWithMapWithNoSeparator),
-        ("testEncodeTypeWithInnerTypeList", testEncodeTypeWithInnerTypeList),
-        ("testEncodeTypeWithInnerType", testEncodeTypeWithInnerType),
-        ("testEncodeTypeWithInnerTypeListWithNoSeparator", testEncodeTypeWithInnerTypeListWithNoSeparator),
-        ("testEncodeTypeWithInnerTypeWithNoSeparator", testEncodeTypeWithInnerTypeWithNoSeparator),
-        ("testArrayLikeFlatStructure", testArrayLikeFlatStructure),
-        ("testMapLikeFlatStructure", testMapLikeFlatStructure),
-        ("testEncodeGreedyToken", testEncodeGreedyToken),
-        ("testEncodeGreedyMultiSegmentToken", testEncodeGreedyMultiSegmentToken),
-        ("testNonMatchingTemplate", testNonMatchingTemplate),
-        ("testNonMatchingTemplate2", testNonMatchingTemplate2),
-        ("testNonMatchingTemplateTooFewSegments", testNonMatchingTemplateTooFewSegments),
-        ("testNonMatchingTemplateTooManySegments", testNonMatchingTemplateTooManySegments),
-    ]
 }
