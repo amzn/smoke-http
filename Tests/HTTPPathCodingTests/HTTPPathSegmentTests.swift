@@ -118,15 +118,4 @@ class HTTPPathSegmentTests: XCTestCase {
             // expected
         }
     }
-
-    static var allTests = [
-        ("testBasicTokenize", testBasicTokenize),
-        ("testTokenizeStartingSlash", testTokenizeStartingSlash),
-        ("testTokenizeAtStart", testTokenizeAtStart),
-        ("testTokenizeAtEnd", testTokenizeAtEnd),
-        ("testTokenizeAtEndWithPlus", testTokenizeAtEndWithPlus),
-        ("testTokenizeAtEndWithPlusWithTrail", testTokenizeAtEndWithPlusWithTrail),
-        ("testInvalidTokenize", testInvalidTokenize),
-        ("testInvalidTokenizeWithTrail", testInvalidTokenizeWithTrail),
-    ]
 }

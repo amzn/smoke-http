@@ -379,25 +379,5 @@ class ShapeSingleValueEncodingContainerTests: XCTestCase {
         
         XCTAssertEqual(expected, encodedValues)
     }
-
-    static var allTests = [
-        ("testEncodeBasicType", testEncodeBasicType),
-        ("testEncodeBasicTypeWithCapitialization", testEncodeBasicTypeWithCapitialization),
-        ("testEncodeBasicTypeWithCustomTransform", testEncodeBasicTypeWithCustomTransform),
-        ("testEncodeBasicTypeWithEncoding", testEncodeBasicTypeWithEncoding),
-        ("testEncodeNoValues", testEncodeNoValues),
-        ("testEncodeTypeWithList", testEncodeTypeWithList),
-        ("testEncodeTypeWithListWithCapitialization", testEncodeTypeWithListWithCapitialization),
-        ("testEncodeTypeWithListWithCustomTransform", testEncodeTypeWithListWithCustomTransform),
-        ("testEncodeTypeWithMap", testEncodeTypeWithMap),
-        ("testEncodeTypeWithMapWithCapitialization", testEncodeTypeWithMapWithCapitialization),
-        ("testEncodeTypeWithMapWithCustomTransform", testEncodeTypeWithMapWithCustomTransform),
-        ("testEncodeTypeWithListOfType", testEncodeTypeWithListOfType),
-        ("testEncodeTypeWithListOfTypeWithCapitialization", testEncodeTypeWithListOfTypeWithCapitialization),
-        ("testEncodeTypeWithListOfTypeWithCustomTransform", testEncodeTypeWithListOfTypeWithCustomTransform),
-        ("testEncodeTypeWithNestedType", testEncodeTypeWithNestedType),
-        ("testEncodeTypeWithNestedTypeWithCapitialization", testEncodeTypeWithNestedTypeWithCapitialization),
-        ("testEncodeTypeWithNestedTypeWithCustomTransform", testEncodeTypeWithNestedTypeWithCustomTransform),
-    ]
 }
 

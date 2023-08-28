@@ -23,9 +23,4 @@ final class SmokeHTTPClientTests: XCTestCase {
     func testHTTPMethodRawValue() {
         XCTAssertEqual(HTTPMethod.GET.rawValue, "GET")
     }
-
-
-    static var allTests = [
-        ("testHTTPMethodRawValue", testHTTPMethodRawValue),
-    ]
 }
