@@ -620,26 +620,8 @@ extension HTTPOperationsClient {
                                        context: ServiceContext? = ServiceContext.current,
                                        ofKind kind: SpanKind = .internal,
                                        _ operation: ((any Span)?) async throws -> T) async rethrows -> T {
-        if let context = context {
-            return try await withSpan(operationName, context: context, ofKind: kind) { span in
-                do {
-                    return try await operation(span)
-                } catch let error as HTTPClientError {
-                    span.attributes["http.status_code"] = error.responseCode
-                    span.setStatus(.init(code: .error))
-                    
-                    // rethrow error
-                    throw error
-                } catch {
-                    span.setStatus(.init(code: .error))
-                    
-                    // rethrow error
-                    throw error
-                }
-            }
-        } else {
-            return try await operation(nil)
-        }
+        // disable client spans due to performance investigation
+        return try await operation(nil)
     }
 }
 
