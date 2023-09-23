@@ -289,7 +289,8 @@ extension HTTPOperationsClient {
                                                                                    requestComponents: requestComponents,
                                                                                    httpMethod: httpMethod,
                                                                                    invocationContext: invocationContext,
-                                                                                   span: span)
+                                                                                   span: span, 
+                                                                                   fallbackServiceContext: serviceContext)
             
             do {
                 let successResult = try await responseFuture.get()
@@ -346,7 +347,8 @@ extension HTTPOperationsClient {
         requestComponents: HTTPRequestComponents,
         httpMethod: HTTPMethod,
         invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>,
-        span: Span? = nil) throws
+        span: Span? = nil,
+        fallbackServiceContext: ServiceContext? = nil) throws
     -> (EventLoopFuture<HTTPClient.Response>, InvocationReportingType.TraceContextType.OutwardsRequestContext) {
 
         let endpointHostName = endpointOverride?.host ?? self.endpointHostName
@@ -383,9 +385,12 @@ extension HTTPOperationsClient {
             span.attributes["http.flavor"] = "1.1"
             span.attributes["http.user_agent"] = requestHeaders.first(name: "user-agent")
             span.attributes["http.request_content_length"] = requestHeaders.first(name: "content-length")
-            
+        }
+        
+        let serviceContext = span?.context ?? fallbackServiceContext
+        if let serviceContext = serviceContext {
             InstrumentationSystem.instrument.inject(
-                span.context,
+                serviceContext,
                 into: &requestHeaders,
                 using: HTTPHeadersInjector()
             )
