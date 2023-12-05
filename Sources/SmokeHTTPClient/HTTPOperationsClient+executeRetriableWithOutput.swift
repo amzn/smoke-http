@@ -18,8 +18,10 @@
 #if (os(Linux) && compiler(>=5.5)) || (!os(Linux) && compiler(>=5.5.2)) && canImport(_Concurrency)
 
 import Foundation
+import AsyncHTTPClient
 import NIO
 import NIOHTTP1
+import NIOHTTP2
 import Metrics
 import Tracing
 
@@ -68,6 +70,11 @@ public extension HTTPOperationsClient {
         let outwardsRequestAggregators: (OutwardsRequestAggregator, RetriableOutwardsRequestAggregator)?
         
         var retriesRemaining: Int
+        
+        // For requests that fail for transient connection issues (StreamClosed, remoteConnectionClosed)
+        // don't consume retry attempts and don't use expotential backoff
+        var abortedAttemptsRemaining: Int = 5
+        let waitOnAbortedAttemptMs = 2
         
         init(endpointOverride: URL?, requestComponents: HTTPRequestComponents, httpMethod: HTTPMethod,
              invocationContext: HTTPClientInvocationContext<InvocationReportingType, HandlerDelegateType>,
@@ -143,8 +150,19 @@ public extension HTTPOperationsClient {
 
             let shouldRetryOnError = retryOnError(error)
             
-            // if there are retries remaining and we should retry on this error
-            if retriesRemaining > 0 && shouldRetryOnError {
+            // For requests that fail for transient connection issues (StreamClosed, remoteConnectionClosed)
+            // don't consume retry attempts and don't use expotential backoff
+            if self.abortedAttemptsRemaining > 0 && treatAsAbortedAttempt(cause: error.cause) {
+                logger.debug(
+                    "Request aborted with error: \(error). Retrying in \(self.waitOnAbortedAttemptMs) ms.")
+                
+                self.abortedAttemptsRemaining -= 1
+                
+                try await Task.sleep(nanoseconds: UInt64(self.waitOnAbortedAttemptMs) * millisecondsToNanoSeconds)
+                
+                return try await self.executeWithOutput()
+                // if there are retries remaining (and haven't exhausted aborted attempts) and we should retry on this error
+            } else if self.abortedAttemptsRemaining > 0 && self.retriesRemaining > 0 && shouldRetryOnError {
                 // determine the required interval
                 let retryInterval = Int(retryConfiguration.getRetryInterval(retriesRemaining: retriesRemaining))
                 
@@ -201,6 +219,16 @@ public extension HTTPOperationsClient {
                 await outwardsRequestAggregators.0.recordRetriableOutwardsRequest(
                     retriableOutwardsRequest: StandardRetriableOutputRequestRecord(outputRequests: outputRequestRecords))
             }
+        }
+        
+        func treatAsAbortedAttempt(cause: Swift.Error) -> Bool {
+            if cause is NIOHTTP2Errors.StreamClosed {
+                return true
+            } else if let clientError = cause as? AsyncHTTPClient.HTTPClientError, clientError == .remoteConnectionClosed {
+                return true
+            }
+            
+            return false
         }
     }
     
