@@ -34,6 +34,7 @@ public enum HTTPError: Error {
 
     // 5xx
     case connectionError(String)
+    case connectionFailure(cause: Swift.Error)
     case internalServerError(String)
     case invalidRequest(String)
 
