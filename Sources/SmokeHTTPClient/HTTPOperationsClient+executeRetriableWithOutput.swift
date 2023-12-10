@@ -21,7 +21,6 @@ import Foundation
 import AsyncHTTPClient
 import NIO
 import NIOHTTP1
-import NIOHTTP2
 import Metrics
 import Tracing
 
@@ -222,9 +221,7 @@ public extension HTTPOperationsClient {
         }
         
         func treatAsAbortedAttempt(cause: Swift.Error) -> Bool {
-            if cause is NIOHTTP2Errors.StreamClosed {
-                return true
-            } else if let clientError = cause as? AsyncHTTPClient.HTTPClientError, clientError == .remoteConnectionClosed {
+            if let httpError = cause as? HTTPError, case .connectionFailure = httpError {
                 return true
             }
             

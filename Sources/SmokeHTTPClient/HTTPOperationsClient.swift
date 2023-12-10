@@ -530,21 +530,19 @@ extension HTTPOperationsClient {
             
         case .failure(let error):
             let wrappingError: HTTPClientError
-            
-            let errorDescription = String(describing: error)
-            
+                        
             switch error {
             // for retriable HTTPClientErrors
-            case let clientError as AsyncHTTPClient.HTTPClientError where isRetriableHTTPClientError(clientError: clientError):
-                let cause = HTTPError.connectionError(errorDescription)
-                wrappingError = HTTPClientError(responseCode: 500, cause: cause)
-            // for non-retriable HTTPClientErrors
-            case _ as AsyncHTTPClient.HTTPClientError:
-                let cause = HTTPError.badResponse(errorDescription)
-                wrappingError = HTTPClientError(responseCode: 400, cause: cause)
-            // by default treat all other errors as 500 so they can be retried
+            case let clientError as AsyncHTTPClient.HTTPClientError:
+                if let httpError = asRetriableError(clientError: clientError) {
+                    wrappingError = HTTPClientError(responseCode: 500, cause: httpError)
+                } else {
+                    // for non-retriable HTTPClientErrors
+                    wrappingError = HTTPClientError(responseCode: 400, cause: clientError)
+                }
+            // by default treat all other errors as a 500 connection failure so they can be retried
             default:
-                let cause = HTTPError.connectionError(errorDescription)
+                let cause = HTTPError.connectionFailure(cause: error)
                 wrappingError = HTTPClientError(responseCode: 500, cause: cause)
             }
             
@@ -577,18 +575,20 @@ extension HTTPOperationsClient {
         return providerError
     }
     
-    private func isRetriableHTTPClientError(clientError: AsyncHTTPClient.HTTPClientError) -> Bool {
-        // special case read, connect, connection pool or tls handshake timeouts and remote connection closed errors
-        // to a 500 error to allow for retries
+    private func asRetriableError(clientError: AsyncHTTPClient.HTTPClientError) -> Swift.Error? {
+        // special case read, connect or connection pool errors,
+        // retry these errors according to the retry configuration
         if clientError == AsyncHTTPClient.HTTPClientError.readTimeout
                 || clientError == AsyncHTTPClient.HTTPClientError.connectTimeout
-                || clientError == AsyncHTTPClient.HTTPClientError.tlsHandshakeTimeout
-                || clientError == AsyncHTTPClient.HTTPClientError.remoteConnectionClosed
                 || clientError == AsyncHTTPClient.HTTPClientError.getConnectionFromPoolTimeout {
-            return true
+            return clientError
+        // special case tls handshake timeouts and remote connection closed errors, treat as a connection failures
+        } else if clientError == AsyncHTTPClient.HTTPClientError.tlsHandshakeTimeout
+                || clientError == AsyncHTTPClient.HTTPClientError.remoteConnectionClosed {
+            return HTTPError.connectionFailure(cause: clientError)
         }
         
-        return false
+        return nil
     }
     
     private func getHeadersFromResponse(response: HTTPClient.Response) -> [(String, String)] {
