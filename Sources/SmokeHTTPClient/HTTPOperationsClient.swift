@@ -582,9 +582,10 @@ extension HTTPOperationsClient {
                 || clientError == AsyncHTTPClient.HTTPClientError.connectTimeout
                 || clientError == AsyncHTTPClient.HTTPClientError.getConnectionFromPoolTimeout {
             return clientError
-        // special case tls handshake timeouts and remote connection closed errors, treat as a connection failures
+        // special case tls handshake timeouts, remote connection closed and cancelled errors, treat as a connection failures
         } else if clientError == AsyncHTTPClient.HTTPClientError.tlsHandshakeTimeout
-                || clientError == AsyncHTTPClient.HTTPClientError.remoteConnectionClosed {
+                || clientError == AsyncHTTPClient.HTTPClientError.remoteConnectionClosed
+                || clientError == AsyncHTTPClient.HTTPClientError.cancelled {
             return HTTPError.connectionFailure(cause: clientError)
         }
         
