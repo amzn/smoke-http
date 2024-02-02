@@ -150,7 +150,9 @@ public extension HTTPOperationsClient {
             let shouldRetryOnError = retryOnError(error)
             
             // For requests that fail for transient connection issues (StreamClosed, remoteConnectionClosed)
-            // don't consume retry attempts and don't use expotential backoff
+            // don't consume retry attempts and don't use exponential backoff.
+            // If aborted attempts are exhausted, we'll treat the aborted attempt just like any other retriable
+            // error, by consuming a retry attempt and applying exponential backoff.
             if self.abortedAttemptsRemaining > 0 && treatAsAbortedAttempt(cause: error.cause) {
                 logger.debug(
                     "Request aborted with error: \(error). Retrying in \(self.waitOnAbortedAttemptMs) ms.")
@@ -160,8 +162,8 @@ public extension HTTPOperationsClient {
                 try await Task.sleep(nanoseconds: UInt64(self.waitOnAbortedAttemptMs) * millisecondsToNanoSeconds)
                 
                 return try await self.executeWithOutput()
-                // if there are retries remaining (and haven't exhausted aborted attempts) and we should retry on this error
-            } else if self.abortedAttemptsRemaining > 0 && self.retriesRemaining > 0 && shouldRetryOnError {
+                // if there are retries remaining (and we've exhausted aborted attempts) and we should retry on this error
+            } else if self.retriesRemaining > 0 && shouldRetryOnError {
                 // determine the required interval
                 let retryInterval = Int(retryConfiguration.getRetryInterval(retriesRemaining: retriesRemaining))
                 
