@@ -106,7 +106,7 @@ public extension HTTPOperationsClient {
                 if let typedError = error as? HTTPClientError {
                     // report failure metric
                     switch typedError.category {
-                    case .clientError:
+                    case .clientError, .clientRetryableError:
                         invocationContext.reporting.failure4XXCounter?.increment()
                     case .serverError:
                         invocationContext.reporting.failure5XXCounter?.increment()

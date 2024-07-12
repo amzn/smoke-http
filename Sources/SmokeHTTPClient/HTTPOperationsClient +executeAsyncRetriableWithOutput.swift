@@ -158,7 +158,7 @@ public extension HTTPOperationsClient {
                 
                 // report failure metric
                 switch error.category {
-                case .clientError:
+                case .clientError, .clientRetryableError:
                     invocationContext.reporting.failure4XXCounter?.increment()
                 case .serverError:
                     invocationContext.reporting.failure5XXCounter?.increment()

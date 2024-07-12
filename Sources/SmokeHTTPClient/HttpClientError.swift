@@ -21,6 +21,7 @@ public struct HTTPClientError: Error {
     
     public enum Category {
         case clientError
+        case clientRetryableError
         case serverError
     }
     
@@ -32,7 +33,11 @@ public struct HTTPClientError: Error {
     public var category: Category {
         switch responseCode {
         case 400...499:
-            return .clientError
+            if(responseCode == 429) {
+                return .clientRetryableError
+            } else {
+                return .clientError
+            }
         default:
             return .serverError
         }

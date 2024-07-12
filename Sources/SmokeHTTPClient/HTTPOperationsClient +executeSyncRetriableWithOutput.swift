@@ -124,7 +124,7 @@ public extension HTTPOperationsClient {
             } catch let error as HTTPClientError {
                 // report failure metric
                 switch error.category {
-                case .clientError:
+                case .clientError, .clientRetryableError:
                     invocationContext.reporting.failure4XXCounter?.increment()
                 case .serverError:
                     invocationContext.reporting.failure5XXCounter?.increment()
@@ -145,7 +145,7 @@ public extension HTTPOperationsClient {
             case .clientError:
                 // never retry
                 shouldRetryOnError = false
-            case .serverError:
+            case .serverError, .clientRetryableError:
                 shouldRetryOnError = retryOnError(error)
             }
             let logger = invocationContext.reporting.logger
