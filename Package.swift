@@ -59,6 +59,7 @@ let package = Package(
                 .product(name: "NIOSSL", package: "swift-nio-ssl"),
                 .product(name: "AsyncHTTPClient", package: "async-http-client"),
                 .product(name: "Tracing", package: "swift-distributed-tracing"),
+                .target(name: "HTTPHeadersCoding"),
             ]),
         .target(
             name: "_SmokeHTTPClientConcurrency", dependencies: [
