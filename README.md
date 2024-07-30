@@ -95,7 +95,7 @@ The inputs to this constructor are:
 
 There are a number of variants of the execute call on the `HTTPOperationsClient`. Below describes one variant but all are broadly similar-
 
-```
+```swift
 try httpOperationsClient.executeAsyncRetriableWithOutput(
             endpointOverride: nil,
             endpointPath = endpointPath,
