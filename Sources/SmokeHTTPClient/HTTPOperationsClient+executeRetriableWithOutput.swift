@@ -26,27 +26,6 @@ import Tracing
 
 private let millisecondsToNanoSeconds: UInt64 = 1000000
 
-// Copy of extension from SwiftNIO; can be removed when the version in SwiftNIO removes its @available attribute
-internal extension EventLoopFuture {
-    /// Get the value/error from an `EventLoopFuture` in an `async` context.
-    ///
-    /// This function can be used to bridge an `EventLoopFuture` into the `async` world. Ie. if you're in an `async`
-    /// function and want to get the result of this future.
-    @inlinable
-    func get() async throws -> Value {
-        return try await withCheckedThrowingContinuation { cont in
-            self.whenComplete { result in
-                switch result {
-                case .success(let value):
-                    cont.resume(returning: value)
-                case .failure(let error):
-                    cont.resume(throwing: error)
-                }
-            }
-        }
-    }
-}
-
 public extension HTTPOperationsClient {
     /**
      Helper type that manages the state of a retriable async request.
